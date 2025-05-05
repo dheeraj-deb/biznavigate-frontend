@@ -36,31 +36,31 @@ const Hero = () => {
   
   return (
     <>
-      <Box
+    <Box
         id="hero"
-        sx={{
+      sx={{
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           pt: { xs: 14, md: 18 },
           pb: { xs: 14, md: 18 },
-          position: 'relative',
-          overflow: 'hidden',
+        position: 'relative',
+        overflow: 'hidden',
           color: 'white',
           minHeight: { xs: '85vh', md: '90vh' },
           display: 'flex',
           alignItems: 'center',
-        }}
-      >
+      }}
+    >
         {/* Animated Gradient Orbs */}
-        <Box
-          sx={{
-            position: 'absolute',
+      <Box
+        sx={{
+          position: 'absolute',
             top: '-10%',
             left: '-5%',
             width: '50vw',
             height: '50vw',
             maxWidth: '800px',
             maxHeight: '800px',
-            borderRadius: '50%',
+          borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(0, 181, 168, 0.15) 0%, rgba(0, 181, 168, 0) 70%)',
             filter: 'blur(50px)',
             animation: 'float 20s infinite alternate ease-in-out',
@@ -69,20 +69,20 @@ const Hero = () => {
               '50%': { transform: 'translate(5%, 5%)' },
               '100%': { transform: 'translate(-5%, -10%)' }
             },
-            zIndex: 1,
-          }}
-        />
+          zIndex: 1,
+        }}
+      />
         
-        <Box
-          sx={{
-            position: 'absolute',
+      <Box
+        sx={{
+          position: 'absolute',
             bottom: '-10%',
             right: '-10%',
             width: '60vw',
             height: '60vw',
             maxWidth: '900px',
             maxHeight: '900px',
-            borderRadius: '50%',
+          borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, rgba(108, 92, 231, 0) 70%)',
             filter: 'blur(50px)',
             animation: 'floatReverse 25s infinite alternate ease-in-out',
@@ -91,9 +91,9 @@ const Hero = () => {
               '50%': { transform: 'translate(-5%, -5%)' },
               '100%': { transform: 'translate(5%, 10%)' }
             },
-            zIndex: 1,
-          }}
-        />
+          zIndex: 1,
+        }}
+      />
         
         {/* Particle Grid Effect */}
         <Box
@@ -109,8 +109,8 @@ const Hero = () => {
             opacity: 0.3,
           }}
         />
-        
-        {/* Main content */}
+      
+      {/* Main content */}
         <Container 
           maxWidth="lg" 
           sx={{ 
@@ -141,22 +141,22 @@ const Hero = () => {
               />
               
               {/* Main heading with animated gradient text */}
-              <Typography
-                variant="h1"
-                component="h1"
-                sx={{
+            <Typography
+              variant="h1"
+              component="h1"
+              sx={{
                   fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
                   fontWeight: 800,
-                  mb: 3,
+                mb: 3,
                   backgroundImage: 'linear-gradient(90deg, #ffffff 0%, #e0e0e0 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                   textShadow: '0 20px 30px rgba(0, 0, 0, 0.2)',
                   lineHeight: 1.1,
-                  textAlign: { xs: 'center', md: 'left' },
-                }}
-              >
+                textAlign: { xs: 'center', md: 'left' },
+              }}
+            >
                 Automate Your <br />
                 <Box 
                   component="span" 
@@ -183,12 +183,12 @@ const Hero = () => {
                 </Box> 
                 <br />
                 with AI Power
-              </Typography>
-              
+            </Typography>
+            
               {/* Subheading with enhanced typography */}
-              <Typography
+            <Typography
                 variant="h5"
-                sx={{
+              sx={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   mb: 5,
                   maxWidth: '600px',
@@ -196,20 +196,20 @@ const Hero = () => {
                   lineHeight: 1.8,
                   fontWeight: 300,
                   fontSize: { xs: '1rem', md: '1.25rem' },
-                  textAlign: { xs: 'center', md: 'left' },
-                }}
-              >
-                We help wholesalers and distributors <Box component="span" sx={{ fontWeight: 600, color: 'white' }}>automate order capture</Box> from WhatsApp messages and emails, seamlessly <Box component="span" sx={{ fontWeight: 600, color: 'white' }}>updating your CRM</Box> and inventory systems.
-              </Typography>
-              
+                textAlign: { xs: 'center', md: 'left' },
+              }}
+            >
+                We automate <Box component="span" sx={{ fontWeight: 600, color: 'white' }}>order capture</Box>, update your <Box component="span" sx={{ fontWeight: 600, color: 'white' }}>business systems</Box>, and provide a <Box component="span" sx={{ fontWeight: 600, color: 'white' }}>branded website</Box> for direct ordering.
+            </Typography>
+            
               {/* CTA Buttons with improved styling */}
               <Box sx={{ display: 'flex', gap: 3, flexWrap: { xs: 'wrap', sm: 'nowrap' }, justifyContent: { xs: 'center', md: 'flex-start' } }}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowForwardIcon />}
-                  sx={{
-                    px: 4,
+              <Button
+                variant="contained"
+                size="large"
+                endIcon={<ArrowForwardIcon />}
+                sx={{
+                  px: 4,
                     py: 1.8,
                     fontSize: '1rem',
                     fontWeight: 600,
@@ -236,7 +236,7 @@ const Hero = () => {
                     px: 4,
                     py: 1.8,
                     fontSize: '1rem',
-                    fontWeight: 600,
+                  fontWeight: 600,
                     borderColor: 'rgba(255, 255, 255, 0.3)',
                     color: 'white',
                     borderRadius: '8px',
@@ -252,10 +252,10 @@ const Hero = () => {
                   }}
                 >
                   Schedule a Demo
-                </Button>
-              </Box>
-            </Grid>
-            
+              </Button>
+            </Box>
+          </Grid>
+          
             {/* Right Side - Image Cards */}
             <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', justifyContent: 'center' }}>
               <Box
@@ -396,9 +396,9 @@ const Hero = () => {
                 />
               </Box>
             </Grid>
-          </Grid>
-        </Container>
-      </Box>
+        </Grid>
+      </Container>
+    </Box>
       
       {/* Demo Form Dialog */}
       <ContactFormDialog 

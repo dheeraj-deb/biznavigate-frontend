@@ -7,6 +7,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import AutomationIcon from '@mui/icons-material/AutoFixHigh';
 import SecurityIcon from '@mui/icons-material/Security';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import LanguageIcon from '@mui/icons-material/Language';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface SolutionItem {
@@ -44,13 +45,13 @@ const solutions: SolutionItem[] = [
   },
   {
     id: 3,
-    title: 'Order Analytics',
-    description: 'Gain valuable insights into order patterns and customer behavior',
-    icon: <AnalyticsIcon sx={{ fontSize: '2.5rem' }} />,
-    color: '#FF5364',
-    background: 'linear-gradient(135deg, rgba(255, 83, 100, 0.1) 0%, rgba(255, 83, 100, 0.05) 100%)',
-    borderColor: 'rgba(255, 83, 100, 0.3)',
-    detailedDescription: 'Our analytics dashboard reveals ordering trends, popular products, customer purchasing patterns, and predictive insights to optimize inventory and improve customer relationships.'
+    title: 'Product Showcase Website',
+    description: 'Custom website to showcase your products with integrated WhatsApp ordering',
+    icon: <LanguageIcon sx={{ fontSize: '2.5rem' }} />,
+    color: '#3498db',
+    background: 'linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%)',
+    borderColor: 'rgba(52, 152, 219, 0.3)',
+    detailedDescription: 'Each customer receives a dedicated website hosted under our domain to showcase their products. Customers can browse your catalog and place orders directly through WhatsApp with a single click, streamlining the ordering process and increasing sales conversion.'
   },
   {
     id: 4,
@@ -81,7 +82,7 @@ const solutions: SolutionItem[] = [
     background: 'linear-gradient(135deg, rgba(0, 180, 103, 0.1) 0%, rgba(0, 180, 103, 0.05) 100%)',
     borderColor: 'rgba(0, 180, 103, 0.3)',
     detailedDescription: 'Our platform automates payment processing, tracks shipments in real-time, and manages logistics operations for efficient order fulfillment. Includes secure payment integration, shipping label generation, and carrier coordination.'
-  }
+  },
 ];
 
 const Solutions = () => {
@@ -245,8 +246,7 @@ const Solutions = () => {
               fontSize: '1.1rem',
             }}
           >
-            Our AI-powered platform transforms how wholesalers and distributors handle orders by automatically processing
-            messages from WhatsApp and emails, eliminating manual data entry, and seamlessly updating your business systems.
+            We help wholesalers and distributors automate order capture from WhatsApp messages and emails, seamlessly updating your CRM and inventory systems. Each customer receives their own branded website under our domain to showcase products, enabling direct ordering through WhatsApp with just one click.
           </Typography>
         </Box>
 
