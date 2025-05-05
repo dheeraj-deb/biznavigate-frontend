@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Container, Typography, Button, Paper, Tab, Tabs, Card, CardContent, Avatar, Chip, useTheme, useMediaQuery } from '@mui/material';
 import AutomationIcon from '@mui/icons-material/SmartToy';
 import AnalyticsIcon from '@mui/icons-material/QueryStats';
@@ -94,10 +94,50 @@ const AIAgents = () => {
   const [activeTab, setActiveTab] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
+
+  // Auto-scroll tabs when changing selection
+  useEffect(() => {
+    if (tabsRef.current && isMobile) {
+      const tabsContainer = tabsRef.current;
+      const tabList = Array.from(tabsContainer.querySelectorAll('.MuiTab-root')) as HTMLElement[];
+      
+      // When the second tab (index 1) is selected, scroll to show tabs 2 and 3 (indexes 1 and 2)
+      if (activeTab === 1 && tabList.length > 2) {
+        // Calculate scroll position to show tabs 1 and 2 (hide tab 0)
+        const firstTabWidth = tabList[0].offsetWidth;
+        tabsContainer.scrollTo({
+          left: firstTabWidth,
+          behavior: 'smooth'
+        });
+      } 
+      // For other tabs, center the active tab
+      else if (activeTab > 1) {
+        const selectedTab = tabList[activeTab];
+        if (selectedTab) {
+          const containerWidth = tabsContainer.clientWidth;
+          const tabWidth = selectedTab.offsetWidth;
+          const scrollPosition = selectedTab.offsetLeft - (containerWidth / 2) + (tabWidth / 2);
+          
+          tabsContainer.scrollTo({
+            left: scrollPosition,
+            behavior: 'smooth'
+          });
+        }
+      }
+      // If first tab is selected, scroll to beginning
+      else if (activeTab === 0) {
+        tabsContainer.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeTab, isMobile]);
 
   return (
     <Box
@@ -184,22 +224,44 @@ const AIAgents = () => {
               color: 'rgba(255, 255, 255, 0.8)',
             }}
           >
-            Our AI agents transform how wholesalers and distributors operate by automating 
-            order capture from WhatsApp and emails, with support for multiple languages, voice recognition, 
+            Our AI agents transform how wholesalers and distributors operate by automating
+            order capture from WhatsApp and emails, with support for multiple languages, voice recognition,
             and integrated shipment tracking - all seamlessly connecting with your existing business systems.
           </Typography>
         </Box>
 
         {/* Tabbed Interface */}
-        <Box sx={{ mb: 8 }}>
-          <Tabs 
-            value={activeTab} 
+        <Box sx={{ 
+          mb: 8, 
+          overflowX: 'auto', 
+          WebkitOverflowScrolling: 'touch',
+          '&::-webkit-scrollbar': {
+            display: 'none'
+          },
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
+          <Tabs
+            variant="scrollable"
+            allowScrollButtonsMobile
+            scrollButtons={false}
+            value={activeTab}
             onChange={handleTabChange}
-            centered
+            ref={tabsRef}
             sx={{
               '& .MuiTabs-indicator': {
                 backgroundColor: '#00B5A8',
                 height: 3,
+              },
+              '& .MuiTabs-flexContainer': {
+                gap: { xs: 0, md: 2 },
+              },
+              '& .MuiTabs-scroller': {
+                '&::-webkit-scrollbar': {
+                  display: 'none'
+                },
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
               },
               '& .MuiTab-root': {
                 color: 'rgba(255,255,255,0.7)',
@@ -207,14 +269,17 @@ const AIAgents = () => {
                 fontSize: '1rem',
                 px: 4,
                 py: 2,
+                minWidth: { xs: 120, md: 'auto' },
+                whiteSpace: 'nowrap',
                 '&.Mui-selected': {
                   color: '#00B5A8',
                 },
               },
               mb: 4,
+              width: '100%'
             }}
           >
-            {aiCapabilities.map((capability, index) => (
+            {aiCapabilities.map((capability) => (
               <Tab key={capability.id} label={capability.title} />
             ))}
           </Tabs>
@@ -233,9 +298,9 @@ const AIAgents = () => {
                   }
                 }}
               >
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
+                <Box
+                  sx={{
+                    display: 'flex',
                     flexDirection: { xs: 'column', md: 'row' },
                     gap: 4,
                     alignItems: 'center',
@@ -249,8 +314,8 @@ const AIAgents = () => {
                 >
                   {/* Left side - description */}
                   <Box sx={{ width: { xs: '100%', md: '40%' }, textAlign: { xs: 'center', md: 'left' } }}>
-                    <Avatar 
-                      sx={{ 
+                    <Avatar
+                      sx={{
                         bgcolor: capability.color,
                         width: 60,
                         height: 60,
@@ -287,8 +352,8 @@ const AIAgents = () => {
                   </Box>
 
                   {/* Right side - feature cards */}
-                  <Box 
-                    sx={{ 
+                  <Box
+                    sx={{
                       width: { xs: '100%', md: '60%' },
                       display: 'flex',
                       flexWrap: 'wrap',
@@ -296,9 +361,9 @@ const AIAgents = () => {
                     }}
                   >
                     {capability.features.map((feature, idx) => (
-                      <Card 
+                      <Card
                         key={idx}
-                        sx={{ 
+                        sx={{
                           width: { xs: '100%', sm: 'calc(50% - 8px)' },
                           backgroundColor: 'rgba(0, 0, 0, 0.3)',
                           backdropFilter: 'blur(5px)',
@@ -351,8 +416,8 @@ const AIAgents = () => {
             Benefits of Order Automation
           </Typography>
 
-          <Box 
-            sx={{ 
+          <Box
+            sx={{
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
               gap: 4,
@@ -378,10 +443,10 @@ const AIAgents = () => {
                 }}
               >
                 <CardContent>
-                  <Avatar 
-                    sx={{ 
-                      bgcolor: 'rgba(255, 255, 255, 0.1)', 
-                      width: 70, 
+                  <Avatar
+                    sx={{
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                      width: 70,
                       height: 70,
                       mx: 'auto',
                       mb: 2,
@@ -403,9 +468,9 @@ const AIAgents = () => {
         </Box>
 
         {/* CTA Section */}
-        <Box 
-          sx={{ 
-            mt: 10, 
+        <Box
+          sx={{
+            mt: 10,
             textAlign: 'center',
             p: 4,
             borderRadius: '16px',
@@ -417,7 +482,7 @@ const AIAgents = () => {
             Ready to Automate Your Order Process?
           </Typography>
           <Typography variant="body1" mb={4} sx={{ maxWidth: '700px', mx: 'auto', color: 'rgba(255, 255, 255, 0.8)' }}>
-            Join leading wholesalers and distributors who've transformed their business with our AI-powered platform. 
+            Join leading wholesalers and distributors who've transformed their business with our AI-powered platform.
             Process orders in multiple languages, capture voice orders, and provide real-time shipment tracking for your customers.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>

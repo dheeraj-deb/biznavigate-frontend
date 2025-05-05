@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Box, Button, Container, Typography, Chip, useTheme, useMediaQuery, Paper, Grid } from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Button, Container, Typography, Chip, useTheme, useMediaQuery, Paper, Grid, IconButton } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import ContactFormDialog from './ContactFormDialog';
 
 const heroImages = [
@@ -25,6 +27,8 @@ const Hero = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
   
   const handleOpenDemoDialog = () => {
     setDemoDialogOpen(true);
@@ -33,6 +37,24 @@ const Hero = () => {
   const handleCloseDemoDialog = () => {
     setDemoDialogOpen(false);
   };
+
+  const handleNextSlide = () => {
+    setActiveSlide((prev) => (prev + 1) % heroImages.length);
+  };
+
+  const handlePrevSlide = () => {
+    setActiveSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
+  useEffect(() => {
+    if (sliderRef.current && isMobile) {
+      const slideWidth = sliderRef.current.scrollWidth / heroImages.length;
+      sliderRef.current.scrollTo({
+        left: slideWidth * activeSlide,
+        behavior: 'smooth'
+      });
+    }
+  }, [activeSlide, isMobile]);
   
   return (
     <>
@@ -258,143 +280,299 @@ const Hero = () => {
           
             {/* Right Side - Image Cards */}
             <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Box
-                sx={{
-                  width: '100%',
+              {isMobile ? (
+                // Mobile Carousel Design
+                <Box sx={{ 
+                  width: '100%', 
+                  mt: 6,
                   position: 'relative',
-                  height: { xs: '450px', md: '550px' },
-                  perspective: '1500px',
-                  mt: { xs: 6, md: 0 },
-                }}
-              >
-                {/* Floating image cards */}
-                {heroImages.map((image, index) => (
-                  <Paper
-                    key={image.id}
-                    elevation={24}
+                  maxWidth: '100%'
+                }}>
+                  {/* Slider container */}
+                  <Box
+                    ref={sliderRef}
                     sx={{
-                      position: 'absolute',
-                      width: '100%',
-                      maxWidth: '350px',
-                      height: '250px',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      transform: `
-                        translateY(${index * 40}px) 
-                        translateX(${index % 2 === 0 ? index * 20 : 0}px) 
-                        rotateY(${index % 2 === 0 ? -5 : 5}deg) 
-                        rotateX(${index * 2}deg)
-                        scale(${1 - index * 0.05})
-                      `,
-                      transformStyle: 'preserve-3d',
-                      zIndex: 5 - index,
-                      transition: 'all 0.5s ease',
-                      animation: `float-card-${index} 8s infinite alternate ease-in-out`,
-                      top: `${10 + index * 10}%`,
-                      left: `${index % 2 === 0 ? 0 : 20}%`,
-                      boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
-                      '&:hover': {
-                        transform: `
-                          translateY(${index * 40 - 10}px) 
-                          translateX(${index % 2 === 0 ? index * 20 + 5 : 5}px) 
-                          rotateY(${index % 2 === 0 ? -2 : 2}deg) 
-                          rotateX(${index * 2 - 2}deg)
-                          scale(${1 - index * 0.05 + 0.05})
-                        `,
-                        zIndex: 10,
-                      },
-                      '@keyframes float-card-0': {
-                        '0%': { transform: 'translateY(0px) translateX(0px) rotateY(-5deg) rotateX(0deg) scale(1)' },
-                        '100%': { transform: 'translateY(-10px) translateX(10px) rotateY(-3deg) rotateX(2deg) scale(1.02)' }
-                      },
-                      '@keyframes float-card-1': {
-                        '0%': { transform: 'translateY(40px) translateX(0px) rotateY(5deg) rotateX(2deg) scale(0.95)' },
-                        '100%': { transform: 'translateY(30px) translateX(-10px) rotateY(3deg) rotateX(0deg) scale(0.97)' }
-                      },
-                      '@keyframes float-card-2': {
-                        '0%': { transform: 'translateY(80px) translateX(40px) rotateY(-5deg) rotateX(4deg) scale(0.9)' },
-                        '100%': { transform: 'translateY(70px) translateX(30px) rotateY(-7deg) rotateX(6deg) scale(0.92)' }
-                      },
+                      display: 'flex',
+                      overflowX: 'auto',
+                      scrollSnapType: 'x mandatory',
+                      scrollbarWidth: 'none', // Firefox
+                      '&::-webkit-scrollbar': { display: 'none' }, // Chrome, Safari
+                      WebkitOverflowScrolling: 'touch',
+                      position: 'relative',
+                      mx: -2,
+                      px: 2
                     }}
                   >
-                    {/* Image */}
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
-                        overflow: 'hidden',
+                    {heroImages.map((image, index) => (
+                      <Paper
+                        key={image.id}
+                        elevation={8}
+                        sx={{
+                          flex: '0 0 auto',
+                          width: 'calc(100% - 32px)', // Full width minus padding
+                          mx: 2,
+                          height: '220px',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          scrollSnapAlign: 'center',
+                          boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
+                          transform: index === activeSlide ? 'scale(1)' : 'scale(0.9)',
+                          transition: 'all 0.3s ease',
+                          opacity: index === activeSlide ? 1 : 0.7,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            position: 'relative',
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src={image.imageUrl}
+                            alt={image.title}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                          
+                          {/* Overlay */}
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              p: 2,
+                              background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))',
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                color: 'white',
+                                fontWeight: 600,
+                                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                                fontSize: '1.1rem',
+                              }}
+                            >
+                              {image.title}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Box>
+
+                  {/* Navigation buttons */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    mt: 2,
+                    gap: 1
+                  }}>
+                    <IconButton 
+                      onClick={handlePrevSlide}
+                      sx={{ 
+                        color: 'white',
+                        bgcolor: 'rgba(0, 0, 0, 0.2)',
+                        backdropFilter: 'blur(4px)',
+                        '&:hover': { bgcolor: 'rgba(0, 181, 168, 0.3)' }
                       }}
                     >
+                      <NavigateBeforeIcon />
+                    </IconButton>
+                    
+                    {/* Dots indicator */}
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {heroImages.map((_, index) => (
+                        <Box 
+                          key={index} 
+                          onClick={() => setActiveSlide(index)}
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            bgcolor: index === activeSlide ? '#00b5a8' : 'rgba(255, 255, 255, 0.4)',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    
+                    <IconButton 
+                      onClick={handleNextSlide}
+                      sx={{ 
+                        color: 'white',
+                        bgcolor: 'rgba(0, 0, 0, 0.2)',
+                        backdropFilter: 'blur(4px)',
+                        '&:hover': { bgcolor: 'rgba(0, 181, 168, 0.3)' }
+                      }}
+                    >
+                      <NavigateNextIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ) : (
+                // Desktop 3D Card Stack (existing code)
+                <Box
+                  sx={{
+                    width: '100%',
+                    position: 'relative',
+                    height: { xs: '450px', sm: '450px', md: '550px' },
+                    perspective: '1500px',
+                    mt: { xs: 6, md: 0 },
+                    maxWidth: { xs: '320px', sm: '350px', md: '100%' },
+                    mx: 'auto',
+                  }}
+                >
+                  {/* Floating image cards */}
+                  {heroImages.map((image, index) => (
+                    <Paper
+                      key={image.id}
+                      elevation={24}
+                      sx={{
+                        position: 'absolute',
+                        width: { xs: '280px', sm: '300px', md: '350px' },
+                        maxWidth: '100%',
+                        height: { xs: '200px', sm: '220px', md: '250px' },
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        transform: `
+                          translateY(${index * 40}px) 
+                          translateX(${index % 2 === 0 ? index * 20 : 0}px) 
+                          rotateY(${index % 2 === 0 ? -5 : 5}deg) 
+                          rotateX(${index * 2}deg)
+                          scale(${1 - index * 0.05})
+                        `,
+                        transformStyle: 'preserve-3d',
+                        zIndex: 5 - index,
+                        transition: 'all 0.5s ease',
+                        animation: `float-card-${index} 8s infinite alternate ease-in-out`,
+                        top: `${10 + index * 10}%`,
+                        left: `${index % 2 === 0 ? 0 : 20}%`,
+                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
+                        '&:hover': {
+                          transform: `
+                            translateY(${index * 40 - 10}px) 
+                            translateX(${index % 2 === 0 ? index * 20 + 5 : 5}px) 
+                            rotateY(${index % 2 === 0 ? -2 : 2}deg) 
+                            rotateX(${index * 2 - 2}deg)
+                            scale(${1 - index * 0.05 + 0.05})
+                          `,
+                          zIndex: 10,
+                        },
+                        '@keyframes float-card-0': {
+                          '0%': { 
+                            transform: 'translateY(0px) translateX(0px) rotateY(-5deg) rotateX(0deg) scale(1)'
+                          },
+                          '100%': { 
+                            transform: 'translateY(-10px) translateX(10px) rotateY(-3deg) rotateX(2deg) scale(1.02)'
+                          }
+                        },
+                        '@keyframes float-card-1': {
+                          '0%': { 
+                            transform: 'translateY(40px) translateX(0px) rotateY(5deg) rotateX(2deg) scale(0.95)'
+                          },
+                          '100%': { 
+                            transform: 'translateY(30px) translateX(-10px) rotateY(3deg) rotateX(0deg) scale(0.97)'
+                          }
+                        },
+                        '@keyframes float-card-2': {
+                          '0%': { 
+                            transform: 'translateY(80px) translateX(40px) rotateY(-5deg) rotateX(4deg) scale(0.9)'
+                          },
+                          '100%': { 
+                            transform: 'translateY(70px) translateX(30px) rotateY(-7deg) rotateX(6deg) scale(0.92)'
+                          }
+                        },
+                      }}
+                    >
+                      {/* Image */}
                       <Box
-                        component="img"
-                        src={image.imageUrl}
-                        alt={image.title}
                         sx={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover',
-                          transition: 'transform 0.5s ease',
-                          '&:hover': {
-                            transform: 'scale(1.05)',
-                          },
-                        }}
-                      />
-                      
-                      {/* Overlay */}
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          p: 2,
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))',
+                          position: 'relative',
+                          overflow: 'hidden',
                         }}
                       >
-                        <Typography
-                          variant="h6"
+                        <Box
+                          component="img"
+                          src={image.imageUrl}
+                          alt={image.title}
                           sx={{
-                            color: 'white',
-                            fontWeight: 600,
-                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transition: 'transform 0.5s ease',
+                            '&:hover': {
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                        />
+                        
+                        {/* Overlay */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            p: 2,
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))',
                           }}
                         >
-                          {image.title}
-                        </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: 'white',
+                              fontWeight: 600,
+                              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                              fontSize: '1.25rem',
+                            }}
+                          >
+                            {image.title}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Paper>
-                ))}
-                
-                {/* Decorative elements */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: -15,
-                    right: -15,
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '16px',
-                    background: 'radial-gradient(circle, rgba(0, 181, 168, 0.3) 0%, rgba(0, 181, 168, 0) 70%)',
-                    filter: 'blur(20px)',
-                    zIndex: -1,
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: -20,
-                    left: -20,
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '20px',
-                    background: 'radial-gradient(circle, rgba(108, 92, 231, 0.3) 0%, rgba(108, 92, 231, 0) 70%)',
-                    filter: 'blur(25px)',
-                    zIndex: -1,
-                  }}
-                />
-              </Box>
+                    </Paper>
+                  ))}
+                  
+                  {/* Decorative elements */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: -15,
+                      right: -15,
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '16px',
+                      background: 'radial-gradient(circle, rgba(0, 181, 168, 0.3) 0%, rgba(0, 181, 168, 0) 70%)',
+                      filter: 'blur(20px)',
+                      zIndex: -1,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: -20,
+                      left: -20,
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '20px',
+                      background: 'radial-gradient(circle, rgba(108, 92, 231, 0.3) 0%, rgba(108, 92, 231, 0) 70%)',
+                      filter: 'blur(25px)',
+                      zIndex: -1,
+                    }}
+                  />
+                </Box>
+              )}
             </Grid>
         </Grid>
       </Container>
