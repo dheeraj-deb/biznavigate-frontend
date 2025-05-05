@@ -6,6 +6,7 @@ import AnalyticsIcon from '@mui/icons-material/BarChart';
 import StorageIcon from '@mui/icons-material/Storage';
 import AutomationIcon from '@mui/icons-material/AutoFixHigh';
 import SecurityIcon from '@mui/icons-material/Security';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface SolutionItem {
@@ -73,13 +74,13 @@ const solutions: SolutionItem[] = [
   },
   {
     id: 6,
-    title: 'Secure & Compliant',
-    description: 'Enterprise-grade security for sensitive customer and order data',
-    icon: <SecurityIcon sx={{ fontSize: '2.5rem' }} />,
+    title: 'Payment and Shipping',
+    description: 'Streamlined payment processing and shipping management automation',
+    icon: <LocalShippingIcon sx={{ fontSize: '2.5rem' }} />,
     color: '#00B467',
     background: 'linear-gradient(135deg, rgba(0, 180, 103, 0.1) 0%, rgba(0, 180, 103, 0.05) 100%)',
     borderColor: 'rgba(0, 180, 103, 0.3)',
-    detailedDescription: 'Our platform maintains strict data security protocols, encryption standards, and compliance requirements to keep customer information and order data protected at all times.'
+    detailedDescription: 'Our platform automates payment processing, tracks shipments in real-time, and manages logistics operations for efficient order fulfillment. Includes secure payment integration, shipping label generation, and carrier coordination.'
   }
 ];
 
