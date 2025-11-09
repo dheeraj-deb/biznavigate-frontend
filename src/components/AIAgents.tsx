@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Button, Paper, Tab, Tabs, Card, CardContent, Avatar, Chip, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Container, Typography, Button, Tab, Tabs, Card, CardContent, Avatar, Chip, useTheme, useMediaQuery } from '@mui/material';
 import AutomationIcon from '@mui/icons-material/SmartToy';
 import AnalyticsIcon from '@mui/icons-material/QueryStats';
 import SupportIcon from '@mui/icons-material/SupportAgent';

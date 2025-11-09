@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  AppBar, 
-  Box, 
-  Toolbar, 
-  IconButton, 
-  Typography, 
-  Menu, 
-  Container, 
-  Button, 
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  Container,
+  Button,
   MenuItem,
-  useMediaQuery,
-  useTheme,
   Slide
 } from '@mui/material';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
@@ -26,8 +24,6 @@ const pages = [
 ];
 
 const Header = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   

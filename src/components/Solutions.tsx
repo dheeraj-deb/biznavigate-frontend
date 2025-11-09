@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Card, CardContent, useTheme, useMediaQuery, ButtonBase, Button } from '@mui/material';
+import { Box, Container, Typography, Card, CardContent, ButtonBase, Button } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import EmailIcon from '@mui/icons-material/Email';
-import AnalyticsIcon from '@mui/icons-material/BarChart';
 import StorageIcon from '@mui/icons-material/Storage';
 import AutomationIcon from '@mui/icons-material/AutoFixHigh';
-import SecurityIcon from '@mui/icons-material/Security';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import LanguageIcon from '@mui/icons-material/Language';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -86,10 +84,6 @@ const solutions: SolutionItem[] = [
 ];
 
 const Solutions = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  
   const [activeCard, setActiveCard] = useState<number | null>(null);
   const [animatedCards, setAnimatedCards] = useState<Array<number>>([]);
   
