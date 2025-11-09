@@ -1,14 +1,14 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  TextField, 
-  Grid, 
-  Box, 
-  Typography, 
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Grid,
+  Box,
+  Typography,
   IconButton,
   MenuItem,
   FormControl,
@@ -18,7 +18,6 @@ import {
   useMediaQuery,
   useTheme,
   Divider,
-  Paper,
   Avatar
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
