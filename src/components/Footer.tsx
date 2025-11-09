@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Container, Typography, Link, Stack } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -38,6 +39,35 @@ const Footer = () => {
             <Typography variant="body2" sx={{ color: '#888' }}>
               © {new Date().getFullYear()} Biznavigate Solutions LLP. All rights reserved.
             </Typography>
+          </Box>
+          <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
+            <Typography
+              variant="subtitle2"
+              component="h6"
+              sx={{
+                color: '#222',
+                fontWeight: 600,
+                mb: 2,
+              }}
+            >
+              Legal
+            </Typography>
+            <Stack spacing={1}>
+              <Link
+                component={RouterLink}
+                to="/privacy-policy"
+                underline="hover"
+                sx={{
+                  color: '#666',
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    color: '#00b5a8',
+                  },
+                }}
+              >
+                Privacy Policy
+              </Link>
+            </Stack>
           </Box>
           <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
             <Typography
