@@ -60,12 +60,34 @@ const Footer = () => {
                 sx={{
                   color: '#666',
                   fontSize: '0.875rem',
-                  '&:hover': {
-                    color: '#00b5a8',
-                  },
+                  '&:hover': { color: '#333' }
                 }}
               >
                 Privacy Policy
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/terms"
+                underline="hover"
+                sx={{
+                  color: '#666',
+                  fontSize: '0.875rem',
+                  '&:hover': { color: '#333' }
+                }}
+              >
+                Terms of Service
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/data-deletion"
+                underline="hover"
+                sx={{
+                  color: '#666',
+                  fontSize: '0.875rem',
+                  '&:hover': { color: '#333' }
+                }}
+              >
+                Data Deletion
               </Link>
             </Stack>
           </Box>
@@ -82,17 +104,15 @@ const Footer = () => {
               Support
             </Typography>
             <Stack spacing={1}>
-              {['Product', 'Features', 'Pricing', 'Contact'].map((item) => (
+              {['About', 'Contact', 'Support'].map((item) => (
                 <Link
-                  key={item}
                   href="#"
+                  key={item}
                   underline="hover"
                   sx={{
                     color: '#666',
                     fontSize: '0.875rem',
-                    '&:hover': {
-                      color: '#00b5a8',
-                    },
+                    '&:hover': { color: '#333' }
                   }}
                 >
                   {item}
@@ -106,4 +126,4 @@ const Footer = () => {
   );
 };
 
-export default Footer; 
+export default Footer;
