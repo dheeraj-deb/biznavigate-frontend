@@ -2,7 +2,7 @@ import { Box, Container, Typography } from '@mui/material';
 
 const PrivacyPolicy = () => {
   return (
-    <Box sx={{ bgcolor: '#ffffff', minHeight: '100vh', color: '#222', py: 8 }}>
+    <Box sx={{ bgcolor: '#ffffff', minHeight: '100vh', color: '#222', py: 20 }}>
       <Container maxWidth="lg">
         <Typography
           variant="h2"
@@ -24,7 +24,7 @@ const PrivacyPolicy = () => {
             fontSize: '0.875rem'
           }}
         >
-          Last updated: {new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+          Last updated: 10 November 2025
         </Typography>
 
         {/* 1. Introduction */}
