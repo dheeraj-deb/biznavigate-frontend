@@ -37,7 +37,7 @@ const Footer = () => {
               Transforming B2B sales automation with WhatsApp-powered AI technology.
             </Typography>
             <Typography variant="body2" sx={{ color: '#888' }}>
-              © {new Date().getFullYear()} Biznavigate Solutions LLP. All rights reserved.
+              © {new Date().getFullYear()} BIZNAVIGATE TECHNOLOGIES PRIVATE LIMITED. All rights reserved.
             </Typography>
           </Box>
           <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
