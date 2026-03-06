@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Box, Container, Typography, Link } from '@mui/material';
 
 const TermsOfService = () => {
   return (
