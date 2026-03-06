@@ -40,7 +40,7 @@ const FinalCTASection = () => {
                         variant="overline"
                         sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em', mb: 4, display: 'block' }}
                     >
-                        // READY TO SCALE?
+                        {"// READY TO SCALE?"}
                     </Typography>
 
                     <Typography

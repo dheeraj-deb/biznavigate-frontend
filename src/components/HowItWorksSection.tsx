@@ -45,7 +45,7 @@ const HowItWorksSection = () => {
                 <FadeUp delay={0.1}>
                     <Box sx={{ textAlign: 'center', mb: { xs: 12, md: 16 } }}>
                         <Typography variant="overline" sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em' }}>
-                            // THE PROCESS
+                            {"// THE PROCESS"}
                         </Typography>
                         <Typography variant="h2" sx={{ my: 3, fontSize: { xs: '3rem', md: '5rem' }, fontWeight: 900, textTransform: 'uppercase' }}>
                             HOW IT <Box component="span" sx={{ fontWeight: 300, fontStyle: 'italic', letterSpacing: '-0.02em', color: 'rgba(10,10,10,0.6)' }}>WORKS</Box>

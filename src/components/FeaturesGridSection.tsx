@@ -441,7 +441,7 @@ const FeaturesGridSection = () => {
                         variant="overline"
                         sx={{ color: '#000000', fontWeight: 900, letterSpacing: '0.2em', display: 'block', mb: 2 }}
                     >
-                        // CORE INFRASTRUCTURE
+                        {"// CORE INFRASTRUCTURE"}
                     </Typography>
                     <Typography
                         variant="h2"

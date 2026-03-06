@@ -48,7 +48,7 @@ const MetricsSection = () => {
                             variant="overline"
                             sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em', mb: 2, display: 'block' }}
                         >
-                            // PROVEN IMPACT
+                            {"// PROVEN IMPACT"}
                         </Typography>
                         <Typography
                             variant="h2"

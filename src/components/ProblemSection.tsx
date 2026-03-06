@@ -3,7 +3,6 @@ import { Box, Container, Typography, Grid, Paper } from '@mui/material';
 import NotificationsOffOutlinedIcon from '@mui/icons-material/NotificationsOffOutlined';
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
 import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
-import PersonRemoveOutlinedIcon from '@mui/icons-material/PersonRemoveOutlined';
 import FadeUp from './FadeUp';
 
 const problems = [
@@ -51,7 +50,7 @@ const ProblemSection = () => {
                         <FadeUp delay={0.2}>
                             <Box sx={{ mb: 6 }}>
                                 <Typography variant="overline" sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em' }}>
-                                    // THE PROBLEM
+                                    {"// THE PROBLEM"}
                                 </Typography>
                                 <Typography variant="h2" sx={{ my: 3, fontWeight: 900, fontSize: { xs: '2.5rem', md: '4rem' }, textTransform: 'uppercase', lineHeight: 1 }}>
                                     The manual way <br />

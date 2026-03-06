@@ -11,7 +11,7 @@ import {
   MenuItem,
   Slide
 } from '@mui/material';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import ContactFormDialog from './ContactFormDialog';
 
@@ -23,8 +23,8 @@ const pages = [
 ];
 
 const Header = () => {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  // removed location
+
 
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
   const [visible, setVisible] = useState(true);

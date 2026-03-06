@@ -26,7 +26,7 @@ const DifferentiationSection = () => {
                 <FadeUp delay={0.1}>
                     <Box sx={{ textAlign: 'center', mb: { xs: 10, md: 16 }, maxWidth: '800px', mx: 'auto' }}>
                         <Typography variant="overline" sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em' }}>
-                            // THE DIFFERENCE
+                            {"// THE DIFFERENCE"}
                         </Typography>
                         <Typography variant="h2" sx={{ my: 3, fontSize: { xs: '2.5rem', md: '4rem' }, fontWeight: 900, textTransform: 'uppercase' }}>
                             NOT JUST A CHATBOT. <br />

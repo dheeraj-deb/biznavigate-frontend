@@ -68,7 +68,7 @@ const UseCaseSection = () => {
                 <FadeUp delay={0.1}>
                     <Box sx={{ textAlign: 'center', mb: { xs: 10, md: 16 } }}>
                         <Typography variant="overline" sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em' }}>
-                            // USE CASES
+                            {"// USE CASES"}
                         </Typography>
                         <Typography variant="h2" sx={{ my: 3, fontWeight: 900, fontSize: { xs: '3rem', md: '5rem' }, textTransform: 'uppercase' }}>
                             Built for your <br />

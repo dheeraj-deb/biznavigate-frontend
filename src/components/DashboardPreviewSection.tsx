@@ -166,7 +166,7 @@ const DashboardPreviewSection = () => {
                         variant="overline"
                         sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em', mb: 2, display: 'block' }}
                     >
-                        // COMMAND CENTER
+                        {"// COMMAND CENTER"}
                     </Typography>
                     <Typography
                         variant="h2"

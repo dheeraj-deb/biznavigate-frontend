@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ContactFormDialog from './ContactFormDialog';
 
 const Hero = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
   const { scrollYProgress } = useScroll();
@@ -94,7 +92,7 @@ const Hero = () => {
                   fontWeight: 600
                 }}
               >
-                // AI AUTOMATION AGENCY
+                {"// AI AUTOMATION AGENCY"}
               </Typography>
             </motion.div>
 

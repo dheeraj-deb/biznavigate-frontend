@@ -3,7 +3,6 @@ import { Box, Container, Typography, Grid, Paper } from '@mui/material';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
-import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 import PaymentOutlinedIcon from '@mui/icons-material/PaymentOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined';
@@ -33,7 +32,7 @@ const SolutionSection = () => {
                 <FadeUp delay={0.1}>
                     <Box sx={{ textAlign: 'center', mb: { xs: 12, md: 16 }, maxWidth: '800px', mx: 'auto' }}>
                         <Typography variant="overline" sx={{ color: '#2563EB', fontWeight: 900, letterSpacing: '0.2em' }}>
-                            // THE SOLUTION
+                            {"// THE SOLUTION"}
                         </Typography>
                         <Typography variant="h2" sx={{ my: 3, fontWeight: 900, fontSize: { xs: '3rem', md: '5rem' }, lineHeight: 1 }}>
                             MEET YOUR <br />
