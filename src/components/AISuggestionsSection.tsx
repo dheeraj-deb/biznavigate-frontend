@@ -48,7 +48,7 @@ const suggestions = [
 ];
 
 const AISuggestionsSection = () => {
-    const [activeTab, setActiveTab] = useState(0);""
+    const [activeTab, setActiveTab] = useState(0);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
