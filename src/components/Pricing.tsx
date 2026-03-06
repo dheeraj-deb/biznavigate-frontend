@@ -6,7 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 const pricingTiers = [
   {
     title: 'Starter',
-    price: '$499',
+    price: '₹4,999',
     period: '/month',
     description: 'Perfect for small wholesalers looking to automate order processing',
     features: [
@@ -21,7 +21,7 @@ const pricingTiers = [
   },
   {
     title: 'Professional',
-    price: '$999',
+    price: '₹9,999',
     period: '/month',
     description: 'Ideal for growing distributors with moderate order volume',
     features: [
@@ -79,7 +79,7 @@ const Pricing = () => {
           zIndex: 1,
         }}
       />
-      
+
       <Box
         sx={{
           position: 'absolute',
@@ -121,7 +121,7 @@ const Pricing = () => {
           >
             PRICING
           </Typography>
-          
+
           <Typography
             variant="h2"
             component="h2"
@@ -134,7 +134,7 @@ const Pricing = () => {
           >
             Simple, Transparent <Box component="span" sx={{ color: '#00b5a8' }}>Pricing</Box>
           </Typography>
-          
+
           <Typography
             variant="body1"
             sx={{
@@ -191,10 +191,10 @@ const Pricing = () => {
                     />
                   </Box>
                 )}
-                
+
                 <CardHeader
                   title={tier.title}
-                  titleTypographyProps={{ 
+                  titleTypographyProps={{
                     align: 'center',
                     fontWeight: 700,
                     fontSize: '1.75rem',
@@ -205,7 +205,7 @@ const Pricing = () => {
                     pb: 1,
                   }}
                 />
-                
+
                 <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
                     <Typography component="h3" variant="h3" fontWeight={800} color="#222">
@@ -218,26 +218,26 @@ const Pricing = () => {
                       {tier.description}
                     </Typography>
                   </Box>
-                  
+
                   <Divider sx={{ my: 2 }} />
-                  
+
                   <List sx={{ mb: 3, flexGrow: 1 }}>
                     {tier.features.map((feature, featureIndex) => (
                       <ListItem key={featureIndex} sx={{ px: 0, py: 1 }}>
                         <ListItemIcon sx={{ minWidth: '36px' }}>
                           <CheckIcon sx={{ color: '#00b5a8' }} />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary={feature} 
-                          primaryTypographyProps={{ 
+                        <ListItemText
+                          primary={feature}
+                          primaryTypographyProps={{
                             fontSize: '0.95rem',
                             color: '#444'
-                          }} 
+                          }}
                         />
                       </ListItem>
                     ))}
                   </List>
-                  
+
                   <Button
                     variant={tier.highlighted ? 'contained' : 'outlined'}
                     size="large"
@@ -265,9 +265,9 @@ const Pricing = () => {
             </Grid>
           ))}
         </Grid>
-        
+
         {/* Enterprise Section */}
-        <Box 
+        <Box
           sx={{
             mt: 10,
             p: 5,
@@ -282,7 +282,7 @@ const Pricing = () => {
             gap: 4,
           }}
         >
-          <Box sx={{ maxWidth: { md: '70%' }}}>
+          <Box sx={{ maxWidth: { md: '70%' } }}>
             <Typography variant="h4" fontWeight={700} mb={2} color="#222">
               Need a custom solution?
             </Typography>

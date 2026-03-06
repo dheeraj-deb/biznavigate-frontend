@@ -1,126 +1,146 @@
 import React from 'react';
 import { Box, Container, Typography, Link, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import FadeUp from './FadeUp';
 
 const Footer = () => {
   return (
     <Box
       component="footer"
       sx={{
-        py: 6,
-        background: '#fff',
-        borderTop: '1px solid #eaeaea',
+        py: 8,
+        background: '#FFFFFF',
+        color: '#0A0A0A',
+        borderTop: '1px solid rgba(0,0,0,0.05)',
       }}
     >
       <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2, justifyContent: 'space-between' }}>
-          <Box sx={{ width: { xs: '100%', md: '33.33%' }, p: 2 }}>
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                fontWeight: 700,
-                mb: 2,
-                color: '#222',
-              }}
-            >
-              Biznavigate
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#666',
-                mb: 2,
-                maxWidth: 280,
-              }}
-            >
-              Transforming B2B sales automation with WhatsApp-powered AI technology.
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#888' }}>
-              © {new Date().getFullYear()} BIZNAVIGATE TECHNOLOGIES PRIVATE LIMITED. All rights reserved.
-            </Typography>
-          </Box>
-          <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
-            <Typography
-              variant="subtitle2"
-              component="h6"
-              sx={{
-                color: '#222',
-                fontWeight: 600,
-                mb: 2,
-              }}
-            >
-              Legal
-            </Typography>
-            <Stack spacing={1}>
-              <Link
-                component={RouterLink}
-                to="/privacy-policy"
-                underline="hover"
+        <FadeUp delay={0.1}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2, justifyContent: 'space-between' }}>
+            <Box sx={{ width: { xs: '100%', md: '33.33%' }, p: 2 }}>
+              <Typography
+                variant="h6"
+                component="div"
                 sx={{
-                  color: '#666',
-                  fontSize: '0.875rem',
-                  '&:hover': { color: '#333' }
+                  fontWeight: 900,
+                  mb: 3,
+                  color: '#0A0A0A',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase'
                 }}
               >
-                Privacy Policy
-              </Link>
-              <Link
-                component={RouterLink}
-                to="/terms"
-                underline="hover"
+                BizNavigo
+              </Typography>
+              <Typography
+                variant="body2"
                 sx={{
-                  color: '#666',
-                  fontSize: '0.875rem',
-                  '&:hover': { color: '#333' }
+                  color: 'rgba(10,10,10,0.65)',
+                  mb: 4,
+                  maxWidth: 280,
+                  lineHeight: 1.6
                 }}
               >
-                Terms of Service
-              </Link>
-              <Link
-                component={RouterLink}
-                to="/data-deletion"
-                underline="hover"
+                Transforming B2B sales automation with WhatsApp-powered AI technology.
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(10,10,10,0.45)', fontSize: '0.8rem' }}>
+                © {new Date().getFullYear()} BizNavigo TECHNOLOGIES PRIVATE LIMITED. <br />
+                All rights reserved.
+              </Typography>
+            </Box>
+            <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                component="h6"
                 sx={{
-                  color: '#666',
-                  fontSize: '0.875rem',
-                  '&:hover': { color: '#333' }
+                  color: '#0A0A0A',
+                  fontWeight: 700,
+                  mb: 3,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
                 }}
               >
-                Data Deletion
-              </Link>
-            </Stack>
-          </Box>
-          <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
-            <Typography
-              variant="subtitle2"
-              component="h6"
-              sx={{
-                color: '#222',
-                fontWeight: 600,
-                mb: 2,
-              }}
-            >
-              Support
-            </Typography>
-            <Stack spacing={1}>
-              {['About', 'Contact', 'Support'].map((item) => (
+                Legal
+              </Typography>
+              <Stack spacing={2}>
                 <Link
-                  href="#"
-                  key={item}
-                  underline="hover"
+                  component={RouterLink}
+                  to="/privacy-policy"
+                  underline="none"
                   sx={{
-                    color: '#666',
-                    fontSize: '0.875rem',
-                    '&:hover': { color: '#333' }
+                    color: 'rgba(10,10,10,0.65)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'color 0.3s',
+                    '&:hover': { color: '#2563EB' }
                   }}
                 >
-                  {item}
+                  Privacy Policy
                 </Link>
-              ))}
-            </Stack>
+                <Link
+                  component={RouterLink}
+                  to="/terms"
+                  underline="none"
+                  sx={{
+                    color: 'rgba(10,10,10,0.65)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'color 0.3s',
+                    '&:hover': { color: '#2563EB' }
+                  }}
+                >
+                  Terms of Service
+                </Link>
+                <Link
+                  component={RouterLink}
+                  to="/data-deletion"
+                  underline="none"
+                  sx={{
+                    color: 'rgba(10,10,10,0.65)',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'color 0.3s',
+                    '&:hover': { color: '#2563EB' }
+                  }}
+                >
+                  Data Deletion
+                </Link>
+              </Stack>
+            </Box>
+            <Box sx={{ width: { xs: '50%', sm: '25%', md: '16.67%' }, p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                component="h6"
+                sx={{
+                  color: '#0A0A0A',
+                  fontWeight: 700,
+                  mb: 3,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
+                }}
+              >
+                Support
+              </Typography>
+              <Stack spacing={2}>
+                {['About', 'Contact', 'Support'].map((item) => (
+                  <Link
+                    href="#"
+                    key={item}
+                    underline="none"
+                    sx={{
+                      color: 'rgba(242,242,242,0.6)',
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
+                      transition: 'color 0.3s',
+                      '&:hover': { color: '#2563EB' }
+                    }}
+                  >
+                    {item}
+                  </Link>
+                ))}
+              </Stack>
+            </Box>
           </Box>
-        </Box>
+        </FadeUp>
       </Container>
     </Box>
   );

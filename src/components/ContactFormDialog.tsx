@@ -242,17 +242,17 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
         borderColor: 'rgba(0, 0, 0, 0.2)',
       },
       '&:hover fieldset': {
-        borderColor: alpha('#00b5a8', 0.5),
+        borderColor: alpha('#1D4ED8', 0.5),
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#00b5a8',
+        borderColor: '#1D4ED8',
       },
     },
     '& .MuiInputLabel-root': {
       color: 'rgba(0, 0, 0, 0.7)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#00b5a8',
+      color: '#1D4ED8',
     },
     '& .MuiInputBase-input': {
       color: '#333',
@@ -268,17 +268,17 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
         borderColor: 'rgba(0, 0, 0, 0.2)',
       },
       '&:hover fieldset': {
-        borderColor: alpha('#00b5a8', 0.5),
+        borderColor: alpha('#1D4ED8', 0.5),
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#00b5a8',
+        borderColor: '#1D4ED8',
       },
     },
     '& .MuiInputLabel-root': {
       color: 'rgba(0, 0, 0, 0.7)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#00b5a8',
+      color: '#1D4ED8',
     },
     '& .MuiSelect-select': {
       color: '#333',
@@ -293,10 +293,10 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
         borderColor: 'rgba(0, 0, 0, 0.1)',
       },
       '&:hover fieldset': {
-        borderColor: alpha('#00b5a8', 0.5),
+        borderColor: alpha('#1D4ED8', 0.5),
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#00b5a8',
+        borderColor: '#1D4ED8',
       },
     },
   }), [textFieldStyleMemo]);
@@ -390,7 +390,7 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
             sx={textFieldStyleMemo}
           />
         </Grid>
-        <Grid size={12}>
+        <Grid size={{ xs: 12 }}>
           <FormSelectField
             required
             name="industry"
@@ -432,7 +432,7 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
           </>
         )}
         
-        <Grid size={12}>
+        <Grid size={{ xs: 12 }}>
           <FormTextField
             name="message"
             label="Message"
@@ -519,7 +519,7 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
               width: 60, 
               height: 60,
               backdropFilter: 'blur(8px)',
-              color: formType === 'contact' ? '#00b5a8' : '#6C5CE7',
+              color: formType === 'contact' ? '#1D4ED8' : '#6C5CE7',
             }}
           >
             {formType === 'contact' ? <EmailIcon sx={{ fontSize: 30 }} /> : <VideocamIcon sx={{ fontSize: 30 }} />}
@@ -601,13 +601,13 @@ const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) 
               py: 1.5,
               fontSize: { xs: '0.9rem', sm: '1rem' },
               fontWeight: 600,
-              background: 'linear-gradient(90deg, #00b5a8, #00a99d)',
+              background: 'linear-gradient(90deg, #1D4ED8, #1D4ED8)',
               color: 'white',
               borderRadius: '8px',
               textTransform: 'none',
               boxShadow: '0 10px 20px rgba(0, 181, 168, 0.3)',
               '&:hover': {
-                background: 'linear-gradient(90deg, #00c2b3, #00b5a8)',
+                background: 'linear-gradient(90deg, #1D4ED8, #1D4ED8)',
                 transform: 'translateY(-2px)',
                 boxShadow: '0 15px 30px rgba(0, 181, 168, 0.4)',
               },

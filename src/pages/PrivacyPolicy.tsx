@@ -13,7 +13,7 @@ const PrivacyPolicy = () => {
             fontSize: { xs: '2rem', md: '2.5rem' }
           }}
         >
-          Privacy Policy for BizNavigate
+          Privacy Policy for BizNavigo
         </Typography>
 
         <Typography
@@ -44,13 +44,13 @@ const PrivacyPolicy = () => {
             1. Introduction
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, color: '#666', lineHeight: 1.8 }}>
-            Welcome to BizNavigate ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our business automation and customer engagement platform.
+            Welcome to BizNavigo ("we," "our," or "us"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our business automation and customer engagement platform.
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, color: '#666', lineHeight: 1.8 }}>
-            BizNavigate is operated in India and complies with the Digital Personal Data Protection Act, 2023 (DPDPA) and other applicable Indian laws.
+            BizNavigo is operated in India and complies with the Digital Personal Data Protection Act, 2023 (DPDPA) and other applicable Indian laws.
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, color: '#666', lineHeight: 1.8 }}>
-            By using BizNavigate, you provide your consent to the collection and use of information in accordance with this policy.
+            By using BizNavigo, you provide your consent to the collection and use of information in accordance with this policy.
           </Typography>
         </Box>
 
@@ -60,12 +60,12 @@ const PrivacyPolicy = () => {
             2. About Us
           </Typography>
           <Box component="ul" sx={{ color: '#666', pl: 0, mb: 2, listStyle: 'none' }}>
-            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Company Name:</strong> BIZNAVIGATE TECHNOLOGIES PRIVATE LIMITED</Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Company Name:</strong> BizNavigo TECHNOLOGIES PRIVATE LIMITED</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Registered Address:</strong> C/O ERAMU P V, PALLIKKAL, VALIYAPUTHOOR HOUSE, TIRURANGADI, PUTHUR-PALLIKKAL, MALAPPURAM - 673636, KERALA, INDIA</Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link></Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Support Email:</strong> <Link href="mailto:support@biznavigate.in" color="primary">support@biznavigate.in</Link></Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link></Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Support Email:</strong> <Link href="mailto:support@BizNavigo.in" color="primary">support@BizNavigo.in</Link></Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Phone:</strong> +91-8075624909</Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Website:</strong> <Link href="https://www.biznavigate.in" color="primary">www.biznavigate.in</Link></Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Website:</strong> <Link href="https://www.BizNavigo.in" color="primary">www.BizNavigo.in</Link></Typography></li>
           </Box>
         </Box>
 
@@ -93,7 +93,7 @@ const PrivacyPolicy = () => {
           </Box>
 
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222', fontSize: '1.1rem' }}>3.3 Information from Third-Party Services</Typography>
-          <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>When you connect third-party services to BizNavigate, we collect:</Typography>
+          <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>When you connect third-party services to BizNavigo, we collect:</Typography>
 
           <Typography variant="subtitle1" sx={{ mb: 1, mt: 2, fontWeight: 600, color: '#444' }}>Instagram Business Account Data:</Typography>
           <Box component="ul" sx={{ color: '#666', pl: 4, mb: 2 }}>
@@ -135,7 +135,7 @@ const PrivacyPolicy = () => {
 
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222', fontSize: '1.1rem' }}>4.1 Service Delivery (Performance of Contract)</Typography>
           <Box component="ul" sx={{ color: '#666', pl: 4, mb: 3 }}>
-            <li><Typography variant="body1" sx={{ mb: 0.5 }}>Providing and maintaining the BizNavigate platform</Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 0.5 }}>Providing and maintaining the BizNavigo platform</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Processing your account registration and managing your subscription</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Facilitating communication between you and your customers</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Managing Instagram, WhatsApp, and Facebook integrations</Typography></li>
@@ -296,7 +296,7 @@ const PrivacyPolicy = () => {
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Personal data is deleted or anonymized within 30 days</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Financial records are retained for 7 years as required by Indian law</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Backup copies are permanently deleted within 90 days</Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 0.5 }}>You can request data deletion by emailing <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link></Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 0.5 }}>You can request data deletion by emailing <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link></Typography></li>
           </Box>
         </Box>
 
@@ -353,7 +353,7 @@ const PrivacyPolicy = () => {
           <Box sx={{ mb: 3, bgcolor: '#f5f5f5', p: 3, borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>To exercise your rights:</Typography>
             <Box component="ul" sx={{ color: '#666', pl: 4, mb: 0 }}>
-              <li><Typography variant="body1" sx={{ mb: 0.5 }}>Email: <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link></Typography></li>
+              <li><Typography variant="body1" sx={{ mb: 0.5 }}>Email: <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link></Typography></li>
               <li><Typography variant="body1" sx={{ mb: 0.5 }}>Through your account settings</Typography></li>
               <li><Typography variant="body1" sx={{ mb: 0.5 }}>Contact our Grievance Officer (details below)</Typography></li>
             </Box>
@@ -458,10 +458,10 @@ const PrivacyPolicy = () => {
             11. Children's Privacy
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, color: '#666', lineHeight: 1.8 }}>
-            BizNavigate is a business platform not intended for individuals under 18 years of age. We do not knowingly collect personal data from children. If we discover that we have inadvertently collected data from a child, we will delete it immediately.
+            BizNavigo is a business platform not intended for individuals under 18 years of age. We do not knowingly collect personal data from children. If we discover that we have inadvertently collected data from a child, we will delete it immediately.
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, color: '#666', lineHeight: 1.8 }}>
-            Parents/guardians can contact us at <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link> if they believe their child's data has been collected.
+            Parents/guardians can contact us at <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link> if they believe their child's data has been collected.
           </Typography>
         </Box>
 
@@ -497,7 +497,7 @@ const PrivacyPolicy = () => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#222' }}>Grievance Officer</Typography>
             <Box component="ul" sx={{ color: '#666', pl: 0, mb: 0, listStyle: 'none' }}>
               <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Designation:</strong> Data Protection & Grievance Officer</Typography></li>
-              <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:grievance@biznavigate.in" color="primary">grievance@biznavigate.in</Link></Typography></li>
+              <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:grievance@BizNavigo.in" color="primary">grievance@BizNavigo.in</Link></Typography></li>
               <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Phone:</strong> +91-8075624909</Typography></li>
             </Box>
           </Box>
@@ -510,7 +510,7 @@ const PrivacyPolicy = () => {
 
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222', fontSize: '1.1rem' }}>How to File a Complaint:</Typography>
           <Box component="ol" sx={{ color: '#666', pl: 4, mb: 2 }}>
-            <li><Typography variant="body1" sx={{ mb: 0.5 }}>Email <Link href="mailto:grievance@biznavigate.in" color="primary">grievance@biznavigate.in</Link> with details</Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 0.5 }}>Email <Link href="mailto:grievance@BizNavigo.in" color="primary">grievance@BizNavigo.in</Link> with details</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Include your account email and description of issue</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 0.5 }}>Provide relevant screenshots or documentation</Typography></li>
           </Box>
@@ -528,12 +528,12 @@ const PrivacyPolicy = () => {
           <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2 }}>
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>Privacy Inquiries:</Typography>
             <Typography variant="body1" sx={{ mb: 2, color: '#666' }}>
-              Email: <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link>
+              Email: <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link>
             </Typography>
 
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>Customer Support:</Typography>
             <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>
-              Email: <Link href="mailto:support@biznavigate.in" color="primary">support@biznavigate.in</Link>
+              Email: <Link href="mailto:support@BizNavigo.in" color="primary">support@BizNavigo.in</Link>
             </Typography>
             <Typography variant="body1" sx={{ mb: 2, color: '#666' }}>
               Phone: +91-8075624909
@@ -541,7 +541,7 @@ const PrivacyPolicy = () => {
 
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>Registered Office:</Typography>
             <Typography variant="body1" sx={{ mb: 0, color: '#666' }}>
-              BIZNAVIGATE TECHNOLOGIES PRIVATE LIMITED<br />
+              BizNavigo TECHNOLOGIES PRIVATE LIMITED<br />
               C/O ERAMU P V, PALLIKKAL<br />
               VALIYAPUTHOOR HOUSE<br />
               TIRURANGADI, PUTHUR-PALLIKKAL<br />
@@ -602,7 +602,7 @@ const PrivacyPolicy = () => {
                 </TableRow>
                 <TableRow>
                   <TableCell>Contact</TableCell>
-                  <TableCell>privacy@biznavigate.in, grievance@biznavigate.in</TableCell>
+                  <TableCell>privacy@BizNavigo.in, grievance@BizNavigo.in</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -616,7 +616,7 @@ const PrivacyPolicy = () => {
               You have full control over your data. Access, correct, or delete it anytime.
             </Typography>
             <Typography variant="body1" sx={{ color: '#666' }}>
-              <strong>Questions?</strong> Contact <Link href="mailto:privacy@biznavigate.in" color="primary">privacy@biznavigate.in</Link> or <Link href="mailto:grievance@biznavigate.in" color="primary">grievance@biznavigate.in</Link>
+              <strong>Questions?</strong> Contact <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link> or <Link href="mailto:grievance@BizNavigo.in" color="primary">grievance@BizNavigo.in</Link>
             </Typography>
           </Box>
         </Box>

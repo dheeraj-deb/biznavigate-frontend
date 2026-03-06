@@ -1,79 +1,86 @@
 import { createTheme } from '@mui/material/styles';
 
-// Create a theme instance
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: '#5469d4', // Blue-purple color similar to the image
-      light: '#7b8be8',
-      dark: '#3a4ba3',
-      contrastText: '#ffffff',
-    },
-    secondary: {
-      main: '#00e5a0', // Bright teal accent color from the image
-      light: '#4effc0',
-      dark: '#00b380',
-      contrastText: '#000000',
+      main: '#4F46E5', // Indigo 600 - Top SaaS primary color
+      dark: '#4338CA', // Indigo 700
+      light: '#818CF8', // Indigo 400
+      contrastText: '#FFFFFF',
     },
     background: {
-      default: '#0a0e29', // Very dark blue background
-      paper: '#151c4a',   // Slightly lighter dark blue
+      default: '#F8FAFC', // Slate 50 - Premium polished lighting
+      paper: '#FFFFFF',   // Crisp white for cards/surfaces
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#b7bdd7',
+      primary: '#0F172A', // Slate 900 - High contrast but softer than black
+      secondary: '#475569', // Slate 600 - Elegant secondary text
     },
+    divider: '#E2E8F0', // Slate 200
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-      fontSize: '3.5rem',
-    },
-    h2: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '2rem',
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-    },
-    button: {
-      fontWeight: 600,
-      textTransform: 'none',
-    },
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    h1: { fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.1 },
+    h2: { fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.2 },
+    h3: { fontWeight: 700, letterSpacing: '-0.015em', lineHeight: 1.25 },
+    h4: { fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.3 },
+    h5: { fontWeight: 600, lineHeight: 1.4 },
+    h6: { fontWeight: 600, lineHeight: 1.4 },
+    button: { fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em' },
+    body1: { fontSize: '1rem', lineHeight: 1.5, color: '#334155' } // Slate 700
   },
-  shape: {
-    borderRadius: 12,
-  },
+  shape: { borderRadius: 8 }, // Modern rounded corners
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: 8,
           padding: '10px 24px',
-          fontSize: '1rem',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+          transition: 'all 0.2s ease-in-out',
         },
         containedPrimary: {
-          background: 'linear-gradient(90deg, #5469d4 0%, #7b8be8 100%)',
+          background: '#4F46E5',
+          color: '#FFFFFF',
+          border: '1px solid transparent',
           '&:hover': {
-            background: 'linear-gradient(90deg, #3a4ba3 0%, #5469d4 100%)',
+            background: '#4338CA',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           },
         },
-        containedSecondary: {
-          background: 'linear-gradient(90deg, #00e5a0 0%, #4effc0 100%)',
+        outlinedPrimary: {
+          borderColor: '#E2E8F0',
+          color: '#0F172A',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
           '&:hover': {
-            background: 'linear-gradient(90deg, #00b380 0%, #00e5a0 100%)',
+            background: '#F8FAFC',
+            borderColor: '#CBD5E1',
           },
         },
       },
     },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          borderRadius: 12,
+          border: '1px solid #F1F5F9', // Subtle border mimicking glass/layered vibe
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF',
+          color: '#0F172A',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          borderBottom: '1px solid #E2E8F0',
+        }
+      }
+    }
   },
 });
 
-export default theme; 
+export default theme;

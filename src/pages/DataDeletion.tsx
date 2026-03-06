@@ -483,7 +483,7 @@ const DataDeletion = () => {
               fontSize: { xs: '0.95rem', md: '1rem' }
             }}
           >
-            Email: <a href="mailto:privacy@biznavigate.in" style={{ color: '#5469d4', textDecoration: 'none' }}>privacy@biznavigate.in</a>
+            Email: <a href="mailto:privacy@BizNavigo.in" style={{ color: '#5469d4', textDecoration: 'none' }}>privacy@BizNavigo.in</a>
           </Typography>
         </Box>
       </Container>

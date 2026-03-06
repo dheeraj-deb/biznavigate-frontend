@@ -19,9 +19,9 @@ const aiCapabilities = [
     color: '#00B5A8',
     description: 'Automatically extract and process orders from WhatsApp messages and emails with high accuracy.',
     features: [
-      'Intelligent message parsing from WhatsApp',
-      'Email attachment and text extraction',
-      'Product and quantity recognition',
+      'Send bills or quotes directly via WhatsApp',
+      'AI instantly reads and extracts line items',
+      'Real-time inventory checking',
       'Order validation and confirmation'
     ]
   },
@@ -105,7 +105,7 @@ const AIAgents = () => {
     if (tabsRef.current && isMobile) {
       const tabsContainer = tabsRef.current;
       const tabList = Array.from(tabsContainer.querySelectorAll('.MuiTab-root')) as HTMLElement[];
-      
+
       // When the second tab (index 1) is selected, scroll to show tabs 2 and 3 (indexes 1 and 2)
       if (activeTab === 1 && tabList.length > 2) {
         // Calculate scroll position to show tabs 1 and 2 (hide tab 0)
@@ -114,7 +114,7 @@ const AIAgents = () => {
           left: firstTabWidth,
           behavior: 'smooth'
         });
-      } 
+      }
       // For other tabs, center the active tab
       else if (activeTab > 1) {
         const selectedTab = tabList[activeTab];
@@ -122,7 +122,7 @@ const AIAgents = () => {
           const containerWidth = tabsContainer.clientWidth;
           const tabWidth = selectedTab.offsetWidth;
           const scrollPosition = selectedTab.offsetLeft - (containerWidth / 2) + (tabWidth / 2);
-          
+
           tabsContainer.scrollTo({
             left: scrollPosition,
             behavior: 'smooth'
@@ -224,16 +224,16 @@ const AIAgents = () => {
               color: 'rgba(255, 255, 255, 0.8)',
             }}
           >
-            Our AI agents transform how wholesalers and distributors operate by automating
-            order capture from WhatsApp and emails, with support for multiple languages, voice recognition,
-            and integrated shipment tracking - all seamlessly connecting with your existing business systems.
+            Our AI agents transform how wholesalers and distributors operate. Simply send bills or quotes
+            through WhatsApp—our AI instantly reads them, checks your inventory in real-time, and processes
+            the order automatically while seamlessly connecting with your existing business systems.
           </Typography>
         </Box>
 
         {/* Tabbed Interface */}
-        <Box sx={{ 
-          mb: 8, 
-          overflowX: 'auto', 
+        <Box sx={{
+          mb: 8,
+          overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
           '&::-webkit-scrollbar': {
             display: 'none'

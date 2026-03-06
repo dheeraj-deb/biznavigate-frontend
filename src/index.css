@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,14 +8,12 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0a0e29;
-  color: #ffffff;
-  scroll-behavior: smooth;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  scroll-behavior: auto;
   overflow-x: hidden;
 }
 
@@ -28,25 +24,30 @@ a {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080d25;
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #5469d4;
+  background: #4F46E5;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4ba3;
+  background: #4338CA;
 }
 
 /* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #5469d4 #080d25;
+  scrollbar-color: #4F46E5 #F8FAFC;
+}
+
+::selection {
+  background-color: rgba(79, 70, 229, 0.2);
+  color: #0F172A;
 }

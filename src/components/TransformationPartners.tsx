@@ -144,7 +144,7 @@ const TransformationPartners = () => {
                     lineHeight: 1.6,
                   }}
                 >
-                  Connect BizNavigate with your existing ERP, CRM, and payment systems to create a unified, automated business ecosystem without disruption.
+                  Connect BizNavigo with your existing ERP, CRM, and payment systems to create a unified, automated business ecosystem without disruption.
                 </Typography>
               </CardContent>
             </Card>
