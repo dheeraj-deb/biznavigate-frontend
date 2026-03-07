@@ -3,9 +3,15 @@ import { Box, Container, Typography, Grid, Paper } from '@mui/material';
 import NotificationsOffOutlinedIcon from '@mui/icons-material/NotificationsOffOutlined';
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
 import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
+import TrendingDownOutlinedIcon from '@mui/icons-material/TrendingDownOutlined';
 import FadeUp from './FadeUp';
 
 const problems = [
+    {
+        title: 'Static Pricing',
+        icon: <TrendingDownOutlinedIcon fontSize="medium" />,
+        description: 'Leaving money on the table by keeping prices flat when demand changes.',
+    },
     {
         title: 'Missed enquiries',
         icon: <NotificationsOffOutlinedIcon fontSize="medium" />,

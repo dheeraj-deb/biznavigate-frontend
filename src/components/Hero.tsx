@@ -40,7 +40,7 @@ const Hero = () => {
           minHeight: '100vh',
           display: 'flex',
           alignItems: { xs: 'flex-start', md: 'center' },
-          pt: { xs: '25vh', md: 0 },
+          pt: { xs: '12vh', md: 0 },
           pb: { xs: 16, md: 0 },
         }}
       >
