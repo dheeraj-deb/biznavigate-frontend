@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { Box, Container, Typography, Chip } from '@mui/material';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContactFormDialog from './ContactFormDialog';
 
 const Hero = () => {
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
 
-  const { scrollYProgress } = useScroll();
-  const yParallax = useTransform(scrollYProgress, [0, 0.5], [0, 80]);
-  const opacityParallax = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
