@@ -6,6 +6,7 @@ import SolutionSection from '../components/SolutionSection';
 import HowItWorksSection from '../components/HowItWorksSection';
 import FeaturesGridSection from '../components/FeaturesGridSection';
 import UseCaseSection from '../components/UseCaseSection';
+import WebsiteChatbotSection from '../components/WebsiteChatbotSection';
 import DashboardPreviewSection from '../components/DashboardPreviewSection';
 import DifferentiationSection from '../components/DifferentiationSection';
 import MetricsSection from '../components/MetricsSection';
@@ -21,6 +22,7 @@ const Home = () => {
       <HowItWorksSection />
       <FeaturesGridSection />
       <UseCaseSection />
+      <WebsiteChatbotSection />
       <DashboardPreviewSection />
       <DifferentiationSection />
       <AISuggestionsSection />

@@ -1,10 +1,7 @@
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   TextField,
   Grid,
   Box,
@@ -17,13 +14,14 @@ import {
   SelectChangeEvent,
   useMediaQuery,
   useTheme,
-  Divider,
-  Avatar
+  Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import EmailIcon from '@mui/icons-material/Email';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import { alpha } from '@mui/material/styles';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 interface ContactFormDialogProps {
   open: boolean;
@@ -31,616 +29,378 @@ interface ContactFormDialogProps {
   formType: 'contact' | 'demo';
 }
 
-// Memoized form field component to prevent re-renders
-const FormTextField = React.memo(({ 
-  name, 
-  label, 
-  value, 
-  onChange, 
-  required = false, 
-  type = 'text', 
-  multiline = false, 
-  rows = 1,
-  placeholder = '',
-  fullWidth = true,
-  InputLabelProps = {},
-  sx = {}
-}: {
-  name: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  required?: boolean;
-  type?: string;
-  multiline?: boolean;
-  rows?: number;
-  placeholder?: string;
-  fullWidth?: boolean;
-  InputLabelProps?: Record<string, any>;
-  sx?: any;
-}) => {
-  return (
-    <TextField
-      required={required}
-      fullWidth={fullWidth}
-      label={label}
-      name={name}
-      type={type}
-      value={value}
-      onChange={onChange}
-      variant="outlined"
-      multiline={multiline}
-      rows={rows}
-      placeholder={placeholder}
-      InputLabelProps={InputLabelProps}
-      sx={sx}
-    />
-  );
-});
+const fieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '10px',
+    background: '#F8F7FF',
+    fontSize: '0.9rem',
+    '& fieldset': { borderColor: '#E5E7EB' },
+    '&:hover fieldset': { borderColor: '#4E5FFD' },
+    '&.Mui-focused fieldset': { borderColor: '#4E5FFD', borderWidth: '2px' },
+  },
+  '& .MuiInputLabel-root': { color: '#9CA3AF', fontSize: '0.9rem' },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#4E5FFD' },
+  '& .MuiInputBase-input': { color: '#1A1A2E' },
+  '& .MuiSelect-select': { color: '#1A1A2E' },
+};
 
-// Memoized select field component
-const FormSelectField = React.memo(({
-  name,
-  label,
-  value,
-  onChange,
-  options,
-  required = false,
-  sx = {}
+const FormTextField = React.memo(({
+  name, label, value, onChange, required = false, type = 'text',
+  multiline = false, rows = 1, placeholder = '', InputLabelProps = {},
 }: {
-  name: string;
-  label: string;
-  value: string;
+  name: string; label: string; value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean; type?: string; multiline?: boolean; rows?: number;
+  placeholder?: string; InputLabelProps?: Record<string, any>;
+}) => (
+  <TextField
+    required={required} fullWidth label={label} name={name} type={type}
+    value={value} onChange={onChange} variant="outlined"
+    multiline={multiline} rows={rows} placeholder={placeholder}
+    InputLabelProps={InputLabelProps} sx={fieldSx}
+  />
+));
+
+const FormSelectField = React.memo(({
+  name, label, value, onChange, options, required = false,
+}: {
+  name: string; label: string; value: string;
   onChange: (e: SelectChangeEvent) => void;
-  options: string[];
-  required?: boolean;
-  sx?: any;
-}) => {
-  return (
-    <FormControl fullWidth required={required} sx={sx}>
-      <InputLabel id={`${name}-label`}>{label}</InputLabel>
-      <Select
-        labelId={`${name}-label`}
-        name={name}
-        value={value}
-        label={label}
-        onChange={onChange}
-      >
-        {options.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-});
+  options: string[]; required?: boolean;
+}) => (
+  <FormControl fullWidth required={required} sx={fieldSx}>
+    <InputLabel id={`${name}-label`} sx={{ fontSize: '0.9rem' }}>{label}</InputLabel>
+    <Select labelId={`${name}-label`} name={name} value={value} label={label} onChange={onChange}>
+      {options.map(option => (
+        <MenuItem key={option} value={option} sx={{ fontSize: '0.9rem' }}>{option}</MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+));
 
 const ContactFormDialog = ({ open, onClose, formType }: ContactFormDialogProps) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-  
-  // Prevent background scrolling when dialog is open
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDemo = formType === 'demo';
+
   useEffect(() => {
-    const handleBodyScrollLock = () => {
-      if (open) {
-        // Get current scroll position
-        const scrollY = window.scrollY;
-        const scrollX = window.scrollX;
-        
-        // Store the current scroll position as a data attribute
-        document.body.setAttribute('data-scroll-position', `${scrollX},${scrollY}`);
-        
-        // Add styles to body to prevent scrolling
-        document.body.style.overflow = 'hidden';
-        document.body.style.height = '100vh';
-        document.body.style.width = '100%';
-      } else {
-        // Restore scrolling
-        document.body.style.overflow = '';
-        document.body.style.height = '';
-        document.body.style.width = '';
-        
-        // Get stored scroll position
-        const scrollPos = document.body.getAttribute('data-scroll-position');
-        if (scrollPos) {
-          const [scrollX, scrollY] = scrollPos.split(',').map(Number);
-          window.scrollTo(scrollX, scrollY);
-        }
+    if (open) {
+      const scrollY = window.scrollY;
+      document.body.setAttribute('data-scroll-position', `0,${scrollY}`);
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100vh';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.body.style.width = '';
+      const pos = document.body.getAttribute('data-scroll-position');
+      if (pos) {
+        const [x, y] = pos.split(',').map(Number);
+        window.scrollTo(x, y);
       }
-    };
-    
-    handleBodyScrollLock();
-    
-    // Cleanup function
+    }
     return () => {
       document.body.style.overflow = '';
       document.body.style.height = '';
       document.body.style.width = '';
     };
   }, [open]);
-  
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    company: '',
-    phone: '',
-    jobTitle: '',
-    industry: '',
-    message: '',
-    preferredDate: '',
-    preferredTime: '',
+    firstName: '', lastName: '', email: '', company: '',
+    phone: '', jobTitle: '', industry: '', message: '',
+    preferredDate: '', preferredTime: '',
   });
 
-  // Memoize handle input change for better performance
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  // Memoize handle select change for better performance
   const handleSelectChange = useCallback((e: SelectChangeEvent) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    // Here you would add your form submission logic
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     console.log('Form submitted:', formData);
-    // Reset form
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      company: '',
-      phone: '',
-      jobTitle: '',
-      industry: '',
-      message: '',
-      preferredDate: '',
-      preferredTime: '',
+      firstName: '', lastName: '', email: '', company: '', phone: '',
+      jobTitle: '', industry: '', message: '', preferredDate: '', preferredTime: '',
     });
-    // Close dialog
     onClose();
   }, [formData, onClose]);
 
-  // Memoize arrays to prevent rerenders
   const industries = useMemo(() => [
-    'Healthcare',
-    'Finance & Banking',
-    'Manufacturing',
-    'Retail',
-    'Technology',
-    'Education',
-    'Government',
-    'Energy & Utilities',
-    'Transportation',
-    'Other'
+    'Resorts & Hotels', 'Trips & Activities', 'Ecommerce & Retail',
+    'Real Estate & Property', 'Food & Restaurants', 'Healthcare',
+    'Education', 'Finance & Banking', 'Other',
   ], []);
 
   const times = useMemo(() => [
-    '9:00 AM - 11:00 AM',
-    '11:00 AM - 1:00 PM',
-    '1:00 PM - 3:00 PM',
-    '3:00 PM - 5:00 PM'
+    '9:00 AM - 11:00 AM', '11:00 AM - 1:00 PM',
+    '1:00 PM - 3:00 PM', '3:00 PM - 5:00 PM',
   ], []);
 
-  // Memoize styles to prevent recalculation on every render
-  const textFieldStyleMemo = useMemo(() => ({
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '8px',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      '& fieldset': {
-        borderColor: 'rgba(0, 0, 0, 0.2)',
-      },
-      '&:hover fieldset': {
-        borderColor: alpha('#1D4ED8', 0.5),
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#1D4ED8',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(0, 0, 0, 0.7)',
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#1D4ED8',
-    },
-    '& .MuiInputBase-input': {
-      color: '#333',
-    },
-  }), []);
-
-  // Memoize select styles
-  const selectFieldStyleMemo = useMemo(() => ({
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '8px',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      '& fieldset': {
-        borderColor: 'rgba(0, 0, 0, 0.2)',
-      },
-      '&:hover fieldset': {
-        borderColor: alpha('#1D4ED8', 0.5),
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#1D4ED8',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(0, 0, 0, 0.7)',
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#1D4ED8',
-    },
-    '& .MuiSelect-select': {
-      color: '#333',
-    },
-  }), []);
-
-  // Memoize message text field style
-  const messageTextFieldStyle = useMemo(() => ({
-    ...textFieldStyleMemo,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: 'rgba(0, 0, 0, 0.1)',
-      },
-      '&:hover fieldset': {
-        borderColor: alpha('#1D4ED8', 0.5),
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#1D4ED8',
-      },
-    },
-  }), [textFieldStyleMemo]);
-
-  // Memoize dialog content to prevent unnecessary rerenders
-  const renderDialogContent = useMemo(() => (
-    <DialogContent 
-      sx={{ 
-        py: 5, 
-        px: { xs: 3, md: 5 },
-        position: 'relative',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        overflow: 'auto',
-        flexGrow: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Subtle background pattern */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.02,
-          backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
-          pointerEvents: 'none',
-        }}
-      />
-      
-      <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            required
-            name="firstName"
-            label="First Name"
-            value={formData.firstName}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            required
-            name="lastName"
-            label="Last Name"
-            value={formData.lastName}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            required
-            name="email"
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            name="phone"
-            label="Phone Number"
-            value={formData.phone}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            required
-            name="company"
-            label="Company"
-            value={formData.company}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormTextField
-            name="jobTitle"
-            label="Job Title"
-            value={formData.jobTitle}
-            onChange={handleInputChange}
-            sx={textFieldStyleMemo}
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <FormSelectField
-            required
-            name="industry"
-            label="Industry"
-            value={formData.industry}
-            onChange={handleSelectChange}
-            options={industries}
-            sx={selectFieldStyleMemo}
-          />
-        </Grid>
-        
-        {formType === 'demo' && (
-          <>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormTextField
-                required
-                name="preferredDate"
-                label="Preferred Date"
-                type="date"
-                value={formData.preferredDate}
-                onChange={handleInputChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={textFieldStyleMemo}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormSelectField
-                required
-                name="preferredTime"
-                label="Preferred Time"
-                value={formData.preferredTime}
-                onChange={handleSelectChange}
-                options={times}
-                sx={selectFieldStyleMemo}
-              />
-            </Grid>
-          </>
-        )}
-        
-        <Grid size={{ xs: 12 }}>
-          <FormTextField
-            name="message"
-            label="Message"
-            multiline
-            rows={4}
-            value={formData.message}
-            onChange={handleInputChange}
-            placeholder={formType === 'contact' 
-              ? "How can we help you with order automation today?" 
-              : "Tell us about your business needs for the demo"}
-            sx={messageTextFieldStyle}
-          />
-        </Grid>
-      </Grid>
-    </DialogContent>
-  ), [formData, formType, handleInputChange, handleSelectChange, industries, messageTextFieldStyle, selectFieldStyleMemo, textFieldStyleMemo, times]);
+  const trustPoints = isDemo
+    ? ['Personalised walkthrough for your industry', 'No commitment required', 'Setup in under 5 minutes']
+    : ['We reply within a few hours', 'No spam, ever', 'Direct line to our team'];
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       fullScreen={fullScreen}
-      maxWidth="md"
+      maxWidth="lg"
       scroll="paper"
       disableRestoreFocus
       aria-labelledby="contact-dialog-title"
-      aria-describedby="contact-dialog-description"
       PaperProps={{
         sx: {
-          borderRadius: { xs: '12px', md: '16px' },
-          boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
-          width: { xs: '95%', sm: '90%', md: '80%' },
-          maxWidth: '900px',
-          maxHeight: { xs: '90vh', md: '80vh' },
+          borderRadius: { xs: '16px', md: '24px' },
+          boxShadow: '0 32px 80px rgba(78,95,253,0.18)',
+          width: { xs: '95%', sm: '92%', md: '88%' },
+          maxWidth: '960px',
+          maxHeight: { xs: '92vh', md: '85vh' },
           m: { xs: 1, sm: 2, md: 'auto' },
+          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column',
-          backgroundImage: 'linear-gradient(to bottom, #ffffff, #f9faff)',
+          flexDirection: 'row',
+          background: 'transparent',
         }
       }}
     >
-      {/* Header Section with Gradient Background */}
-      <Box sx={{ 
-        position: 'relative',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        color: 'white',
-        px: { xs: 3, md: 5 },
-        py: { xs: 4, md: 5 },
-        flexShrink: 0,
-      }}>
-        {/* Decorative elements */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '10%',
-            left: '5%',
-            width: '30%',
-            height: '40%',
-            background: 'radial-gradient(circle, rgba(0, 181, 168, 0.15) 0%, rgba(0, 181, 168, 0) 70%)',
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            zIndex: 0,
-          }}
-        />
-        
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: '10%',
-            right: '5%',
-            width: '30%',
-            height: '40%',
-            background: 'radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, rgba(108, 92, 231, 0) 70%)',
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            zIndex: 0,
-          }}
-        />
-        
-        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
-          <Avatar 
-            sx={{ 
-              bgcolor: 'rgba(255, 255, 255, 0.1)', 
-              width: 60, 
-              height: 60,
-              backdropFilter: 'blur(8px)',
-              color: formType === 'contact' ? '#1D4ED8' : '#6C5CE7',
-            }}
-          >
-            {formType === 'contact' ? <EmailIcon sx={{ fontSize: 30 }} /> : <VideocamIcon sx={{ fontSize: 30 }} />}
-          </Avatar>
-          
-          <Box>
-            <DialogTitle 
+      {/* ── Left panel ── */}
+      {!isMobile && (
+        <Box sx={{
+          width: '38%',
+          flexShrink: 0,
+          background: 'linear-gradient(160deg, #4E5FFD 0%, #7B3FE4 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          p: 4,
+        }}>
+          {/* Background blobs */}
+          <Box sx={{ position: 'absolute', top: '-20%', right: '-20%', width: '70%', height: '60%', background: 'radial-gradient(ellipse, rgba(255,255,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <Box sx={{ position: 'absolute', bottom: '-15%', left: '-15%', width: '60%', height: '50%', background: 'radial-gradient(ellipse, rgba(255,107,107,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+          {/* Top content */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box sx={{
+              width: 52, height: 52, borderRadius: '14px',
+              background: 'rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              mb: 3,
+            }}>
+              {isDemo
+                ? <VideocamOutlinedIcon sx={{ fontSize: '1.6rem', color: '#fff' }} />
+                : <EmailOutlinedIcon sx={{ fontSize: '1.6rem', color: '#fff' }} />
+              }
+            </Box>
+
+            <Typography
               id="contact-dialog-title"
-              sx={{ 
-                fontSize: { xs: '1.75rem', md: '2.25rem' },
-                fontWeight: 800,
-                p: 0,
-                lineHeight: 1.2,
-                backgroundImage: 'linear-gradient(90deg, #ffffff, #e0e0e0)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
+              sx={{ fontSize: '1.7rem', fontWeight: 700, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.02em', mb: 1.5 }}
             >
-              {formType === 'contact' ? 'Get in Touch' : 'Schedule a Demo'}
-            </DialogTitle>
-            
-            <Typography 
-              id="contact-dialog-description" 
-              variant="body1" 
-              sx={{ 
-                mt: 1, 
-                color: 'rgba(255,255,255,0.8)', 
-                maxWidth: '550px' 
-              }}
-            >
-              {formType === 'contact' 
-                ? 'Have questions about our AI order automation? We\'d love to hear from you.' 
-                : 'See our AI-powered platform in action with a personalized demo tailored to your business.'}
+              {isDemo ? 'Schedule a Demo' : 'Get in Touch'}
             </Typography>
+
+            <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.92rem', lineHeight: 1.65 }}>
+              {isDemo
+                ? 'See how BizNavigo automates your entire customer workflow — live, in real time.'
+                : 'Have questions about our AI platform? Our team would love to help you out.'}
+            </Typography>
+
+            {/* Trust points */}
+            <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {trustPoints.map((point, i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <CheckCircleOutlineIcon sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.7)', flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>{point}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Bottom content */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            {/* Response time badge */}
+            <Box sx={{
+              display: 'flex', alignItems: 'center', gap: 1.5,
+              background: 'rgba(255,255,255,0.12)',
+              borderRadius: '12px', p: 2,
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              mb: 2,
+            }}>
+              <AccessTimeOutlinedIcon sx={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.8)' }} />
+              <Box>
+                <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1 }}>Average response time</Typography>
+                <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', mt: 0.25 }}>Under 3 hours</Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <LockOutlinedIcon sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)' }} />
+              <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
+                Your data is private and never shared.
+              </Typography>
+            </Box>
           </Box>
         </Box>
-        
+      )}
+
+      {/* ── Right panel (form) ── */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff', overflow: 'hidden', position: 'relative' }}>
+        {/* Mobile header */}
+        {isMobile && (
+          <Box sx={{
+            background: 'linear-gradient(135deg, #4E5FFD 0%, #7B3FE4 100%)',
+            px: 3, py: 3, flexShrink: 0,
+          }}>
+            <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+              {isDemo ? 'Schedule a Demo' : 'Get in Touch'}
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.85rem', mt: 0.5 }}>
+              {isDemo ? 'See the platform live.' : 'We reply within a few hours.'}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Close button */}
         <IconButton
           aria-label="close"
           onClick={onClose}
           sx={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            color: 'white',
-            bgcolor: 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(8px)',
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.2)',
-            },
-            zIndex: 2,
+            position: 'absolute', right: 14, top: 14, zIndex: 10,
+            color: isMobile ? '#fff' : '#9CA3AF',
+            background: isMobile ? 'rgba(255,255,255,0.15)' : '#F3F4F6',
+            width: 34, height: 34,
+            '&:hover': { background: isMobile ? 'rgba(255,255,255,0.25)' : '#E5E7EB', color: '#4E5FFD' },
           }}
         >
-          <CloseIcon />
+          <CloseIcon sx={{ fontSize: '1.1rem' }} />
         </IconButton>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
+          {/* Form section label */}
+          <Box sx={{ px: { xs: 3, md: 4 }, pt: { xs: 3, md: 4 }, pb: 0, flexShrink: 0 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#4E5FFD', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              {isDemo ? 'Book your session' : 'Send us a message'}
+            </Typography>
+          </Box>
+
+          <DialogContent sx={{ px: { xs: 3, md: 4 }, pt: 2.5, pb: 2, overflowY: 'auto', flexGrow: 1 }}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField required name="firstName" label="First name" value={formData.firstName} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField required name="lastName" label="Last name" value={formData.lastName} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField required name="email" label="Work email" type="email" value={formData.email} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField name="phone" label="Phone number" value={formData.phone} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField required name="company" label="Company name" value={formData.company} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormTextField name="jobTitle" label="Job title" value={formData.jobTitle} onChange={handleInputChange} />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormSelectField required name="industry" label="Industry" value={formData.industry} onChange={handleSelectChange} options={industries} />
+              </Grid>
+
+              {isDemo && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormTextField
+                      required name="preferredDate" label="Preferred date" type="date"
+                      value={formData.preferredDate} onChange={handleInputChange}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormSelectField required name="preferredTime" label="Preferred time" value={formData.preferredTime} onChange={handleSelectChange} options={times} />
+                  </Grid>
+                </>
+              )}
+
+              <Grid size={{ xs: 12 }}>
+                <FormTextField
+                  name="message" label="Message (optional)" multiline rows={3}
+                  value={formData.message} onChange={handleInputChange}
+                  placeholder={isDemo
+                    ? 'Tell us about your business and what you want to see...'
+                    : 'How can we help you today?'}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+
+          {/* Footer */}
+          <Box sx={{
+            px: { xs: 3, md: 4 }, py: 2.5,
+            borderTop: '1px solid #F3F4F6',
+            display: 'flex', alignItems: 'center', gap: 2,
+            flexShrink: 0,
+            background: '#ffffff',
+          }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              sx={{
+                px: 4, py: 1.4,
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                background: 'linear-gradient(135deg, #4E5FFD 0%, #7B3FE4 100%)',
+                color: '#fff',
+                borderRadius: '9999px',
+                textTransform: 'none',
+                boxShadow: '0 6px 20px rgba(78,95,253,0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #3A4AE8 0%, #6B2FD4 100%)',
+                  boxShadow: '0 10px 28px rgba(78,95,253,0.4)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {isDemo ? 'Schedule Demo' : 'Send Message'}
+            </Button>
+
+            <Button
+              onClick={onClose}
+              size="large"
+              sx={{
+                px: 3, py: 1.4,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                color: '#6B7280',
+                borderRadius: '9999px',
+                textTransform: 'none',
+                border: '1.5px solid #E5E7EB',
+                '&:hover': { borderColor: '#4E5FFD', color: '#4E5FFD', background: '#F8F7FF' },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Cancel
+            </Button>
+          </Box>
+        </form>
       </Box>
-      
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
-        {renderDialogContent}
-        
-        <Divider sx={{ opacity: 0.1 }} />
-        
-        <DialogActions sx={{ 
-          px: { xs: 3, md: 5 }, 
-          py: 3, 
-          justifyContent: { xs: 'center', sm: 'flex-start' },
-          flexWrap: 'wrap',
-          gap: 2,
-          background: 'linear-gradient(to top, rgba(249, 250, 251, 0.8), transparent)',
-          flexShrink: 0,
-        }}>
-          <Button 
-            type="submit"
-            variant="contained" 
-            size="large"
-            sx={{
-              px: { xs: 3, sm: 5 },
-              py: 1.5,
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-              fontWeight: 600,
-              background: 'linear-gradient(90deg, #1D4ED8, #1D4ED8)',
-              color: 'white',
-              borderRadius: '8px',
-              textTransform: 'none',
-              boxShadow: '0 10px 20px rgba(0, 181, 168, 0.3)',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #1D4ED8, #1D4ED8)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 15px 30px rgba(0, 181, 168, 0.4)',
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {formType === 'contact' ? 'Send Message' : 'Schedule Demo'}
-          </Button>
-          <Button 
-            onClick={onClose} 
-            variant="outlined"
-            size="large"
-            sx={{ 
-              px: { xs: 3, sm: 4 },
-              py: 1.5,
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-              fontWeight: 600,
-              color: '#64748b',
-              borderColor: 'rgba(100, 116, 139, 0.2)',
-              borderRadius: '8px',
-              textTransform: 'none',
-              '&:hover': {
-                borderColor: '#94a3b8',
-                backgroundColor: 'rgba(148, 163, 184, 0.05)',
-              },
-            }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </form>
     </Dialog>
   );
 };
 
-export default React.memo(ContactFormDialog); 
+export default React.memo(ContactFormDialog);
