@@ -31,7 +31,7 @@ const UseCaseSection = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Box sx={{ py: { xs: 10, md: 16 }, background: '#ffffff' }}>
+    <Box id="use-cases" sx={{ py: { xs: 10, md: 16 }, background: '#ffffff' }}>
       <Container maxWidth="lg">
         <FadeUp delay={0.1}>
           <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 10 } }}>

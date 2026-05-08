@@ -201,7 +201,7 @@ const BrowserMockup = () => {
 };
 
 const WebsiteChatbotSection = () => (
-  <Box sx={{ py: { xs: 12, md: 20 }, background: '#ffffff', overflow: 'hidden' }}>
+  <Box id="website-chatbot" sx={{ py: { xs: 12, md: 20 }, background: '#ffffff', overflow: 'hidden' }}>
     <Container maxWidth="lg">
       <Grid container spacing={{ xs: 6, md: 10 }} alignItems="center">
         {/* Left: Text */}

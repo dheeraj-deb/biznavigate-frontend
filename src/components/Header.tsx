@@ -16,9 +16,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ContactFormDialog from './ContactFormDialog';
 
 const pages = [
-  { name: 'Product', id: 'hero', scroll: true },
+  { name: 'Solutions', id: 'solutions', scroll: true },
+  { name: 'How It Works', id: 'how-it-works', scroll: true },
   { name: 'Features', id: 'features', scroll: true },
-  { name: 'Agency', id: 'agency', scroll: false, route: '/pricing' },
+  { name: 'Use Cases', id: 'use-cases', scroll: true },
   { name: 'Contact', id: 'contact', scroll: false },
 ];
 

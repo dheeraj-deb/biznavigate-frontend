@@ -14,7 +14,7 @@ const steps = [
 ];
 
 const HowItWorksSection = () => (
-  <Box sx={{ py: { xs: 10, md: 16 }, background: '#F8F7FF' }}>
+  <Box id="how-it-works" sx={{ py: { xs: 10, md: 16 }, background: '#F8F7FF' }}>
     <Container maxWidth="lg">
       <FadeUp delay={0.1}>
         <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 12 } }}>

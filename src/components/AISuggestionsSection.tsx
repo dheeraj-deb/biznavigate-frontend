@@ -48,7 +48,7 @@ const AISuggestionsSection = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Box sx={{ py: { xs: 10, md: 16 }, background: '#F8F7FF' }}>
+    <Box id="ai-insights" sx={{ py: { xs: 10, md: 16 }, background: '#F8F7FF' }}>
       <Container maxWidth="lg">
         <FadeUp delay={0.1}>
           <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 10 } }}>
