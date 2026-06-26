@@ -11,20 +11,24 @@ import DataDeletion from "./pages/DataDeletion";
 
 const App = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/pricing" element={<ComingSoon />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/data-deletion" element={<DataDeletion />} />
-          </Routes>
-        </MainLayout>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/*" element={
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <MainLayout>
+              <Routes>
+                <Route path="pricing" element={<ComingSoon />} />
+                <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="terms" element={<TermsOfService />} />
+                <Route path="data-deletion" element={<DataDeletion />} />
+              </Routes>
+            </MainLayout>
+          </ThemeProvider>
+        } />
+      </Routes>
+    </Router>
   );
 };
 

@@ -1,35 +1,43 @@
-import React from 'react';
-import { Box } from '@mui/material';
-import Hero from '../components/Hero';
-import ProblemSection from '../components/ProblemSection';
-import SolutionSection from '../components/SolutionSection';
-import HowItWorksSection from '../components/HowItWorksSection';
-import FeaturesGridSection from '../components/FeaturesGridSection';
-import UseCaseSection from '../components/UseCaseSection';
-import WebsiteChatbotSection from '../components/WebsiteChatbotSection';
-import DashboardPreviewSection from '../components/DashboardPreviewSection';
-import DifferentiationSection from '../components/DifferentiationSection';
-import MetricsSection from '../components/MetricsSection';
-import AISuggestionsSection from '../components/AISuggestionsSection';
-import FinalCTASection from '../components/FinalCTASection';
+import React, { useEffect } from 'react';
+import './home.css';
 
-const Home = () => {
-  return (
-    <Box>
-      <Hero />
-      <ProblemSection />
-      <SolutionSection />
-      <HowItWorksSection />
-      <FeaturesGridSection />
-      <UseCaseSection />
-      <WebsiteChatbotSection />
-      <DashboardPreviewSection />
-      <DifferentiationSection />
-      <AISuggestionsSection />
-      <MetricsSection />
-      <FinalCTASection />
-    </Box>
+const Home: React.FC = () => {
+  useEffect(() => {
+    const nav = document.getElementById('biz-nav') as HTMLElement | null;
+    const handleScroll = () => {
+      nav?.classList.toggle('scrolled', window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll('.home-root .reveal').forEach((el) => io.observe(el));
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      io.disconnect();
+    };
+  }, []);
+
+  const CheckIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
   );
-};
 
-export default Home;
+  return (
+    <div className="home-root">
+
+      {/* NAV */}
+      <header className="nav" id="biz-nav">
+        <div className="wrap nav-in">
+ 
