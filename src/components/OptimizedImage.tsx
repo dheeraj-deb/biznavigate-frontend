@@ -21,32 +21,37 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   ...rest
 }) => {
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | null>(priority ? src : null);
   
   useEffect(() => {
-    if (!priority) {
-      // Check if this component is in the viewport
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setImgSrc(src);
-            observer.disconnect();
-          }
-        });
-      }, {
-        rootMargin: '200px' // Start loading when image is 200px from viewport
-      });
-      
-      const currentRef = document.querySelector(`[data-img-id="${src}"]`);
-      if (currentRef) {
-        observer.observe(currentRef);
-      }
-      
-      return () => {
-        observer.disconnect();
-      };
+    if (priority) {
+      // Priority images skip lazy-loading, but still need to react to a
+      // changed `src` on an already-mounted instance (e.g. a story viewer
+      // swapping slides) — the useState initializer only runs once.
+      setImgSrc(src);
+      return;
     }
+
+    // Check if this component is in the viewport
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setImgSrc(src);
+          observer.disconnect();
+        }
+      });
+    }, {
+      rootMargin: '200px' // Start loading when image is 200px from viewport
+    });
+
+    const currentRef = document.querySelector(`[data-img-id="${src}"]`);
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, [src, priority]);
   
   const handleLoad = () => {
@@ -54,7 +59,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
   
   const handleError = () => {
-    setError(true);
     setLoaded(true);
   };
   

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import theme from "./theme";
@@ -9,11 +9,23 @@ import ComingSoon from "./components/ComingSoon";
 import TermsOfService from "./pages/TermsOfService";
 import DataDeletion from "./pages/DataDeletion";
 
+// SmartPages (public resort pages) load as their own chunk so the marketing
+// home bundle is unaffected.
+const ResortsRoutes = lazy(() => import("./pages/resorts/ResortsRoutes"));
+
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route
+          path="/resorts/*"
+          element={
+            <Suspense fallback={null}>
+              <ResortsRoutes />
+            </Suspense>
+          }
+        />
         <Route path="/*" element={
           <ThemeProvider theme={theme}>
             <CssBaseline />
