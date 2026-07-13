@@ -49,3 +49,18 @@ export function classifyMedia(url: string): ClassifiedMedia {
 export function isVideoUrl(url: string): boolean {
   return classifyMedia(url).kind !== "image";
 }
+
+/**
+ * The AI motion clip for a photo, if one is published. Clips are keyed by the
+ * exact photo URL string (same join the moments layer uses); roomTypeId
+ * scopes room-photo clips apart from property-gallery ones.
+ */
+export function clipForPhoto(
+  motion: import("./publicApi").PropertyMotionMedia | undefined,
+  photoUrl: string,
+  roomTypeId: string | null = null,
+): string | undefined {
+  return motion?.clips.find(
+    (c) => c.photoUrl === photoUrl && (c.roomTypeId ?? null) === roomTypeId,
+  )?.clipUrl;
+}

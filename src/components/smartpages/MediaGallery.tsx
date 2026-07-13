@@ -6,8 +6,9 @@ import OptimizedImage from "../OptimizedImage";
 import { HeroMedia } from "./HeroMedia";
 import { MomentLayer } from "./MomentLayer";
 import { isDirectVideo } from "./VideoEmbed";
+import { clipForPhoto } from "../../lib/media";
 import type { LightboxSlide } from "./Lightbox";
-import type { PageMoment } from "../../lib/publicApi";
+import type { PageMoment, PropertyMotionMedia } from "../../lib/publicApi";
 import { sp } from "./tokens";
 
 const Lightbox = lazy(() => import("./Lightbox"));
@@ -15,6 +16,7 @@ const Lightbox = lazy(() => import("./Lightbox"));
 type Props = {
   photos: string[];
   videos?: string[];
+  motion?: PropertyMotionMedia;
   name: string;
   propertyId?: string;
   moments?: PageMoment[];
@@ -27,7 +29,7 @@ type Props = {
  * Either surface opens the shared lazy-loaded lightbox (photos + videos).
  * PIN moments matching a photo's URL render as tappable overlays on it.
  */
-export function MediaGallery({ photos, videos, name, propertyId, moments, phoneNumber }: Props) {
+export function MediaGallery({ photos, videos, motion: motionMedia, name, propertyId, moments, phoneNumber }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
 
@@ -39,10 +41,15 @@ export function MediaGallery({ photos, videos, name, propertyId, moments, phoneN
     );
   }
 
+  // The highlight reel rides in the lightbox only — it must never displace an
+  // owner-uploaded video as the autoplaying hero.
+  const reelUrl = motionMedia?.reelUrl ?? undefined;
   const slides: LightboxSlide[] = [
     ...photos.map((url) => ({ url, kind: "image" as const, alt: name })),
     ...(videos ?? []).map((url) => ({ url, kind: "video" as const })),
+    ...(reelUrl ? [{ url: reelUrl, kind: "video" as const }] : []),
   ];
+  const reelSlideIndex = reelUrl ? slides.length - 1 : null;
 
   const thumbs = photos.slice(1, 3);
 
@@ -74,6 +81,33 @@ export function MediaGallery({ photos, videos, name, propertyId, moments, phoneN
           {moments && photos[mobileIndex] && (
             <MomentLayer photoUrl={photos[mobileIndex]} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
           )}
+          {reelSlideIndex !== null && (
+            <Box
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(reelSlideIndex);
+              }}
+              sx={{
+                position: "absolute",
+                left: 10,
+                bottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                borderRadius: "999px",
+                bgcolor: "rgba(0,0,0,0.55)",
+                color: "#fff",
+                px: 1.5,
+                py: 0.5,
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              ▶ Highlights
+            </Box>
+          )}
         </Box>
         {photos.length > 1 && (
           <Box sx={{ mt: 1, display: "flex", justifyContent: "center", gap: 0.75 }}>
@@ -98,7 +132,42 @@ export function MediaGallery({ photos, videos, name, propertyId, moments, phoneN
       {/* Desktop: hero grid */}
       <Box sx={{ display: { xs: "none", sm: "grid" }, gap: 1, gridTemplateColumns: "2fr 1fr" }}>
         <Box sx={{ position: "relative" }}>
-          <HeroMedia photos={photos} videos={videos} name={name} propertyId={propertyId} onClick={() => setLightboxIndex(0)} />
+          <HeroMedia
+            photos={photos}
+            videos={videos}
+            motionClip={photos[0] ? clipForPhoto(motionMedia, photos[0]) : undefined}
+            name={name}
+            propertyId={propertyId}
+            onClick={() => setLightboxIndex(0)}
+          />
+          {reelSlideIndex !== null && (
+            <Box
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(reelSlideIndex);
+              }}
+              sx={{
+                position: "absolute",
+                left: 12,
+                bottom: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                borderRadius: "999px",
+                bgcolor: "rgba(0,0,0,0.55)",
+                color: "#fff",
+                px: 1.5,
+                py: 0.5,
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backdropFilter: "blur(4px)",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+              }}
+            >
+              ▶ Highlights
+            </Box>
+          )}
           {moments && photos[0] && (
             <MomentLayer photoUrl={photos[0]} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
           )}

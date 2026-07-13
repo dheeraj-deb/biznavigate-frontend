@@ -1,21 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import PlaceIcon from "@mui/icons-material/Place";
 import StarIcon from "@mui/icons-material/Star";
-import OptimizedImage from "../OptimizedImage";
+import { LivingPhotos } from "./LivingPhotos";
 import type { ResortListItem } from "../../lib/publicApi";
 import { sp, formatINR } from "./tokens";
 
 export function ResortCard({ property }: { property: ResortListItem }) {
-  const photo = property.photos?.[0];
+  const photos = property.photos ?? [];
   const location = [property.city, property.region].filter(Boolean).join(", ");
+  const [hovered, setHovered] = useState(false);
+  // Touch devices have no hover, so the card plays whenever it's in view;
+  // pointer devices come alive on hover, like Hovr's listing cards.
+  const [canHover] = useState(() => window.matchMedia("(hover: hover)").matches);
 
   return (
     <Box
       component={RouterLink}
       to={`/resorts/${property.slug}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -27,7 +33,6 @@ export function ResortCard({ property }: { property: ResortListItem }) {
         textDecoration: "none",
         transition: "box-shadow 0.2s ease",
         "&:hover": { boxShadow: sp.cardShadowHover },
-        "&:hover .resort-card-photo img": { transform: "scale(1.05)" },
         "&:hover .resort-card-name": { color: sp.blue },
       }}
     >
@@ -39,11 +44,14 @@ export function ResortCard({ property }: { property: ResortListItem }) {
           width: "100%",
           overflow: "hidden",
           bgcolor: sp.border,
-          "& img": { transition: "transform 0.3s ease" },
         }}
       >
-        {photo ? (
-          <OptimizedImage src={photo} alt={property.name} sx={{ width: "100%", height: "100%" }} />
+        {photos.length > 0 ? (
+          <LivingPhotos
+            photos={photos}
+            alt={property.name}
+            playing={canHover ? hovered : undefined}
+          />
         ) : (
           <Box
             sx={{

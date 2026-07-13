@@ -84,6 +84,15 @@ export type PageMoment = {
   sortOrder: number;
 };
 
+// AI-generated motion media: per-photo clips (camera motion over the original
+// photo), one stitched highlight reel, and per-room tours. Only READY assets
+// are published; older cached payloads simply omit the field.
+export type PropertyMotionMedia = {
+  reelUrl: string | null;
+  clips: { photoUrl: string; clipUrl: string; effect: string; roomTypeId: string | null }[];
+  tours: { roomTypeId: string; tourUrl: string }[];
+};
+
 export type ResortDetail = PublicProperty & {
   roomTypes: PublicRoomType[];
   faqs: PublicFaq[];
@@ -92,6 +101,7 @@ export type ResortDetail = PublicProperty & {
   averageRating: number;
   reviewCount: number;
   moments?: PageMoment[];
+  motion?: PropertyMotionMedia;
   tenant: { gupshupSourceNumber: string | null };
 };
 

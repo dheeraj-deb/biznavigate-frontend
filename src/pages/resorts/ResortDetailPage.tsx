@@ -18,6 +18,7 @@ import { StickyCtaBar } from "../../components/smartpages/StickyCtaBar";
 import { AmenityHighlights } from "../../components/smartpages/AmenityHighlights";
 import { StickyPin } from "../../components/smartpages/StickyPin";
 import { isDirectVideo } from "../../components/smartpages/VideoEmbed";
+import { clipForPhoto } from "../../lib/media";
 import type { StorySlide } from "../../components/smartpages/StoryViewer";
 import {
   SectionTitle,
@@ -49,11 +50,16 @@ export default function ResortDetailPage() {
 
   // Story slides: every photo/video plus any PIN moment's own media (with its
   // label as a caption) — no separate content model, it's derived from what
-  // the gallery and moments editor already produced.
+  // the gallery and moments editor already produced. Photos that have an AI
+  // motion clip play as that clip (StoryViewer advances video slides on
+  // `ended`), so the story feels filmed while staying true to the photos.
   const slides: StorySlide[] = useMemo(() => {
     if (!property) return [];
     const base: StorySlide[] = [
-      ...property.photos.map((url) => ({ kind: "image" as const, url })),
+      ...property.photos.map((url) => {
+        const clip = clipForPhoto(property.motion, url);
+        return clip ? { kind: "video" as const, url: clip } : { kind: "image" as const, url };
+      }),
       ...(property.videos ?? []).filter(isDirectVideo).map((url) => ({ kind: "video" as const, url })),
     ];
     const pinMedia: StorySlide[] = (property.moments ?? [])
@@ -100,6 +106,7 @@ export default function ResortDetailPage() {
           <MediaGallery
             photos={property.photos}
             videos={property.videos}
+            motion={property.motion}
             name={property.name}
             propertyId={property.id}
             moments={property.moments}
@@ -202,6 +209,9 @@ export default function ResortDetailPage() {
                   phoneNumber={phone}
                   propertyName={property.name}
                   propertyId={property.id}
+                  tourUrl={
+                    property.motion?.tours.find((t) => t.roomTypeId === room.id)?.tourUrl ?? null
+                  }
                 />
               ))}
             </Box>

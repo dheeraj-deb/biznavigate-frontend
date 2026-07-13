@@ -20,11 +20,13 @@ type Props = {
   phoneNumber: string | null;
   propertyName: string;
   propertyId?: string;
+  /** AI-generated room tour (direct mp4) — used when the owner hasn't uploaded a video. */
+  tourUrl?: string | null;
 };
 
-export function RoomCard({ room, phoneNumber, propertyName, propertyId }: Props) {
+export function RoomCard({ room, phoneNumber, propertyName, propertyId, tourUrl }: Props) {
   const photos = room.photos ?? [];
-  const roomVideo = (room.videos ?? []).find(isDirectVideo);
+  const roomVideo = (room.videos ?? []).find(isDirectVideo) ?? tourUrl ?? undefined;
   const [index, setIndex] = useState(0);
   const [playingVideo, setPlayingVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);

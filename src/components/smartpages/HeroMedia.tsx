@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
-import OptimizedImage from "../OptimizedImage";
+import { LivingPhotos } from "./LivingPhotos";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
 import { claimPlayback, releasePlayback } from "../../lib/videoPlayback";
@@ -9,6 +9,8 @@ import { sp } from "./tokens";
 type Props = {
   photos: string[];
   videos?: string[];
+  /** AI motion clip generated from the hero photo (direct mp4 URL). */
+  motionClip?: string;
   name: string;
   propertyId?: string;
   onClick?: () => void;
@@ -16,12 +18,20 @@ type Props = {
 
 /**
  * Hovr-style "Fill": the hero photo becomes a muted autoplay video preview
- * once it's actually in view, falls back to a slow Ken Burns pan on the
- * poster when there's no direct-playable video.
+ * once it's actually in view. Precedence: an owner-uploaded video is a
+ * deliberate choice and always wins; the auto-generated AI motion clip of the
+ * hero photo comes next; LivingPhotos' CSS pan is the no-video fallback.
  */
-export function HeroMedia({ photos, videos, name, propertyId, onClick }: Props) {
+export function HeroMedia({ photos, videos, motionClip, name, propertyId, onClick }: Props) {
   const poster = photos[0];
-  const heroVideo = (videos ?? []).find(isDirectVideo);
+  // The AI clip is decorative motion — reduced-motion users get stills.
+  const [reducedMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const heroVideo =
+    (videos ?? []).find(isDirectVideo) ?? (reducedMotion ? undefined : motionClip);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [inView, setInView] = useState(false);
@@ -93,19 +103,7 @@ export function HeroMedia({ photos, videos, name, propertyId, onClick }: Props) 
       {heroVideo ? (
         <VideoEmbed url={heroVideo} poster={poster} muted loop videoRef={videoRef} />
       ) : (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            animation: "sp-kenburns 18s ease-in-out infinite alternate",
-            "@keyframes sp-kenburns": {
-              "0%": { transform: "scale(1) translate(0, 0)" },
-              "100%": { transform: "scale(1.08) translate(-1%, -1%)" },
-            },
-          }}
-        >
-          <OptimizedImage src={poster} alt={name} priority sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        </Box>
+        <LivingPhotos photos={photos} alt={name} />
       )}
     </Box>
   );
