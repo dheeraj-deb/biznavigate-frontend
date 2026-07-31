@@ -9,11 +9,19 @@ type Props = {
   phoneNumber: string | null;
   propertyName: string;
   propertyId?: string;
+  bookingSlug?: string;
   intentContext?: string;
 };
 
 /** Mobile-only fixed bottom bar with the from-price and booking CTA. */
-export function StickyCtaBar({ todayRate, phoneNumber, propertyName, propertyId, intentContext }: Props) {
+export function StickyCtaBar({
+  todayRate,
+  phoneNumber,
+  propertyName,
+  propertyId,
+  bookingSlug,
+  intentContext,
+}: Props) {
   return (
     <Box
       sx={{
@@ -45,8 +53,9 @@ export function StickyCtaBar({ todayRate, phoneNumber, propertyName, propertyId,
           phoneNumber={phoneNumber}
           propertyName={propertyName}
           propertyId={propertyId}
+          bookingSlug={bookingSlug}
           intentContext={intentContext}
-          label="Book via WhatsApp"
+          label="Continue to book"
         />
       </Box>
     </Box>

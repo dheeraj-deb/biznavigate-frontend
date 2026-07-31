@@ -16,6 +16,8 @@ type Props = {
   source?: string;
   propertyId?: string;
   roomTypeId?: string;
+  /** When set, CTA opens booking.biznavigo.com instead of WhatsApp. */
+  bookingSlug?: string;
   variant?: "solid" | "outline";
   label?: string;
   fullWidth?: boolean;
@@ -28,6 +30,19 @@ function formatDate(iso?: string): string | undefined {
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+const BOOKING_URL =
+  process.env.REACT_APP_BOOKING_URL ?? "https://booking.biznavigo.com";
+
+function buildBookingUrl(props: Props): string | null {
+  if (!props.bookingSlug) return null;
+  const params = new URLSearchParams({ src: "smart_page" });
+  if (props.checkin) params.set("checkin", props.checkin);
+  if (props.checkout) params.set("checkout", props.checkout);
+  if (props.adults) params.set("adults", String(props.adults));
+  if (props.roomTypeId) params.set("roomTypeId", props.roomTypeId);
+  return `${BOOKING_URL.replace(/\/$/, "")}/r/${props.bookingSlug}?${params.toString()}`;
 }
 
 export function buildWhatsAppUrl(props: Props): string {
@@ -48,24 +63,38 @@ export function buildWhatsAppUrl(props: Props): string {
   } else if (roomName) {
     text = `Hi! I'm interested in ${roomName} at ${propertyName}. Is it available?`;
   } else if (intentContext) {
-    // Intent pages: mention what the guest was searching for so Riya AI has context.
     text = `Hi! I found ${propertyName} for ${intentContext}. Can I get more details?`;
   } else {
     text = `Hi! I'm interested in booking at ${propertyName}. Can you help?`;
   }
 
-  // Lightweight source tag for the AI agent / staff — visible context, not
-  // hidden tracking. Full click attribution is logged separately (see
-  // trackListingClick) before this link is opened.
   if (source) text += ` (via ${source})`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
 
 export function WhatsAppCTA(props: Props) {
-  const { roomName, variant = "solid", label, propertyId, roomTypeId, fullWidth, analyticsAction } = props;
-  const href = buildWhatsAppUrl(props);
-  const text = label ?? (roomName ? "Book on WhatsApp" : "Book via WhatsApp");
+  const {
+    roomName,
+    variant = "solid",
+    label,
+    propertyId,
+    roomTypeId,
+    fullWidth,
+    analyticsAction,
+    bookingSlug,
+  } = props;
+  const bookingHref = buildBookingUrl(props);
+  const href = bookingHref ?? buildWhatsAppUrl(props);
+  const text =
+    label ??
+    (bookingHref
+      ? roomName
+        ? "Book now"
+        : "Continue to book"
+      : roomName
+        ? "Book on WhatsApp"
+        : "Book via WhatsApp");
 
   return (
     <Button
@@ -73,8 +102,14 @@ export function WhatsAppCTA(props: Props) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => trackListingClick({ propertyId, roomTypeId, action: analyticsAction ?? "book_whatsapp" })}
-      startIcon={<WhatsAppIcon sx={{ fontSize: 18 }} />}
+      onClick={() =>
+        trackListingClick({
+          propertyId,
+          roomTypeId,
+          action: analyticsAction ?? (bookingHref ? "book_page" : "book_whatsapp"),
+        })
+      }
+      startIcon={bookingHref ? undefined : <WhatsAppIcon sx={{ fontSize: 18 }} />}
       fullWidth={fullWidth}
       disableElevation
       sx={{
@@ -84,17 +119,29 @@ export function WhatsAppCTA(props: Props) {
         fontSize: "0.875rem",
         fontWeight: 600,
         whiteSpace: "nowrap",
-        ...(variant === "solid"
-          ? {
-              bgcolor: sp.whatsapp,
-              color: "#fff",
-              "&:hover": { bgcolor: sp.whatsappDark },
-            }
-          : {
-              border: `1px solid ${sp.whatsapp}`,
-              color: sp.whatsappText,
-              "&:hover": { bgcolor: "#f0fdf4" },
-            }),
+        ...(bookingHref
+          ? variant === "solid"
+            ? {
+                bgcolor: sp.blue,
+                color: "#fff",
+                "&:hover": { bgcolor: "#1a4ab8" },
+              }
+            : {
+                border: `1px solid ${sp.blue}`,
+                color: sp.blue,
+                "&:hover": { bgcolor: "#edf2fd" },
+              }
+          : variant === "solid"
+            ? {
+                bgcolor: sp.whatsapp,
+                color: "#fff",
+                "&:hover": { bgcolor: sp.whatsappDark },
+              }
+            : {
+                border: `1px solid ${sp.whatsapp}`,
+                color: sp.whatsappText,
+                "&:hover": { bgcolor: "#f0fdf4" },
+              }),
       }}
     >
       {text}

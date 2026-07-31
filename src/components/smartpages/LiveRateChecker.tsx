@@ -204,6 +204,7 @@ export function LiveRateChecker({
                     totalPrice={r.totalPrice}
                     propertyId={propertyId}
                     roomTypeId={r.roomTypeId}
+                    bookingSlug={slug}
                     label="Book now"
                   />
                 )}

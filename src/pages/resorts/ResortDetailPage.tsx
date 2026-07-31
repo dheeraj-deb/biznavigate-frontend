@@ -163,7 +163,8 @@ export default function ResortDetailPage() {
               phoneNumber={phone}
               propertyName={property.name}
               propertyId={property.id}
-              label="Book via WhatsApp"
+              bookingSlug={property.slug}
+              label="Continue to book"
             />
           </Box>
         </Box>
@@ -209,6 +210,7 @@ export default function ResortDetailPage() {
                   phoneNumber={phone}
                   propertyName={property.name}
                   propertyId={property.id}
+                  bookingSlug={property.slug}
                   tourUrl={
                     property.motion?.tours.find((t) => t.roomTypeId === room.id)?.tourUrl ?? null
                   }
@@ -250,6 +252,7 @@ export default function ResortDetailPage() {
         phoneNumber={phone}
         propertyName={property.name}
         propertyId={property.id}
+        bookingSlug={property.slug}
       />
 
       {/* Floating story entry point */}

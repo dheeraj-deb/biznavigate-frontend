@@ -91,8 +91,9 @@ export default function IntentPage() {
               phoneNumber={phone}
               propertyName={property.name}
               propertyId={property.id}
+              bookingSlug={property.slug}
               intentContext={intent.h1}
-              label="Book on WhatsApp"
+              label="Continue to book"
             />
             {property.todayRate > 0 && (
               <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>
@@ -162,8 +163,9 @@ export default function IntentPage() {
               phoneNumber={phone}
               propertyName={property.name}
               propertyId={property.id}
+              bookingSlug={property.slug}
               intentContext={intent.h1}
-              label="Book via WhatsApp"
+              label="Continue to book"
             />
           </Box>
         </Box>
@@ -206,6 +208,7 @@ export default function IntentPage() {
                   phoneNumber={phone}
                   propertyName={property.name}
                   propertyId={property.id}
+                  bookingSlug={property.slug}
                 />
               ))}
             </Box>
@@ -251,6 +254,7 @@ export default function IntentPage() {
         phoneNumber={phone}
         propertyName={property.name}
         propertyId={property.id}
+        bookingSlug={property.slug}
         intentContext={intent.h1}
       />
     </>

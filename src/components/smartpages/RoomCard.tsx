@@ -20,11 +20,12 @@ type Props = {
   phoneNumber: string | null;
   propertyName: string;
   propertyId?: string;
+  bookingSlug?: string;
   /** AI-generated room tour (direct mp4) — used when the owner hasn't uploaded a video. */
   tourUrl?: string | null;
 };
 
-export function RoomCard({ room, phoneNumber, propertyName, propertyId, tourUrl }: Props) {
+export function RoomCard({ room, phoneNumber, propertyName, propertyId, bookingSlug, tourUrl }: Props) {
   const photos = room.photos ?? [];
   const roomVideo = (room.videos ?? []).find(isDirectVideo) ?? tourUrl ?? undefined;
   const [index, setIndex] = useState(0);
@@ -208,7 +209,8 @@ export function RoomCard({ room, phoneNumber, propertyName, propertyId, tourUrl 
             roomName={room.name}
             propertyId={propertyId}
             roomTypeId={room.id}
-            label="Book on WhatsApp"
+            bookingSlug={bookingSlug}
+            label="Book now"
           />
         </Box>
       </Box>
