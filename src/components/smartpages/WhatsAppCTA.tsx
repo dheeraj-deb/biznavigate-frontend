@@ -82,7 +82,6 @@ export function WhatsAppCTA(props: Props) {
     roomTypeId,
     fullWidth,
     analyticsAction,
-    bookingSlug,
   } = props;
   const bookingHref = buildBookingUrl(props);
   const href = bookingHref ?? buildWhatsAppUrl(props);
