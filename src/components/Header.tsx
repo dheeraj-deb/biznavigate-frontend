@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import {
   AppBar,
@@ -11,7 +13,7 @@ import {
   MenuItem,
   Slide
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import NextLink from 'next/link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ContactFormDialog from './ContactFormDialog';
 
@@ -67,8 +69,8 @@ const Header = () => {
             <Toolbar disableGutters sx={{ py: 1.5 }}>
               {/* Desktop Logo */}
               <Box
-                component={RouterLink}
-                to="/"
+                component={NextLink}
+                href="/"
                 sx={{ mr: 6, display: { xs: 'none', md: 'flex' }, alignItems: 'center', textDecoration: 'none', gap: 1 }}
               >
                 <Box
@@ -127,8 +129,8 @@ const Header = () => {
 
               {/* Mobile Logo */}
               <Box
-                component={RouterLink}
-                to="/"
+                component={NextLink}
+                href="/"
                 sx={{ mr: 2, display: { xs: 'flex', md: 'none' }, flexGrow: 1, alignItems: 'center', textDecoration: 'none', gap: 0.75 }}
               >
                 <Box component="img" src="/logo.png" alt="BizNavigo Logo" sx={{ height: 36, width: 'auto', borderRadius: '6px' }} />

@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import PlaceIcon from "@mui/icons-material/Place";
@@ -14,12 +16,12 @@ export function ResortCard({ property }: { property: ResortListItem }) {
   const [hovered, setHovered] = useState(false);
   // Touch devices have no hover, so the card plays whenever it's in view;
   // pointer devices come alive on hover, like Hovr's listing cards.
-  const [canHover] = useState(() => window.matchMedia("(hover: hover)").matches);
+  const [canHover] = useState(() => typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches);
 
   return (
     <Box
-      component={RouterLink}
-      to={`/resorts/${property.slug}`}
+      component={NextLink}
+      href={`/resorts/${property.slug}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{

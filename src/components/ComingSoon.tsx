@@ -1,10 +1,12 @@
+'use client';
+
 import React from 'react';
 import { Box, Container, Typography, Button, Paper } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const ComingSoon = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <Box
@@ -102,7 +104,7 @@ const ComingSoon = () => {
             <Button
               variant="contained"
               startIcon={<ArrowBackIcon />}
-              onClick={() => navigate('/')}
+              onClick={() => router.push('/')}
               sx={{
                 backgroundColor: '#00b5a8',
                 color: 'white',

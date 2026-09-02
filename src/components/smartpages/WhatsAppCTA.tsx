@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import Button from "@mui/material/Button";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
@@ -33,7 +35,7 @@ function formatDate(iso?: string): string | undefined {
 }
 
 const BOOKING_URL =
-  process.env.REACT_APP_BOOKING_URL ?? "https://booking.biznavigo.com";
+  process.env.NEXT_PUBLIC_BOOKING_URL ?? "https://booking.biznavigo.com";
 
 function buildBookingUrl(props: Props): string | null {
   if (!props.bookingSlug) return null;
@@ -50,7 +52,7 @@ export function buildWhatsAppUrl(props: Props): string {
   const number =
     phoneNumber
       ? `91${phoneNumber.replace(/\D/g, "").slice(-10)}`
-      : process.env.REACT_APP_WHATSAPP_DEFAULT ?? "919999999999";
+      : process.env.NEXT_PUBLIC_WHATSAPP_DEFAULT ?? "919999999999";
 
   const ci = formatDate(checkin);
   const co = formatDate(checkout);

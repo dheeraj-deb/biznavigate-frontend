@@ -1,4 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL ?? "http://localhost:3006/api";
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3006/api";
 
 export const API_BASE = BASE;
 

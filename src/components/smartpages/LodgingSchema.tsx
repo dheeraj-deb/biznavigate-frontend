@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import type { ResortDetail } from "../../lib/publicApi";
 
@@ -23,7 +25,10 @@ function buildPriceRange(basePrices: number[]): string {
 }
 
 function baseUrl(): string {
-  return process.env.REACT_APP_PUBLIC_BASE_URL ?? window.location.origin;
+  return (
+    process.env.NEXT_PUBLIC_PUBLIC_BASE_URL ??
+    (typeof window !== "undefined" ? window.location.origin : "")
+  );
 }
 
 export function LodgingSchema({ property, todayRate }: { property: ResortDetail; todayRate: number }) {

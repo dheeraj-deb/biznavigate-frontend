@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
-import { ThemeProvider, CssBaseline } from "@mui/material";
+'use client';
+
+import React, { Suspense } from "react";
+import NextLink from "next/link";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import theme from "../theme";
-import { captureUtmParams } from "../lib/attribution";
+import { AttributionCapture } from "../components/AttributionCapture";
 import { sp } from "../components/smartpages/tokens";
 
 /**
@@ -14,17 +14,11 @@ import { sp } from "../components/smartpages/tokens";
  * hide-on-scroll header competes with the sticky booking CTA.
  */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-
-  // Capture UTM params on every public-page navigation (mirrors the
-  // per-page AttributionCapture mount in the original Next.js app).
-  useEffect(() => {
-    captureUtmParams();
-  }, [location.pathname, location.search]);
-
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
+      <Suspense fallback={null}>
+        <AttributionCapture />
+      </Suspense>
       <Box sx={{ display: "flex", minHeight: "100vh", flexDirection: "column", bgcolor: "#fff" }}>
         <Box
           component="header"
@@ -48,12 +42,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               justifyContent: "space-between",
             }}
           >
-            <Box component={RouterLink} to="/" sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}>
+            <Box component={NextLink} href="/" sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}>
               <Box component="img" src="/logo.png" alt="BizNavigate" sx={{ height: 28, width: "auto" }} />
             </Box>
             <Link
-              component={RouterLink}
-              to="/"
+              component={NextLink}
+              href="/"
               underline="none"
               sx={{ fontSize: "0.8125rem", fontWeight: 600, color: sp.blue }}
             >
@@ -85,16 +79,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               bookings on autopilot
             </Typography>
             <Box sx={{ display: "flex", gap: 2 }}>
-              <Link component={RouterLink} to="/privacy-policy" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
+              <Link component={NextLink} href="/privacy-policy" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
                 Privacy
               </Link>
-              <Link component={RouterLink} to="/terms" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
+              <Link component={NextLink} href="/terms" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
                 Terms
               </Link>
             </Box>
           </Box>
         </Box>
       </Box>
-    </ThemeProvider>
+    </>
   );
 }

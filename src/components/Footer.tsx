@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Box, Container, Typography, Link, Stack } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import NextLink from 'next/link';
 
 const Footer = () => {
   return (
@@ -136,8 +138,8 @@ const Footer = () => {
               ].map(({ label, to }) => (
                 <Link
                   key={label}
-                  component={RouterLink}
-                  to={to}
+                  component={NextLink}
+                  href={to}
                   underline="none"
                   sx={{
                     color: 'rgba(255,255,255,0.6)',
