@@ -7,7 +7,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_PUBLIC_BASE_URL ?? 'https://biznavigate.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_PUBLIC_BASE_URL ?? 'https://www.biznavigo.com'),
   title: 'BizNavigo — Direct bookings on autopilot for resorts',
   description:
     'An AI agent that captures and converts guests across WhatsApp, your website, and Google — into one inbox, one calendar, one CRM. Built for resorts and stays in India.',
