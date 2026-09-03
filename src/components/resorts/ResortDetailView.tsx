@@ -28,6 +28,7 @@ import { sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import { DateGuestCard } from "@/components/resorts/DateGuestCard";
+import { StickyBookingHeader } from "@/components/resorts/StickyBookingHeader";
 import { useBookingFlowHref } from "@/lib/booking-flow-url";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { ResortDetail } from "@/lib/publicApi";
@@ -61,6 +62,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const [pickChildren, setPickChildren] = useState(0);
 
   const heroRef = useRef<HTMLDivElement>(null);
+  const bookingWidgetRef = useRef<HTMLDivElement>(null);
   const [storyOpen, setStoryOpen] = useState(() => searchParams.get("story") === "1");
 
   // Story slides: every photo/video plus any PIN moment's own media (with its
@@ -151,6 +153,21 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             Check availability
           </Button>
         }
+      />
+      {/* Invisible sentinel, not a wrapper — DateGuestCard's own negative
+          margin confuses a wrapping ref's measured position. */}
+      <Box ref={bookingWidgetRef} sx={{ height: "1px" }} />
+
+      {/* Persistent booking access while scrolling — the one gap real
+          market leaders (Airbnb's sticky booking card, Aman/Oberoi's
+          persistent header "Reserve" button) agreed on that this page
+          didn't have. Appears once the primary widget above scrolls out
+          of view. */}
+      <StickyBookingHeader
+        watchRef={bookingWidgetRef}
+        propertyName={property.name}
+        todayRate={property.todayRate}
+        onBook={checkAvailability}
       />
 
       <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 12, sm: 6 } }}>
