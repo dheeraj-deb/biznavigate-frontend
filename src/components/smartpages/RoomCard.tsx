@@ -16,6 +16,7 @@ import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
 import { claimPlayback, releasePlayback } from "../../lib/videoPlayback";
 import { sp, formatINR } from "./tokens";
+import { guestDisplayFontFamily } from "../../lib/guestTheme";
 
 type Props = {
   room: PublicRoomType;
@@ -134,7 +135,7 @@ export function RoomCard({ room, phoneNumber, propertyName, propertyId, bookingS
       )}
       <Box sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1.5 }}>
         <Box>
-          <Typography sx={{ fontSize: "1rem", fontWeight: 600, color: sp.ink }}>
+          <Typography sx={{ fontFamily: guestDisplayFontFamily, fontSize: "1.375rem", fontWeight: 400, color: sp.ink }}>
             {room.name}
           </Typography>
           {room.description && (

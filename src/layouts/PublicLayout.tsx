@@ -2,20 +2,24 @@
 
 import React, { Suspense } from "react";
 import NextLink from "next/link";
+import { ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { AttributionCapture } from "../components/AttributionCapture";
 import { sp } from "../components/smartpages/tokens";
+import guestTheme from "../lib/guestTheme";
 
 /**
  * Minimal chrome for public SmartPages (/resorts/*). Deliberately NOT the
  * marketing MainLayout: its in-page-scroll nav is meaningless here and its
- * hide-on-scroll header competes with the sticky booking CTA.
+ * hide-on-scroll header competes with the sticky booking CTA. Nested
+ * ThemeProvider swaps typography to the guest type system (Geist +
+ * Instrument Serif) without touching the marketing site's theme.
  */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <ThemeProvider theme={guestTheme}>
       <Suspense fallback={null}>
         <AttributionCapture />
       </Suspense>
@@ -89,6 +93,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </Box>
         </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 }

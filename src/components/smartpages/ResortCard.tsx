@@ -8,6 +8,7 @@ import PlaceIcon from "@mui/icons-material/Place";
 import StarIcon from "@mui/icons-material/Star";
 import { LivingPhotos } from "./LivingPhotos";
 import type { ResortListItem } from "../../lib/publicApi";
+import { guestDisplayFontFamily } from "../../lib/guestTheme";
 import { sp, formatINR } from "./tokens";
 
 export function ResortCard({ property }: { property: ResortListItem }) {
@@ -96,7 +97,14 @@ export function ResortCard({ property }: { property: ResortListItem }) {
           <Typography
             className="resort-card-name"
             component="h2"
-            sx={{ fontSize: "1rem", fontWeight: 600, lineHeight: 1.4, color: sp.ink, transition: "color 0.15s" }}
+            sx={{
+              fontFamily: guestDisplayFontFamily,
+              fontSize: "1.25rem",
+              fontWeight: 400,
+              lineHeight: 1.3,
+              color: sp.ink,
+              transition: "color 0.15s",
+            }}
           >
             {property.name}
           </Typography>

@@ -93,9 +93,19 @@ export type PropertyMotionMedia = {
   tours: { roomTypeId: string; tourUrl: string }[];
 };
 
+export type PropertyAddon = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  priceUnit: "PER_STAY" | "PER_NIGHT" | "PER_GUEST";
+  maxQuantity: number;
+};
+
 export type ResortDetail = PublicProperty & {
   roomTypes: PublicRoomType[];
   faqs: PublicFaq[];
+  addons: PropertyAddon[];
   todayRate: number;
   reviews: PublicReview[];
   averageRating: number;

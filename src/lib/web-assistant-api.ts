@@ -12,14 +12,29 @@ export type WebAssistantReply = {
   escalated: boolean;
 };
 
+// What screen/selection the guest is currently on (docs/guest-experience-handoff.md,
+// Phase C) — sent with every message so the assistant can answer in context
+// without the client reconstructing it server-side.
+export type WebAssistantContext = {
+  step: "experience" | "availability" | "room_detail" | "checkout";
+  checkIn?: string;
+  checkOut?: string;
+  adults?: number;
+  children?: number;
+  roomTypeId?: string;
+  roomName?: string;
+  extras?: string[];
+};
+
 export async function askWebAssistant(
   token: string,
   message: string,
+  context?: WebAssistantContext,
 ): Promise<WebAssistantReply> {
   const res = await fetch(`${BASE}/public/booking-sessions/${token}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, context }),
   });
   if (!res.ok) {
     throw new Error(`Assistant request failed (${res.status})`);

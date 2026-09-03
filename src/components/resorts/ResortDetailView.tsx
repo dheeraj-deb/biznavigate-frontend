@@ -26,6 +26,8 @@ import {
   FaqSection,
 } from "@/components/smartpages/DetailSections";
 import { sp } from "@/components/smartpages/tokens";
+import { guestDisplayFontFamily } from "@/lib/guestTheme";
+import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import type { ResortDetail } from "@/lib/publicApi";
 
 const StoryViewer = lazy(() => import("@/components/smartpages/StoryViewer"));
@@ -39,6 +41,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const checkout = searchParams.get("checkout") ?? undefined;
   const adultsParam = searchParams.get("adults");
   const adults = adultsParam ? parseInt(adultsParam, 10) : undefined;
+  const sessionToken = searchParams.get("s");
 
   const heroRef = useRef<HTMLDivElement>(null);
   const [storyOpen, setStoryOpen] = useState(() => searchParams.get("story") === "1");
@@ -128,7 +131,14 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             )}
             <Typography
               component="h1"
-              sx={{ mt: 1, fontSize: { xs: "1.875rem", sm: "2.25rem" }, fontWeight: 700, letterSpacing: "-0.02em", color: sp.ink }}
+              sx={{
+                mt: 1,
+                fontFamily: guestDisplayFontFamily,
+                fontSize: { xs: "2.25rem", sm: "2.75rem" },
+                fontWeight: 400,
+                lineHeight: 1.1,
+                color: sp.ink,
+              }}
             >
               {property.name}
             </Typography>
@@ -252,6 +262,13 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           />
         </Suspense>
       )}
+
+      <AskAssistantDrawer
+        sessionToken={sessionToken}
+        phoneNumber={phone}
+        propertyName={property.name}
+        context={{ step: "experience", checkIn: checkin, checkOut: checkout, adults }}
+      />
     </>
   );
 }

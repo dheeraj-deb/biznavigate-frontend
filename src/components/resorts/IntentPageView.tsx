@@ -24,6 +24,7 @@ import {
   FaqSection,
 } from "@/components/smartpages/DetailSections";
 import { sp, formatINR } from "@/components/smartpages/tokens";
+import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import type { IntentPageData } from "@/lib/publicApi";
 
 export function IntentPageView({ intent }: { intent: IntentPageData }) {
@@ -133,7 +134,10 @@ export function IntentPageView({ intent }: { intent: IntentPageData }) {
                 {property.propertyType}
               </Typography>
             )}
-            <Typography component="h2" sx={{ mt: 1, fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.02em", color: sp.ink }}>
+            <Typography
+              component="h2"
+              sx={{ mt: 1, fontFamily: guestDisplayFontFamily, fontSize: "2rem", fontWeight: 400, lineHeight: 1.15, color: sp.ink }}
+            >
               {property.name}
             </Typography>
             {location && (
