@@ -1,11 +1,13 @@
 'use client';
 
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import PlaceIcon from "@mui/icons-material/Place";
+import StarIcon from "@mui/icons-material/Star";
 import { trackListingClick } from "@/lib/attribution";
 import { MediaGallery } from "@/components/smartpages/MediaGallery";
 import { RoomCard } from "@/components/smartpages/RoomCard";
@@ -14,10 +16,6 @@ import { LodgingSchema } from "@/components/smartpages/LodgingSchema";
 import { ReviewSection } from "@/components/smartpages/ReviewSection";
 import { StickyCtaBar } from "@/components/smartpages/StickyCtaBar";
 import { AmenityHighlights } from "@/components/smartpages/AmenityHighlights";
-import { StickyPin } from "@/components/smartpages/StickyPin";
-import { isDirectVideo } from "@/components/smartpages/VideoEmbed";
-import { clipForPhoto } from "@/lib/media";
-import type { StorySlide } from "@/components/smartpages/StoryViewer";
 import {
   SectionTitle,
   LocationSection,
@@ -29,11 +27,9 @@ import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import { DateGuestCard } from "@/components/resorts/DateGuestCard";
 import { StickyBookingHeader } from "@/components/resorts/StickyBookingHeader";
-import { useBookingFlowHref } from "@/lib/booking-flow-url";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
-import type { ResortDetail } from "@/lib/publicApi";
-
-const StoryViewer = lazy(() => import("@/components/smartpages/StoryViewer"));
+import { getAvailability } from "@/lib/publicApi";
+import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -46,8 +42,6 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   // chosen dates/party size to the landing URL — reading them here lets the
   // page open pre-filled instead of asking the guest to type dates twice.
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const buildHref = useBookingFlowHref();
   const checkin = searchParams.get("checkin") ?? undefined;
   const checkout = searchParams.get("checkout") ?? undefined;
   const adultsParam = searchParams.get("adults");
@@ -61,32 +55,13 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const [pickAdults, setPickAdults] = useState(adults ?? 2);
   const [pickChildren, setPickChildren] = useState(0);
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const bookingWidgetRef = useRef<HTMLDivElement>(null);
-  const [storyOpen, setStoryOpen] = useState(() => searchParams.get("story") === "1");
-
-  // Story slides: every photo/video plus any PIN moment's own media (with its
-  // label as a caption) — no separate content model, it's derived from what
-  // the gallery and moments editor already produced. Photos that have an AI
-  // motion clip play as that clip (StoryViewer advances video slides on
-  // `ended`), so the story feels filmed while staying true to the photos.
-  const slides: StorySlide[] = useMemo(() => {
-    const base: StorySlide[] = [
-      ...property.photos.map((url) => {
-        const clip = clipForPhoto(property.motion, url);
-        return clip ? { kind: "video" as const, url: clip } : { kind: "image" as const, url };
-      }),
-      ...(property.videos ?? []).filter(isDirectVideo).map((url) => ({ kind: "video" as const, url })),
-    ];
-    const pinMedia: StorySlide[] = (property.moments ?? [])
-      .filter((m) => m.type === "PIN" && m.mediaUrl)
-      .map((m) => ({
-        kind: (isDirectVideo(m.mediaUrl as string) ? "video" : "image") as "image" | "video",
-        url: m.mediaUrl as string,
-        caption: m.label,
-      }));
-    return [...base, ...pinMedia];
-  }, [property]);
+  // Real availability for the room types list below — checked in place, no
+  // navigation to /book. That page still exists for the actual checkout,
+  // but only ever opens once a specific room is already confirmed available
+  // for these exact dates (see checkAvailability below).
+  const [availability, setAvailability] = useState<AvailabilityResult[] | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const roomsRef = useRef<HTMLDivElement>(null);
 
   // Page-view event so the funnel (view → moment → book) starts at the top.
   useEffect(() => {
@@ -99,78 +74,46 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const location = [property.city, property.region, property.country].filter(Boolean).join(", ");
   const highlights = [...(property.highlights ?? []), ...(property.amenities ?? [])].slice(0, 4);
 
-  function checkAvailability() {
+  // The hero gallery reads best with at least 4 photos (hero + a split
+  // bottom row + "View more"). Listings that haven't uploaded enough of
+  // their own property-level photos borrow from their room types instead
+  // of showing a sparse 1-2 photo grid — room shots are still real photos
+  // of this property, just scoped narrower than the top-level gallery.
+  const roomPhotos = (property.roomTypes ?? []).flatMap((r) => r.photos ?? []);
+  const galleryPhotos =
+    property.photos.length < 4
+      ? [...property.photos, ...roomPhotos.filter((p) => !property.photos.includes(p))].slice(0, 8)
+      : property.photos;
+
+  async function checkAvailability() {
     bookingLinkEvents.track("dates_selected", { checkIn: pickCheckIn, checkOut: pickCheckOut });
-    router.push(
-      buildHref(`/resorts/${property.slug}/book`, {
-        checkin: pickCheckIn,
-        checkout: pickCheckOut,
-        adults: pickAdults,
-        children: pickChildren,
-      }),
-    );
+    setCheckingAvailability(true);
+    try {
+      const rows = await getAvailability(property.slug, pickCheckIn, pickCheckOut);
+      setAvailability(rows);
+    } catch {
+      setAvailability([]);
+    } finally {
+      setCheckingAvailability(false);
+    }
+    roomsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
     <>
       <LodgingSchema property={property} todayRate={property.todayRate} />
 
-      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, pt: 4 }}>
-        <Box ref={heroRef}>
-          <MediaGallery
-            photos={property.photos}
-            videos={property.videos}
-            motion={property.motion}
-            name={property.name}
-            propertyId={property.id}
-            moments={property.moments}
-            phoneNumber={phone}
-          />
-        </Box>
-      </Box>
-
-      {/* One check-in/out/guests card, reused verbatim on /book and
-          /rooms/[id] — picking dates here just hands off; nothing here is
-          re-queried against real availability until /book. */}
-      <DateGuestCard
-        checkIn={pickCheckIn}
-        checkOut={pickCheckOut}
-        adults={pickAdults}
-        children={pickChildren}
-        onChange={(next) => {
-          if (next.checkIn) setPickCheckIn(next.checkIn);
-          if (next.checkOut) setPickCheckOut(next.checkOut);
-          if (next.adults != null) setPickAdults(next.adults);
-          if (next.children != null) setPickChildren(next.children);
-        }}
-        footer={
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={checkAvailability}
-            sx={{ borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: "#1a4ab8" }, py: 1.25, fontWeight: 600 }}
-          >
-            Check availability
-          </Button>
-        }
-      />
-      {/* Invisible sentinel, not a wrapper — DateGuestCard's own negative
-          margin confuses a wrapping ref's measured position. */}
-      <Box ref={bookingWidgetRef} sx={{ height: "1px" }} />
-
       {/* Persistent booking access while scrolling — the one gap real
           market leaders (Airbnb's sticky booking card, Aman/Oberoi's
           persistent header "Reserve" button) agreed on that this page
-          didn't have. Appears once the primary widget above scrolls out
-          of view. */}
+          didn't have. Always present, stuck under the main nav. */}
       <StickyBookingHeader
-        watchRef={bookingWidgetRef}
         propertyName={property.name}
         todayRate={property.todayRate}
         onBook={checkAvailability}
       />
 
-      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 12, sm: 6 } }}>
+      <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 4 }}>
         {/* Header */}
         <Box>
           {property.propertyType && (
@@ -205,14 +148,79 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           >
             {property.name}
           </Typography>
-          {location && (
-            <Typography sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.75, color: sp.muted }}>
-              <PlaceIcon sx={{ fontSize: 18, flexShrink: 0 }} />
-              {location}
+          {(location || property.reviewCount > 0) && (
+            <Typography sx={{ mt: 1, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, color: sp.muted }}>
+              {location && (
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+                  <PlaceIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+                  {location}
+                </Box>
+              )}
+              {property.reviewCount > 0 && (
+                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  {location && "·"}
+                  <StarIcon sx={{ fontSize: 16, color: sp.star }} />
+                  <Box component="span" sx={{ fontWeight: 600, color: sp.ink }}>
+                    {property.averageRating.toFixed(1)}
+                  </Box>
+                  · {property.reviewCount} review{property.reviewCount !== 1 ? "s" : ""}
+                </Box>
+              )}
             </Typography>
           )}
         </Box>
 
+        <Box sx={{ mt: 3 }}>
+          <MediaGallery
+            photos={galleryPhotos}
+            videos={property.videos}
+            motion={property.motion}
+            name={property.name}
+            propertyId={property.id}
+            moments={property.moments}
+            phoneNumber={phone}
+          />
+        </Box>
+      </Box>
+
+      {/* One check-in/out/guests card, reused verbatim on /book and
+          /rooms/[id] — picking dates here just hands off; nothing here is
+          re-queried against real availability until /book. */}
+      <DateGuestCard
+        overlap={false}
+        checkIn={pickCheckIn}
+        checkOut={pickCheckOut}
+        adults={pickAdults}
+        children={pickChildren}
+        onChange={(next) => {
+          if (next.checkIn) setPickCheckIn(next.checkIn);
+          if (next.checkOut) setPickCheckOut(next.checkOut);
+          if (next.adults != null) setPickAdults(next.adults);
+          if (next.children != null) setPickChildren(next.children);
+        }}
+        footer={
+          <Button
+            fullWidth
+            variant="contained"
+            disabled={checkingAvailability}
+            onClick={checkAvailability}
+            startIcon={checkingAvailability ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+            sx={{
+              borderRadius: 0,
+              bgcolor: sp.blue,
+              "&:hover": { bgcolor: "#1a4ab8" },
+              "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.7 },
+              fontWeight: 600,
+              height: "100%",
+              minHeight: { xs: 48, sm: "auto" },
+            }}
+          >
+            {checkingAvailability ? "Checking…" : "Check availability"}
+          </Button>
+        }
+      />
+
+      <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 12, sm: 6 } }}>
         {/* Highlights strip */}
         <AmenityHighlights
           highlights={highlights}
@@ -229,25 +237,65 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           </Typography>
         )}
 
-        {/* Room types — the core decision, given the most visual weight */}
+        {/* Room types — the core decision, given the most visual weight.
+            Once dates are checked, only rooms actually available for them
+            are shown — each with its real price for those dates instead of
+            the generic nightly rate, and a Book now that goes straight to
+            /book (already pre-verified) instead of re-checking there. */}
         {property.roomTypes.length > 0 && (
-          <Box component="section" sx={{ mt: 6 }}>
+          <Box component="section" ref={roomsRef} sx={{ mt: 6, scrollMarginTop: 16 }}>
             <SectionTitle>Room types</SectionTitle>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {property.roomTypes.map((room) => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  phoneNumber={phone}
-                  propertyName={property.name}
-                  propertyId={property.id}
-                  bookingSlug={property.slug}
-                  tourUrl={
-                    property.motion?.tours.find((t) => t.roomTypeId === room.id)?.tourUrl ?? null
-                  }
-                />
-              ))}
-            </Box>
+            {checkingAvailability ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                <CircularProgress size={28} sx={{ color: sp.blue }} />
+              </Box>
+            ) : (
+              (() => {
+                const visibleRooms = availability
+                  ? property.roomTypes.filter(
+                      (room) => availability.find((a) => a.roomTypeId === room.id)?.available,
+                    )
+                  : property.roomTypes;
+
+                if (availability && visibleRooms.length === 0) {
+                  return (
+                    <Typography sx={{ fontSize: "0.9375rem", color: sp.muted }}>
+                      No rooms available for these dates. Try different dates.
+                    </Typography>
+                  );
+                }
+
+                return (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {visibleRooms.map((room) => {
+                      const thisAvailability = availability?.find((a) => a.roomTypeId === room.id);
+                      return (
+                        <RoomCard
+                          key={room.id}
+                          room={room}
+                          phoneNumber={phone}
+                          propertyName={property.name}
+                          propertyId={property.id}
+                          bookingSlug={property.slug}
+                          tourUrl={
+                            property.motion?.tours.find((t) => t.roomTypeId === room.id)?.tourUrl ?? null
+                          }
+                          checkIn={pickCheckIn}
+                          checkOut={pickCheckOut}
+                          adults={pickAdults}
+                          availability={
+                            thisAvailability
+                              ? { totalPrice: thisAvailability.totalPrice, nights: thisAvailability.nights }
+                              : null
+                          }
+                          onBookNow={checkAvailability}
+                        />
+                      );
+                    })}
+                  </Box>
+                );
+              })()
+            )}
           </Box>
         )}
 
@@ -281,23 +329,6 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
         propertyId={property.id}
         bookingSlug={property.slug}
       />
-
-      {/* Floating story entry point */}
-      {slides.length > 0 && !storyOpen && (
-        <StickyPin thumbnail={property.photos[0] ?? slides[0].url} anchorRef={heroRef} onOpen={() => setStoryOpen(true)} />
-      )}
-
-      {storyOpen && (
-        <Suspense fallback={null}>
-          <StoryViewer
-            slides={slides}
-            phoneNumber={phone}
-            propertyName={property.name}
-            propertyId={property.id}
-            onClose={() => setStoryOpen(false)}
-          />
-        </Suspense>
-      )}
 
       <AskAssistantDrawer
         slug={property.slug}

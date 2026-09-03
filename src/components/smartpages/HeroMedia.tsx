@@ -95,7 +95,7 @@ export function HeroMedia({ photos, videos, motionClip, name, propertyId, onClic
       sx={{
         position: "relative",
         aspectRatio: { xs: "4/3", sm: "auto" },
-        height: { sm: 420 },
+        height: { sm: "100%" },
         cursor: onClick ? "pointer" : "default",
         overflow: "hidden",
         borderRadius: sp.radius,

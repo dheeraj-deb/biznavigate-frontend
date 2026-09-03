@@ -9,6 +9,7 @@ import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import { submitReview, type PublicReview } from "../../lib/publicApi";
 import { sp } from "./tokens";
+import { guestDisplayFontFamily } from "../../lib/guestTheme";
 
 type Props = {
   slug: string;
@@ -55,54 +56,97 @@ export function ReviewSection({ slug, reviews, averageRating, reviewCount }: Pro
     }
   }
 
+  const writeReviewButton = submitted ? (
+    <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, color: sp.whatsappText }}>
+      Thanks for sharing your stay!
+    </Typography>
+  ) : !showForm ? (
+    <Button
+      onClick={() => setShowForm(true)}
+      sx={{
+        height: 40,
+        px: 2.5,
+        borderRadius: sp.radiusSm,
+        border: `1px solid ${sp.borderSoft}`,
+        color: sp.blue,
+        fontSize: "0.875rem",
+        fontWeight: 600,
+        "&:hover": { bgcolor: sp.blueBgTint },
+      }}
+    >
+      Write a review
+    </Button>
+  ) : null;
+
   return (
     <Box component="section" sx={{ mt: 5 }}>
-      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
-        <Typography component="h2" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink }}>
-          Guest reviews
-        </Typography>
-        {reviewCount > 0 && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Rating value={averageRating} precision={0.5} readOnly size="small" sx={ratingSx} />
-            <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: sp.ink }}>
-              {averageRating.toFixed(1)}
-            </Typography>
+      <Typography component="h2" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink }}>
+        Guest reviews
+      </Typography>
+
+      <Box sx={{ mt: 2, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: { xs: 3, sm: 4 } }}>
+        {/* Stat block */}
+        <Box sx={{ flexShrink: 0, minWidth: { sm: 140 } }}>
+          {reviewCount > 0 ? (
+            <>
+              <Typography sx={{ fontFamily: guestDisplayFontFamily, fontSize: "2.5rem", fontWeight: 400, color: sp.ink, lineHeight: 1 }}>
+                {averageRating.toFixed(1)}
+              </Typography>
+              <Rating value={averageRating} precision={0.5} readOnly size="small" sx={{ ...ratingSx, mt: 0.75 }} />
+              <Typography sx={{ mt: 0.5, fontSize: "0.8125rem", color: sp.muted }}>
+                {reviewCount} review{reviewCount !== 1 ? "s" : ""}
+              </Typography>
+            </>
+          ) : (
             <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>
-              · {reviewCount} review{reviewCount !== 1 ? "s" : ""}
+              No reviews yet — be the first to share your stay.
             </Typography>
+          )}
+          <Box sx={{ mt: 1.5 }}>{writeReviewButton}</Box>
+        </Box>
+
+        {/* Review list */}
+        {reviews.length > 0 && (
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+            {reviews.slice(0, 8).map((r) => (
+              <Box key={r.id} sx={{ borderRadius: sp.radiusSm, border: `1px solid ${sp.border}`, bgcolor: "#fff", p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        flexShrink: 0,
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        bgcolor: sp.blueBgSoft,
+                        color: sp.blue,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {r.guestName.trim().charAt(0).toUpperCase()}
+                    </Box>
+                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: sp.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.guestName}
+                    </Typography>
+                  </Box>
+                  <Rating value={r.rating} readOnly size="small" sx={{ ...ratingSx, flexShrink: 0 }} />
+                </Box>
+                {r.comment && (
+                  <Typography sx={{ mt: 0.75, fontSize: "0.875rem", lineHeight: 1.7, color: sp.body }}>
+                    {r.comment}
+                  </Typography>
+                )}
+              </Box>
+            ))}
           </Box>
         )}
       </Box>
 
-      {reviews.length === 0 ? (
-        <Typography sx={{ mt: 1.5, fontSize: "0.875rem", color: sp.muted }}>
-          No reviews yet — be the first to share your stay.
-        </Typography>
-      ) : (
-        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {reviews.slice(0, 8).map((r) => (
-            <Box key={r.id} sx={{ borderRadius: sp.radiusSm, border: `1px solid ${sp.border}`, bgcolor: "#fff", p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
-                <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: sp.ink }}>
-                  {r.guestName}
-                </Typography>
-                <Rating value={r.rating} readOnly size="small" sx={ratingSx} />
-              </Box>
-              {r.comment && (
-                <Typography sx={{ mt: 0.75, fontSize: "0.875rem", lineHeight: 1.7, color: sp.body }}>
-                  {r.comment}
-                </Typography>
-              )}
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {submitted ? (
-        <Typography sx={{ mt: 2, fontSize: "0.875rem", fontWeight: 500, color: sp.whatsappText }}>
-          Thanks for sharing your stay!
-        </Typography>
-      ) : showForm ? (
+      {showForm && !submitted && (
         <Box sx={{ mt: 2, borderRadius: sp.radiusSm, border: `1px solid ${sp.border}`, bgcolor: sp.bgSoft, p: 2 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Box>
@@ -170,23 +214,6 @@ export function ReviewSection({ slug, reviews, averageRating, reviewCount }: Pro
             </Box>
           </Box>
         </Box>
-      ) : (
-        <Button
-          onClick={() => setShowForm(true)}
-          sx={{
-            mt: 2,
-            height: 40,
-            px: 2.5,
-            borderRadius: sp.radiusSm,
-            border: `1px solid ${sp.borderSoft}`,
-            color: sp.blue,
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            "&:hover": { bgcolor: sp.blueBgTint },
-          }}
-        >
-          Write a review
-        </Button>
       )}
     </Box>
   );

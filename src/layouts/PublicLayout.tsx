@@ -38,7 +38,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Box
             sx={{
               mx: "auto",
-              maxWidth: 1024,
+              maxWidth: 1280,
               px: { xs: 2, sm: 3 },
               py: 1.5,
               display: "flex",
@@ -68,7 +68,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Box
             sx={{
               mx: "auto",
-              maxWidth: 1024,
+              maxWidth: 1280,
               px: { xs: 2, sm: 3 },
               py: 3,
               display: "flex",

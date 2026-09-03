@@ -86,8 +86,12 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     [property.roomTypes],
   );
 
+  // Only a room genuinely available for the current dates opens checkout —
+  // it can still appear in `availability` (just unavailable) after the
+  // guest changes dates on this same page for a room they'd already
+  // selected, and that must fall back to the room list, not a ₹0 checkout.
   const selectedAvailability = useMemo(
-    () => availability?.find((a) => a.roomTypeId === params.room) ?? null,
+    () => availability?.find((a) => a.roomTypeId === params.room && a.available) ?? null,
     [availability, params.room],
   );
 

@@ -18,6 +18,27 @@ type Props = {
    *  — e.g. the experience page's "Check availability" button that hands
    *  the selection off to /book, where this same card reappears live. */
   footer?: React.ReactNode;
+  /** Raised up to overlap the hero banner above it (Phase C spec on /book:
+   *  "raised/elevated"). The experience page's gallery already ends in its
+   *  own natural rhythm, so it sits just below instead. Ignored when `mt`
+   *  is given explicitly (e.g. the room page centers this over its hero
+   *  via an absolutely-positioned wrapper, which needs a plain 0). */
+  overlap?: boolean;
+  mt?: number | string | { xs?: number | string; sm?: number | string };
+};
+
+const labelSx = {
+  fontSize: "0.6875rem",
+  fontWeight: 600,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase" as const,
+  color: sp.muted,
+};
+
+const dateFieldSx = {
+  "& .MuiInputBase-input": { p: 0, fontSize: "0.9375rem", fontWeight: 600, color: sp.ink },
+  "& .MuiInputBase-root": { mt: 0.5 },
+  "& .MuiInputBase-root:before, & .MuiInputBase-root:after": { display: "none" },
 };
 
 function Stepper({
@@ -32,7 +53,7 @@ function Stepper({
   onChange: (next: number) => void;
 }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.75 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 0.5 }}>
       <Typography sx={{ fontSize: "0.875rem", color: sp.ink }}>{label}</Typography>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <IconButton
@@ -62,16 +83,23 @@ function Stepper({
  * Overlaps the hero on /book and /rooms/[id] (Phase C spec: "raised/elevated,
  * always visible and always editable — changing it re-queries availability
  * in place"). The guest is never sent back a page to change dates.
+ *
+ * One continuous bar on sm+ — fields separated by hairline dividers, the
+ * footer action filling the remaining width flush against the right edge —
+ * rather than a padded card with the button stacked below it. `overflow:
+ * hidden` on the rounded outer box is what clips a square-cornered footer
+ * button into the card's own corner radius, so the button doesn't need to
+ * know its own radius.
  */
-export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, footer }: Props) {
+export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, footer, overlap = true, mt }: Props) {
   return (
     <Box
       sx={{
         position: "relative",
         zIndex: 10,
         mx: "auto",
-        mt: { xs: -4, sm: -5 },
-        maxWidth: 1024,
+        mt: mt !== undefined ? mt : overlap ? { xs: -4, sm: -5 } : { xs: 2, sm: 3 },
+        maxWidth: 1280,
         px: { xs: 2, sm: 3 },
       }}
     >
@@ -81,43 +109,54 @@ export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, f
           border: `1px solid ${sp.border}`,
           bgcolor: "#fff",
           boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
-          p: { xs: 2, sm: 2.5 },
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr auto" },
-          alignItems: "center",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { sm: "stretch" },
         }}
       >
-        <TextField
-          type="date"
-          label="Check-in"
-          size="small"
-          value={checkIn}
-          onChange={(e) => onChange({ checkIn: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          type="date"
-          label="Check-out"
-          size="small"
-          value={checkOut}
-          onChange={(e) => onChange({ checkOut: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: checkIn } }}
-        />
+        <Box sx={{ flex: 1, px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 }, borderBottom: { xs: `1px solid ${sp.divider}`, sm: "none" }, borderRight: { sm: `1px solid ${sp.divider}` } }}>
+          <Typography sx={labelSx}>Check-in</Typography>
+          <TextField
+            type="date"
+            variant="standard"
+            fullWidth
+            value={checkIn}
+            onChange={(e) => onChange({ checkIn: e.target.value })}
+            slotProps={{ input: { disableUnderline: true } }}
+            sx={dateFieldSx}
+          />
+        </Box>
+        <Box sx={{ flex: 1, px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 }, borderBottom: { xs: `1px solid ${sp.divider}`, sm: "none" }, borderRight: { sm: `1px solid ${sp.divider}` } }}>
+          <Typography sx={labelSx}>Check-out</Typography>
+          <TextField
+            type="date"
+            variant="standard"
+            fullWidth
+            value={checkOut}
+            onChange={(e) => onChange({ checkOut: e.target.value })}
+            slotProps={{ input: { disableUnderline: true }, htmlInput: { min: checkIn } }}
+            sx={dateFieldSx}
+          />
+        </Box>
         <Box
           sx={{
-            gridColumn: { xs: "1 / -1", sm: "auto" },
             minWidth: { sm: 220 },
-            borderRadius: sp.radiusSm,
-            border: `1px solid ${sp.border}`,
-            px: 1.5,
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1, sm: 1.5 },
+            borderBottom: { xs: `1px solid ${sp.divider}`, sm: "none" },
+            borderRight: { sm: `1px solid ${sp.divider}` },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
           }}
         >
           <Stepper label="Adults" value={adults} min={1} onChange={(v) => onChange({ adults: v })} />
-          <Box sx={{ borderTop: `1px solid ${sp.divider}` }} />
           <Stepper label="Children" value={children} min={0} onChange={(v) => onChange({ children: v })} />
         </Box>
-        {footer && <Box sx={{ gridColumn: "1 / -1" }}>{footer}</Box>}
+        {footer && (
+          <Box sx={{ display: "flex", flex: { xs: "none", sm: 1 } }}>{footer}</Box>
+        )}
       </Box>
     </Box>
   );

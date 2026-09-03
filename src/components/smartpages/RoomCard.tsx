@@ -5,7 +5,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
-import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
+import Button from "@mui/material/Button";
+import CheckIcon from "@mui/icons-material/Check";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
@@ -26,9 +27,33 @@ type Props = {
   bookingSlug?: string;
   /** AI-generated room tour (direct mp4) — used when the owner hasn't uploaded a video. */
   tourUrl?: string | null;
+  /** Dates/guests currently selected above — carried into the booking link
+   *  once availability is confirmed, so /book never has to ask again. */
+  checkIn?: string;
+  checkOut?: string;
+  adults?: number;
+  /** Set once this room is confirmed available for checkIn/checkOut — real
+   *  price for those dates replaces the generic nightly rate, and Book now
+   *  becomes a real link to /book instead of a "check first" trigger. */
+  availability?: { totalPrice: number; nights: number } | null;
+  /** Book now before availability is known: runs the same inline check as
+   *  the date card above, instead of jumping straight into /book unverified. */
+  onBookNow?: () => void;
 };
 
-export function RoomCard({ room, phoneNumber, propertyName, propertyId, bookingSlug, tourUrl }: Props) {
+export function RoomCard({
+  room,
+  phoneNumber,
+  propertyName,
+  propertyId,
+  bookingSlug,
+  tourUrl,
+  checkIn,
+  checkOut,
+  adults,
+  availability,
+  onBookNow,
+}: Props) {
   const photos = room.photos ?? [];
   const roomVideo = (room.videos ?? []).find(isDirectVideo) ?? tourUrl ?? undefined;
   const [index, setIndex] = useState(0);
@@ -156,14 +181,17 @@ export function RoomCard({ room, phoneNumber, propertyName, propertyId, bookingS
           )}
         </Box>
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, color: sp.muted }}>
-          <Typography sx={{ fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-            <PeopleOutlineIcon sx={{ fontSize: 15 }} />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, color: sp.body }}>
+          <Typography sx={{ fontSize: "0.8125rem", display: "flex", alignItems: "center", gap: 0.75 }}>
+            <CheckIcon sx={{ fontSize: 15, color: sp.blue, flexShrink: 0 }} />
             Up to {room.capacityAdults} adults
             {room.capacityChildren > 0 ? ` + ${room.capacityChildren} children` : ""}
           </Typography>
           {room.totalRooms > 1 && (
-            <Typography sx={{ fontSize: "0.75rem" }}>{room.totalRooms} rooms available</Typography>
+            <Typography sx={{ fontSize: "0.8125rem", display: "flex", alignItems: "center", gap: 0.75 }}>
+              <CheckIcon sx={{ fontSize: 15, color: sp.blue, flexShrink: 0 }} />
+              {room.totalRooms} rooms available
+            </Typography>
           )}
         </Box>
 
@@ -199,22 +227,58 @@ export function RoomCard({ room, phoneNumber, propertyName, propertyId, bookingS
           }}
         >
           <Box>
-            <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
-              ₹{formatINR(Number(room.basePrice))}
-            </Typography>
-            <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
-              /night
-            </Typography>
+            {availability ? (
+              <>
+                <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
+                  ₹{formatINR(availability.totalPrice)}
+                </Typography>
+                <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
+                  {" "}for {availability.nights} night{availability.nights !== 1 ? "s" : ""}
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
+                  ₹{formatINR(Number(room.basePrice))}
+                </Typography>
+                <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
+                  /night
+                </Typography>
+              </>
+            )}
           </Box>
-          <WhatsAppCTA
-            phoneNumber={phoneNumber}
-            propertyName={propertyName}
-            roomName={room.name}
-            propertyId={propertyId}
-            roomTypeId={room.id}
-            bookingSlug={bookingSlug}
-            label="Book now"
-          />
+          {availability ? (
+            <WhatsAppCTA
+              phoneNumber={phoneNumber}
+              propertyName={propertyName}
+              roomName={room.name}
+              propertyId={propertyId}
+              roomTypeId={room.id}
+              bookingSlug={bookingSlug}
+              checkin={checkIn}
+              checkout={checkOut}
+              adults={adults}
+              totalPrice={availability.totalPrice}
+              label="Book now"
+            />
+          ) : (
+            <Button
+              variant="contained"
+              disableElevation
+              onClick={onBookNow}
+              sx={{
+                borderRadius: "12px",
+                px: 2.5,
+                py: 1.25,
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                bgcolor: sp.blue,
+                "&:hover": { bgcolor: "#1a4ab8" },
+              }}
+            >
+              Book now
+            </Button>
+          )}
         </Box>
       </Box>
     </Box>

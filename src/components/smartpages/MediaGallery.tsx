@@ -53,7 +53,15 @@ export function MediaGallery({ photos, videos, motion: motionMedia, name, proper
   ];
   const reelSlideIndex = reelUrl ? slides.length - 1 : null;
 
-  const thumbs = photos.slice(1, 3);
+  // Right column: one photo on top, and — since a single stacked thumbnail
+  // underused that space — up to two more side by side underneath, so the
+  // gallery surfaces 4 photos instead of 3 before the guest has to open the
+  // lightbox.
+  const topThumb = photos[1];
+  const bottomThumbs = photos.slice(2, 4);
+  const totalMedia = photos.length + (videos?.length ?? 0);
+  const shownMedia = (topThumb ? 2 : 1) + bottomThumbs.length;
+  const showViewMore = totalMedia > shownMedia;
 
   return (
     <>
@@ -132,8 +140,8 @@ export function MediaGallery({ photos, videos, motion: motionMedia, name, proper
       </Box>
 
       {/* Desktop: hero grid */}
-      <Box sx={{ display: { xs: "none", sm: "grid" }, gap: 1, gridTemplateColumns: "2fr 1fr" }}>
-        <Box sx={{ position: "relative" }}>
+      <Box sx={{ display: { xs: "none", sm: "grid" }, gap: 1, gridTemplateColumns: "2fr 1fr", height: 420 }}>
+        <Box sx={{ position: "relative", height: "100%", minHeight: 0 }}>
           <HeroMedia
             photos={photos}
             videos={videos}
@@ -175,27 +183,46 @@ export function MediaGallery({ photos, videos, motion: motionMedia, name, proper
           )}
         </Box>
 
-        {thumbs.length > 0 && (
-          <Box sx={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 1 }}>
-            {thumbs.map((photo, i) => (
+        {(topThumb || bottomThumbs.length > 0) && (
+          <Box sx={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 1, height: "100%", minHeight: 0 }}>
+            {topThumb && (
               <Box
-                key={photo}
-                onClick={() => setLightboxIndex(i + 1)}
+                onClick={() => setLightboxIndex(1)}
                 sx={{ position: "relative", cursor: "pointer", overflow: "hidden", borderRadius: sp.radius, bgcolor: sp.border, minHeight: 0 }}
               >
-                <OptimizedImage src={photo} alt={`${name} ${i + 2}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                {i === 1 && photos.length + (videos?.length ?? 0) > 3 && (
-                  <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.4)" }}>
-                    <Typography sx={{ fontSize: "1.125rem", fontWeight: 700, color: "#fff" }}>
-                      +{photos.length + (videos?.length ?? 0) - 3} more
-                    </Typography>
-                  </Box>
-                )}
+                <OptimizedImage src={topThumb} alt={`${name} 2`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 {moments && (
-                  <MomentLayer photoUrl={photo} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
+                  <MomentLayer photoUrl={topThumb} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
                 )}
               </Box>
-            ))}
+            )}
+
+            {bottomThumbs.length > 0 && (
+              <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${bottomThumbs.length}, 1fr)`, gap: 1, minHeight: 0 }}>
+                {bottomThumbs.map((photo, i) => {
+                  const isLast = i === bottomThumbs.length - 1;
+                  return (
+                    <Box
+                      key={photo}
+                      onClick={() => setLightboxIndex(i + 2)}
+                      sx={{ position: "relative", cursor: "pointer", overflow: "hidden", borderRadius: sp.radius, bgcolor: sp.border, minHeight: 0 }}
+                    >
+                      <OptimizedImage src={photo} alt={`${name} ${i + 3}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      {isLast && showViewMore && (
+                        <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.4)" }}>
+                          <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: "#fff" }}>
+                            View more
+                          </Typography>
+                        </Box>
+                      )}
+                      {moments && (
+                        <MomentLayer photoUrl={photo} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
           </Box>
         )}
       </Box>

@@ -8,9 +8,6 @@ import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 
 type Props = {
-  /** Sentinel to watch — the bar appears once this scrolls out of view
-   *  (i.e. once the guest has scrolled past the primary booking widget). */
-  watchRef: React.RefObject<HTMLElement | null>;
   propertyName: string;
   todayRate: number;
   onBook: () => void;
@@ -21,39 +18,26 @@ type Props = {
  * booking access must stay reachable while scrolling, not just live at the
  * top and disappear. Airbnb keeps a sticky booking card; Aman and Oberoi
  * keep a persistent "Reserve" button in the header. This is our version —
- * appears in the same slot the plain logo header occupies, once the guest
- * has scrolled past the primary widget, so it never fights that widget for
- * attention while it's still on screen.
+ * always present, stuck directly under the main nav.
  */
-export function StickyBookingHeader({ watchRef, propertyName, todayRate, onBook }: Props) {
-  const [visible, setVisible] = useState(false);
+export function StickyBookingHeader({ propertyName, todayRate, onBook }: Props) {
+  // Measured once against the public nav's real height rather than a
+  // hardcoded constant — the nav's content (logo height, padding) is
+  // themeable, and a stale guess would leave a gap or an overlap.
+  const [navHeight, setNavHeight] = useState(61);
 
-  // A scroll listener re-measuring the sentinel's offset fresh each time,
-  // rather than IntersectionObserver — the sentinel's position shifts as
-  // the hero image loads in, and an observer set up before that layout
-  // settles can latch onto a stale/premature reading.
   useEffect(() => {
-    function onScroll() {
-      const el = watchRef.current;
-      if (!el) return;
-      const offsetTop = el.getBoundingClientRect().top + window.scrollY;
-      setVisible(window.scrollY > offsetTop);
-    }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [watchRef]);
-
-  if (!visible) return null;
+    const nav = document.querySelector("header");
+    if (nav) setNavHeight(nav.getBoundingClientRect().height);
+  }, []);
 
   return (
     <Box
       sx={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 41,
+        display: { xs: "block", sm: "none" },
+        position: "sticky",
+        top: navHeight,
+        zIndex: 39,
         bgcolor: "rgba(255,255,255,0.97)",
         backdropFilter: "blur(8px)",
         borderBottom: `1px solid ${sp.border}`,
@@ -63,7 +47,7 @@ export function StickyBookingHeader({ watchRef, propertyName, todayRate, onBook 
       <Box
         sx={{
           mx: "auto",
-          maxWidth: 1024,
+          maxWidth: 1280,
           px: { xs: 2, sm: 3 },
           py: 1.25,
           display: "flex",

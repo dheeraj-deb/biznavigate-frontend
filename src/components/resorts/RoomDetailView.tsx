@@ -81,6 +81,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
     <Box>
       <Box
         sx={{
+          position: "relative",
           height: { xs: 200, sm: 260 },
           width: "100%",
           bgcolor: sp.border,
@@ -88,15 +89,34 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-      />
+      >
+        {/* Centered on the hero band — sm+ only, where the card fits in one
+            row and stays shorter than the hero. On mobile the stacked card
+            is taller than the hero itself, so it's rendered as a normal
+            sibling below instead (further down, not nested here) rather
+            than overflowing a fixed-height absolutely-positioned parent. */}
+        <Box sx={{ display: { xs: "none", sm: "block" }, position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)" }}>
+          <DateGuestCard
+            mt={0}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            adults={adults}
+            children={childrenCount}
+            onChange={handleDateGuestChange}
+          />
+        </Box>
+      </Box>
 
-      <DateGuestCard
-        checkIn={checkIn}
-        checkOut={checkOut}
-        adults={adults}
-        children={childrenCount}
-        onChange={handleDateGuestChange}
-      />
+      <Box sx={{ display: { xs: "block", sm: "none" } }}>
+        <DateGuestCard
+          mt={2}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          adults={adults}
+          children={childrenCount}
+          onChange={handleDateGuestChange}
+        />
+      </Box>
 
       <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: 4 }}>
         <Typography
@@ -108,6 +128,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
         <Typography sx={{ mt: 0.5, fontSize: "0.9375rem", color: sp.muted }}>
           {property.name} · Sleeps {roomType.capacityAdults} adult{roomType.capacityAdults !== 1 ? "s" : ""}
           {roomType.capacityChildren ? ` + ${roomType.capacityChildren} children` : ""}
+          {roomType.totalRooms > 1 && ` · ${roomType.totalRooms} rooms available`}
         </Typography>
 
         <Box sx={{ mt: 3 }}>

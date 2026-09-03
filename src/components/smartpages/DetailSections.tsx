@@ -29,27 +29,41 @@ export function LocationSection({
   property: Pick<ResortDetail, "address" | "city" | "region" | "postalCode" | "latitude" | "longitude">;
   directions?: string | null;
 }) {
+  const hasCoords = property.latitude != null && property.longitude != null;
+
   return (
-    <Box component="section" sx={{ mt: 5, borderRadius: sp.radius, border: `1px solid ${sp.border}`, bgcolor: sp.bgSoft, p: 3 }}>
-      <Typography component="h2" sx={{ mb: 1.5, fontSize: "1.25rem", fontWeight: 700, color: sp.ink }}>
-        Location
-      </Typography>
-      <Typography sx={{ display: "flex", alignItems: "flex-start", gap: 1, fontSize: "1rem", color: sp.body }}>
-        <PlaceIcon sx={{ mt: 0.25, fontSize: 18, flexShrink: 0, color: sp.blue }} />
-        {[property.address, property.city, property.region, property.postalCode].filter(Boolean).join(", ")}
-      </Typography>
-      {property.latitude && property.longitude && (
-        <Link
-          href={`https://maps.google.com/?q=${property.latitude},${property.longitude}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          underline="hover"
-          sx={{ mt: 1.5, display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: "0.875rem", fontWeight: 500, color: sp.blue }}
-        >
-          Open in Google Maps →
-        </Link>
+    <Box component="section" sx={{ mt: 5, borderRadius: sp.radius, border: `1px solid ${sp.border}`, bgcolor: sp.bgSoft, overflow: "hidden" }}>
+      {hasCoords && (
+        <Box
+          component="iframe"
+          title="Property location map"
+          src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&z=15&output=embed`}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          sx={{ display: "block", width: "100%", height: 240, border: 0 }}
+        />
       )}
-      {directions && <Typography sx={{ mt: 1.5, fontSize: "0.875rem", color: sp.muted }}>{directions}</Typography>}
+      <Box sx={{ p: 3 }}>
+        <Typography component="h2" sx={{ mb: 1.5, fontSize: "1.25rem", fontWeight: 700, color: sp.ink }}>
+          Location
+        </Typography>
+        <Typography sx={{ display: "flex", alignItems: "flex-start", gap: 1, fontSize: "1rem", color: sp.body }}>
+          <PlaceIcon sx={{ mt: 0.25, fontSize: 18, flexShrink: 0, color: sp.blue }} />
+          {[property.address, property.city, property.region, property.postalCode].filter(Boolean).join(", ")}
+        </Typography>
+        {hasCoords && (
+          <Link
+            href={`https://maps.google.com/?q=${property.latitude},${property.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="hover"
+            sx={{ mt: 1.5, display: "inline-flex", alignItems: "center", gap: 0.75, fontSize: "0.875rem", fontWeight: 500, color: sp.blue }}
+          >
+            Open in Google Maps →
+          </Link>
+        )}
+        {directions && <Typography sx={{ mt: 1.5, fontSize: "0.875rem", color: sp.muted }}>{directions}</Typography>}
+      </Box>
     </Box>
   );
 }
