@@ -11,17 +11,15 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import { sp } from "@/components/smartpages/tokens";
+import { useBookingFlowParams, useUpdateBookingFlowParams } from "@/lib/booking-flow-url";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
+import { startWebVisitorSession } from "@/lib/booking-link-api";
 import { askWebAssistant, type WebAssistantContext } from "@/lib/web-assistant-api";
 
 type ChatTurn = { role: "guest" | "assistant"; text: string };
 
 type Props = {
-  /** Booking-link session token — nothing to answer into without one (v1
-   *  only serves a guest who arrived via a WhatsApp-minted link). Falls back
-   *  to a plain WhatsApp link for an organic visitor, same as before this
-   *  existed. */
-  sessionToken: string | null;
+  slug: string;
   phoneNumber: string | null;
   propertyName: string;
   context: WebAssistantContext;
@@ -35,12 +33,19 @@ function buildWaUrl(phoneNumber: string | null, propertyName: string): string | 
 }
 
 /**
- * Present on all four Phase C screens (docs/guest-experience-handoff.md).
- * Opens an inline panel backed by a real agent turn when a session token is
- * available; otherwise falls back to the plain WhatsApp link. "Continue on
- * WhatsApp instead" stays available inside the panel — never remove the exit.
+ * Present on all three built Phase C screens (docs/guest-experience-handoff.md).
+ * Always opens the real chat panel, whether the guest arrived via a
+ * WhatsApp-minted `?s=` link or organically (Phase C open question #3, now
+ * closed): with no session yet, the first message lazily mints one
+ * (startWebVisitorSession — a real Contact + Conversation) rather than
+ * falling back to a WhatsApp-only button. "Continue on WhatsApp instead"
+ * stays available inside the panel as an escape hatch, never as the only
+ * option.
  */
-export function AskAssistantDrawer({ sessionToken, phoneNumber, propertyName, context }: Props) {
+export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context }: Props) {
+  const params = useBookingFlowParams();
+  const updateParams = useUpdateBookingFlowParams();
+  const [sessionToken, setSessionToken] = useState<string | null>(params.s);
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
@@ -51,10 +56,24 @@ export function AskAssistantDrawer({ sessionToken, phoneNumber, propertyName, co
   const waUrl = buildWaUrl(phoneNumber, propertyName);
 
   useEffect(() => {
+    if (params.s) setSessionToken(params.s);
+  }, [params.s]);
+
+  useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [turns, sending]);
 
-  if (!waUrl && !sessionToken) return null;
+  async function ensureSession(): Promise<string | null> {
+    if (sessionToken) return sessionToken;
+    try {
+      const token = await startWebVisitorSession(slug);
+      setSessionToken(token);
+      updateParams({ s: token });
+      return token;
+    } catch {
+      return null;
+    }
+  }
 
   function openPanel() {
     setOpen(true);
@@ -72,48 +91,22 @@ export function AskAssistantDrawer({ sessionToken, phoneNumber, propertyName, co
 
   async function send() {
     const message = input.trim();
-    if (!message || sending || !sessionToken) return;
+    if (!message || sending) return;
     setInput("");
     setError(null);
     setTurns((prev) => [...prev, { role: "guest", text: message }]);
     setSending(true);
     bookingLinkEvents.track("web_chat_message_sent", { fromStep: context.step });
     try {
-      const result = await askWebAssistant(sessionToken, message, context);
+      const token = await ensureSession();
+      if (!token) throw new Error("no session");
+      const result = await askWebAssistant(token, message, context);
       setTurns((prev) => [...prev, { role: "assistant", text: result.reply }]);
     } catch {
       setError("Couldn't send that — please try again, or continue on WhatsApp below.");
     } finally {
       setSending(false);
     }
-  }
-
-  if (!sessionToken) {
-    return (
-      <Fab
-        href={waUrl!}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="extended"
-        onClick={() => {
-          bookingLinkEvents.track("asked_on_whatsapp", { fromStep: context.step });
-          bookingLinkEvents.flush();
-        }}
-        aria-label="Ask a question on WhatsApp"
-        sx={{
-          position: "fixed",
-          bottom: 20,
-          right: 20,
-          zIndex: 30,
-          bgcolor: sp.whatsapp,
-          color: "#fff",
-          "&:hover": { bgcolor: sp.whatsappDark },
-        }}
-      >
-        <ChatBubbleOutlineIcon sx={{ mr: 1, fontSize: 18 }} />
-        Ask on WhatsApp
-      </Fab>
-    );
   }
 
   return (

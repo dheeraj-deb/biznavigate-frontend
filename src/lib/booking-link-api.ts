@@ -49,6 +49,21 @@ export async function getBookingLinkSession(
 }
 
 /**
+ * Mints a chat-only session for a guest with no WhatsApp-minted `?s=` token —
+ * organic search, a shared link, direct navigation. Creates a real
+ * Contact + Conversation server-side, so call this lazily (when the guest
+ * actually opens the chat panel), never on page load.
+ */
+export async function startWebVisitorSession(slug: string): Promise<string> {
+  const res = await fetch(`${BASE}/public/resorts/${slug}/start-chat`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`Could not start chat (${res.status})`);
+  const body = (await res.json()) as { token: string };
+  return body.token;
+}
+
+/**
  * A pre-booking special request raised via "Ask on WhatsApp" or a note the
  * guest leaves before checkout — see Phase 3B of the plan doc. Best-effort:
  * failures are swallowed so a flaky request never blocks the booking flow.

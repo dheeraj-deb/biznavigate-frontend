@@ -268,7 +268,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       )}
 
       <AskAssistantDrawer
-        sessionToken={sessionToken}
+        slug={property.slug}
         phoneNumber={phone}
         propertyName={property.name}
         context={{ step: "experience", checkIn: checkin, checkOut: checkout, adults }}

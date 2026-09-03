@@ -197,7 +197,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       </Box>
 
       <AskAssistantDrawer
-        sessionToken={params.s}
+        slug={property.slug}
         phoneNumber={property.tenant?.gupshupSourceNumber ?? null}
         propertyName={property.name}
         context={{
