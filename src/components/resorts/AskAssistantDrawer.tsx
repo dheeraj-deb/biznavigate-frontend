@@ -23,6 +23,9 @@ type Props = {
   phoneNumber: string | null;
   propertyName: string;
   context: WebAssistantContext;
+  /** Clears StickyCtaBar's mobile-only fixed bottom bar (the experience
+   *  page has both) — otherwise the closed-state FAB sits on top of it. */
+  mobileBottomOffset?: number;
 };
 
 function buildWaUrl(phoneNumber: string | null, propertyName: string): string | null {
@@ -42,7 +45,7 @@ function buildWaUrl(phoneNumber: string | null, propertyName: string): string | 
  * stays available inside the panel as an escape hatch, never as the only
  * option.
  */
-export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context }: Props) {
+export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, mobileBottomOffset }: Props) {
   const params = useBookingFlowParams();
   const updateParams = useUpdateBookingFlowParams();
   const [sessionToken, setSessionToken] = useState<string | null>(params.s);
@@ -118,9 +121,9 @@ export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context }:
           aria-label="Ask a question"
           sx={{
             position: "fixed",
-            bottom: 20,
+            bottom: { xs: mobileBottomOffset ?? 20, sm: 20 },
             right: 20,
-            zIndex: 30,
+            zIndex: 31,
             bgcolor: sp.ink,
             color: "#fff",
             "&:hover": { bgcolor: sp.ink },

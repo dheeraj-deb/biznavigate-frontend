@@ -14,6 +14,10 @@ type Props = {
   adults: number;
   children: number;
   onChange: (next: { checkIn?: string; checkOut?: string; adults?: number; children?: number }) => void;
+  /** Optional trailing action rendered below the grid, inside the same card
+   *  — e.g. the experience page's "Check availability" button that hands
+   *  the selection off to /book, where this same card reappears live. */
+  footer?: React.ReactNode;
 };
 
 function Stepper({
@@ -59,7 +63,7 @@ function Stepper({
  * always visible and always editable — changing it re-queries availability
  * in place"). The guest is never sent back a page to change dates.
  */
-export function DateGuestCard({ checkIn, checkOut, adults, children, onChange }: Props) {
+export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, footer }: Props) {
   return (
     <Box
       sx={{
@@ -113,6 +117,7 @@ export function DateGuestCard({ checkIn, checkOut, adults, children, onChange }:
           <Box sx={{ borderTop: `1px solid ${sp.divider}` }} />
           <Stepper label="Children" value={children} min={0} onChange={(v) => onChange({ children: v })} />
         </Box>
+        {footer && <Box sx={{ gridColumn: "1 / -1" }}>{footer}</Box>}
       </Box>
     </Box>
   );

@@ -1,16 +1,15 @@
 'use client';
 
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 import PlaceIcon from "@mui/icons-material/Place";
 import { trackListingClick } from "@/lib/attribution";
 import { MediaGallery } from "@/components/smartpages/MediaGallery";
 import { RoomCard } from "@/components/smartpages/RoomCard";
 import { AmenitiesGrid } from "@/components/smartpages/AmenitiesGrid";
-import { LiveRateChecker } from "@/components/smartpages/LiveRateChecker";
-import { WhatsAppCTA } from "@/components/smartpages/WhatsAppCTA";
 import { LodgingSchema } from "@/components/smartpages/LodgingSchema";
 import { ReviewSection } from "@/components/smartpages/ReviewSection";
 import { StickyCtaBar } from "@/components/smartpages/StickyCtaBar";
@@ -28,20 +27,38 @@ import {
 import { sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
+import { DateGuestCard } from "@/components/resorts/DateGuestCard";
+import { useBookingFlowHref } from "@/lib/booking-flow-url";
+import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { ResortDetail } from "@/lib/publicApi";
 
 const StoryViewer = lazy(() => import("@/components/smartpages/StoryViewer"));
+
+function defaultDate(daysFromNow: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  return d.toISOString().slice(0, 10);
+}
 
 export function ResortDetailView({ property }: { property: ResortDetail }) {
   // Google's hotel price card (and free booking links) appends the guest's
   // chosen dates/party size to the landing URL — reading them here lets the
   // page open pre-filled instead of asking the guest to type dates twice.
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const buildHref = useBookingFlowHref();
   const checkin = searchParams.get("checkin") ?? undefined;
   const checkout = searchParams.get("checkout") ?? undefined;
   const adultsParam = searchParams.get("adults");
   const adults = adultsParam ? parseInt(adultsParam, 10) : undefined;
-  const sessionToken = searchParams.get("s");
+
+  // This page makes no booking decisions of its own (docs/guest-experience-handoff.md,
+  // Phase C: "no booking mechanics" on the experience screen) — picking
+  // dates here just hands them off to /book, where availability is real.
+  const [pickCheckIn, setPickCheckIn] = useState(checkin ?? defaultDate(1));
+  const [pickCheckOut, setPickCheckOut] = useState(checkout ?? defaultDate(2));
+  const [pickAdults, setPickAdults] = useState(adults ?? 2);
+  const [pickChildren, setPickChildren] = useState(0);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const [storyOpen, setStoryOpen] = useState(() => searchParams.get("story") === "1");
@@ -80,12 +97,23 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const location = [property.city, property.region, property.country].filter(Boolean).join(", ");
   const highlights = [...(property.highlights ?? []), ...(property.amenities ?? [])].slice(0, 4);
 
+  function checkAvailability() {
+    bookingLinkEvents.track("dates_selected", { checkIn: pickCheckIn, checkOut: pickCheckOut });
+    router.push(
+      buildHref(`/resorts/${property.slug}/book`, {
+        checkin: pickCheckIn,
+        checkout: pickCheckOut,
+        adults: pickAdults,
+        children: pickChildren,
+      }),
+    );
+  }
+
   return (
     <>
       <LodgingSchema property={property} todayRate={property.todayRate} />
 
-      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: 4, pb: { xs: 12, sm: 4 } }}>
-        {/* Photos */}
+      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, pt: 4 }}>
         <Box ref={heroRef}>
           <MediaGallery
             photos={property.photos}
@@ -97,71 +125,75 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             phoneNumber={phone}
           />
         </Box>
+      </Box>
 
+      {/* One check-in/out/guests card, reused verbatim on /book and
+          /rooms/[id] — picking dates here just hands off; nothing here is
+          re-queried against real availability until /book. */}
+      <DateGuestCard
+        checkIn={pickCheckIn}
+        checkOut={pickCheckOut}
+        adults={pickAdults}
+        children={pickChildren}
+        onChange={(next) => {
+          if (next.checkIn) setPickCheckIn(next.checkIn);
+          if (next.checkOut) setPickCheckOut(next.checkOut);
+          if (next.adults != null) setPickAdults(next.adults);
+          if (next.children != null) setPickChildren(next.children);
+        }}
+        footer={
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={checkAvailability}
+            sx={{ borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: "#1a4ab8" }, py: 1.25, fontWeight: 600 }}
+          >
+            Check availability
+          </Button>
+        }
+      />
+
+      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 12, sm: 6 } }}>
         {/* Header */}
-        <Box
-          sx={{
-            mt: 3,
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { sm: "flex-start" },
-            justifyContent: { sm: "space-between" },
-            gap: 2,
-          }}
-        >
-          <Box>
-            {property.propertyType && (
-              <Typography
-                component="span"
-                sx={{
-                  display: "inline-block",
-                  borderRadius: "8px",
-                  bgcolor: sp.blueBgSoft,
-                  px: 1.25,
-                  py: 0.5,
-                  fontSize: "0.6875rem",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  color: sp.blue,
-                }}
-              >
-                {property.propertyType}
-              </Typography>
-            )}
+        <Box>
+          {property.propertyType && (
             <Typography
-              component="h1"
+              component="span"
               sx={{
-                mt: 1,
-                fontFamily: guestDisplayFontFamily,
-                fontSize: { xs: "2.25rem", sm: "2.75rem" },
-                fontWeight: 400,
-                lineHeight: 1.1,
-                color: sp.ink,
+                display: "inline-block",
+                borderRadius: "8px",
+                bgcolor: sp.blueBgSoft,
+                px: 1.25,
+                py: 0.5,
+                fontSize: "0.6875rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: sp.blue,
               }}
             >
-              {property.name}
+              {property.propertyType}
             </Typography>
-            {location && (
-              <Typography sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.75, color: sp.muted }}>
-                <PlaceIcon sx={{ fontSize: 18, flexShrink: 0 }} />
-                {location}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ flexShrink: 0 }}>
-            <WhatsAppCTA
-              phoneNumber={phone}
-              propertyName={property.name}
-              propertyId={property.id}
-              bookingSlug={property.slug}
-              sessionToken={sessionToken}
-              checkin={checkin}
-              checkout={checkout}
-              adults={adults}
-              label="Continue to book"
-            />
-          </Box>
+          )}
+          <Typography
+            component="h1"
+            sx={{
+              mt: 1,
+              fontFamily: guestDisplayFontFamily,
+              fontSize: { xs: "2.25rem", sm: "2.75rem" },
+              fontWeight: 400,
+              lineHeight: 1.1,
+              color: sp.ink,
+            }}
+          >
+            {property.name}
+          </Typography>
+          {location && (
+            <Typography sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.75, color: sp.muted }}>
+              <PlaceIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              {location}
+            </Typography>
+          )}
         </Box>
 
         {/* Highlights strip */}
@@ -180,22 +212,9 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           </Typography>
         )}
 
-        {/* Availability checker */}
-        <Box sx={{ mt: 4 }}>
-          <LiveRateChecker
-            slug={property.slug}
-            propertyId={property.id}
-            phoneNumber={phone}
-            propertyName={property.name}
-            initialCheckin={checkin}
-            initialCheckout={checkout}
-            initialAdults={adults}
-          />
-        </Box>
-
-        {/* Room types */}
+        {/* Room types — the core decision, given the most visual weight */}
         {property.roomTypes.length > 0 && (
-          <Box component="section" sx={{ mt: 5 }}>
+          <Box component="section" sx={{ mt: 6 }}>
             <SectionTitle>Room types</SectionTitle>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {property.roomTypes.map((room) => (
@@ -223,22 +242,18 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           </Box>
         )}
 
-        {/* Location */}
-        <LocationSection property={property} />
-
-        {/* Policies */}
-        <PoliciesSection property={property} />
-
-        {/* FAQ */}
-        <FaqSection faqs={property.faqs} />
-
-        {/* Reviews */}
+        {/* Reviews — social proof, still above the fold-adjacent content */}
         <ReviewSection
           slug={property.slug}
           reviews={property.reviews}
           averageRating={property.averageRating}
           reviewCount={property.reviewCount}
         />
+
+        {/* Location, policies, FAQ — reference material, deliberately last */}
+        <LocationSection property={property} />
+        <PoliciesSection property={property} />
+        <FaqSection faqs={property.faqs} />
       </Box>
 
       {/* Sticky mobile CTA */}
@@ -272,6 +287,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
         phoneNumber={phone}
         propertyName={property.name}
         context={{ step: "experience", checkIn: checkin, checkOut: checkout, adults }}
+        mobileBottomOffset={88}
       />
     </>
   );
