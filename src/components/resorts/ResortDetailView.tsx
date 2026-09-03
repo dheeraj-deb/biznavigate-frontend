@@ -155,6 +155,10 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
               propertyName={property.name}
               propertyId={property.id}
               bookingSlug={property.slug}
+              sessionToken={sessionToken}
+              checkin={checkin}
+              checkout={checkout}
+              adults={adults}
               label="Continue to book"
             />
           </Box>

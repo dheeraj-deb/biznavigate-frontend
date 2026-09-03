@@ -1,6 +1,7 @@
 'use client';
 
 import React from "react";
+import NextLink from "next/link";
 import Button from "@mui/material/Button";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { trackListingClick } from "../../lib/attribution";
@@ -18,8 +19,10 @@ type Props = {
   source?: string;
   propertyId?: string;
   roomTypeId?: string;
-  /** When set, CTA opens booking.biznavigo.com instead of WhatsApp. */
+  /** When set, CTA opens /resorts/:slug/book (this same app) instead of WhatsApp. */
   bookingSlug?: string;
+  /** Booking-link session token, carried forward into /book so identity/prefill survive the click. */
+  sessionToken?: string | null;
   variant?: "solid" | "outline";
   label?: string;
   fullWidth?: boolean;
@@ -34,17 +37,19 @@ function formatDate(iso?: string): string | undefined {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-const BOOKING_URL =
-  process.env.NEXT_PUBLIC_BOOKING_URL ?? "https://booking.biznavigo.com";
-
+// The booking flow lives in this same app now (/resorts/:slug/book) — see
+// docs/guest-experience-handoff.md, Phase C. Always a same-site relative
+// link, never an external booking.* domain.
 function buildBookingUrl(props: Props): string | null {
   if (!props.bookingSlug) return null;
-  const params = new URLSearchParams({ src: "smart_page" });
+  const params = new URLSearchParams();
+  if (props.sessionToken) params.set("s", props.sessionToken);
   if (props.checkin) params.set("checkin", props.checkin);
   if (props.checkout) params.set("checkout", props.checkout);
   if (props.adults) params.set("adults", String(props.adults));
-  if (props.roomTypeId) params.set("roomTypeId", props.roomTypeId);
-  return `${BOOKING_URL.replace(/\/$/, "")}/r/${props.bookingSlug}?${params.toString()}`;
+  if (props.roomTypeId) params.set("room", props.roomTypeId);
+  const qs = params.toString();
+  return `/resorts/${props.bookingSlug}/book${qs ? `?${qs}` : ""}`;
 }
 
 export function buildWhatsAppUrl(props: Props): string {
@@ -99,10 +104,10 @@ export function WhatsAppCTA(props: Props) {
 
   return (
     <Button
-      component="a"
+      component={bookingHref ? NextLink : "a"}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={bookingHref ? undefined : "_blank"}
+      rel={bookingHref ? undefined : "noopener noreferrer"}
       onClick={() =>
         trackListingClick({
           propertyId,
