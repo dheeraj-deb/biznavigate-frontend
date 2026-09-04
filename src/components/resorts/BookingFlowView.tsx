@@ -35,29 +35,65 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   const [session, setSession] = useState<BookingLinkSessionView | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResult[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
 
-  // Backfill any missing params so the URL always carries the real, active
-  // search — a guest who lands on a bare /book gets defaults, but the URL
-  // itself becomes the shareable, refreshable state immediately.
+  // Resolve the booking-link session FIRST, then seed the URL from it.
+  //
+  // The session is everything the guest already told the WhatsApp agent —
+  // room, dates, party size — and it has to win over the calendar defaults.
+  // It can only win if we wait for it: seeding defaults on mount (as this
+  // used to) writes "tomorrow, 2 adults" into the URL before the session
+  // lands, which makes "the guest said nothing" indistinguishable from "the
+  // guest said tomorrow" and silently discards what the conversation
+  // established. Seeding once, after resolution, is what makes the handoff
+  // lossless — the guest lands on their room, on their dates, and scrolls
+  // straight to payment.
   useEffect(() => {
-    if (!params.checkin || !params.checkout || params.adults == null || params.children == null) {
-      updateParams({ checkin: checkIn, checkout: checkOut, adults, children: childrenCount });
+    let alive = true;
+    bookingLinkEvents.setToken(params.s);
+
+    async function seed() {
+      let prefill: BookingLinkSessionView["prefill"] | undefined;
+      if (params.s) {
+        const resolved = await getBookingLinkSession(params.s);
+        if (!alive) return;
+        if (resolved) {
+          setSession(resolved);
+          prefill = resolved.prefill;
+        }
+      }
+
+      const next: Record<string, string | number | null> = {};
+      if (!params.checkin) next.checkin = prefill?.checkIn ?? defaultDate(1);
+      if (!params.checkout) next.checkout = prefill?.checkOut ?? defaultDate(2);
+      if (params.adults == null) next.adults = prefill?.adults ?? 2;
+      if (params.children == null) next.children = prefill?.children ?? 0;
+      // Only when the URL is silent. A card tap already carries `room`, and a
+      // guest who closed checkout must not have it pushed back at them — once
+      // seeded the URL is the sole source of truth, which is why this effect
+      // runs exactly once.
+      if (!params.room && prefill?.roomTypeId) next.room = prefill.roomTypeId;
+
+      if (Object.keys(next).length > 0) updateParams(next);
+      setSeeded(true);
     }
+
+    void seed();
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    bookingLinkEvents.setToken(params.s);
-    if (params.s) {
-      getBookingLinkSession(params.s).then(setSession);
-    }
-  }, [params.s]);
 
   useEffect(() => {
     bookingLinkEvents.track("page_view", { step: "book" });
   }, []);
 
   useEffect(() => {
+    // Wait for the seed, or the guest sees a flash of default-date rooms
+    // before their real dates land — and we burn an availability call on
+    // dates nobody asked about.
+    if (!seeded) return;
     let alive = true;
     setLoading(true);
     getAvailability(property.slug, checkIn, checkOut)
@@ -73,7 +109,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     return () => {
       alive = false;
     };
-  }, [property.slug, checkIn, checkOut]);
+  }, [property.slug, checkIn, checkOut, seeded]);
 
   useEffect(() => {
     if (availability) {
