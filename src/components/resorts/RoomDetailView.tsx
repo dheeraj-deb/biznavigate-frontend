@@ -45,7 +45,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    getAvailability(property.slug, checkIn, checkOut)
+    getAvailability(property.slug, checkIn, checkOut, params.s)
       .then((rows) => {
         if (alive) setAvailability(rows);
       })
@@ -58,7 +58,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
     return () => {
       alive = false;
     };
-  }, [property.slug, checkIn, checkOut]);
+  }, [property.slug, checkIn, checkOut, params.s]);
 
   const thisRoom = availability?.find((a) => a.roomTypeId === roomType.id) ?? null;
 

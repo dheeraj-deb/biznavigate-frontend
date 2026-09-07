@@ -33,12 +33,24 @@ type Props = {
   checkOut?: string;
   adults?: number;
   /** Set once this room is confirmed available for checkIn/checkOut — real
-   *  price for those dates replaces the generic nightly rate, and Book now
-   *  becomes a real link to /book instead of a "check first" trigger. */
-  availability?: { totalPrice: number; nights: number } | null;
+   *  price for those dates replaces the generic nightly rate. */
+  availability?: {
+    totalPrice: number;
+    nights: number;
+    /** Set when the owner approved a rate for this guest in WhatsApp — the
+     *  standard total, struck through beside what they were actually
+     *  promised. Without it the page quotes rack rate for a guest who
+     *  negotiated, which reads as a bait-and-switch. */
+    standardTotalPrice?: number;
+    approvedRate?: boolean;
+  } | null;
   /** Book now before availability is known: runs the same inline check as
-   *  the date card above, instead of jumping straight into /book unverified. */
+   *  the date card above, instead of jumping straight into checkout unverified. */
   onBookNow?: () => void;
+  /** Book now once this room IS confirmed available — opens checkout for it
+   *  right there on the page. Falls back to a /book link (via WhatsAppCTA's
+   *  bookingSlug) only if a caller doesn't supply this. */
+  onSelectRoom?: () => void;
 };
 
 export function RoomCard({
@@ -53,6 +65,7 @@ export function RoomCard({
   adults,
   availability,
   onBookNow,
+  onSelectRoom,
 }: Props) {
   const photos = room.photos ?? [];
   const roomVideo = (room.videos ?? []).find(isDirectVideo) ?? tourUrl ?? undefined;
@@ -229,12 +242,30 @@ export function RoomCard({
           <Box>
             {availability ? (
               <>
+                {availability.approvedRate && availability.standardTotalPrice != null && (
+                  <Typography
+                    component="span"
+                    sx={{
+                      mr: 0.75,
+                      fontSize: "0.9375rem",
+                      color: sp.muted,
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    ₹{formatINR(availability.standardTotalPrice)}
+                  </Typography>
+                )}
                 <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
                   ₹{formatINR(availability.totalPrice)}
                 </Typography>
                 <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
                   {" "}for {availability.nights} night{availability.nights !== 1 ? "s" : ""}
                 </Typography>
+                {availability.approvedRate && (
+                  <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
+                    Special rate approved for you
+                  </Typography>
+                )}
               </>
             ) : (
               <>
@@ -248,19 +279,38 @@ export function RoomCard({
             )}
           </Box>
           {availability ? (
-            <WhatsAppCTA
-              phoneNumber={phoneNumber}
-              propertyName={propertyName}
-              roomName={room.name}
-              propertyId={propertyId}
-              roomTypeId={room.id}
-              bookingSlug={bookingSlug}
-              checkin={checkIn}
-              checkout={checkOut}
-              adults={adults}
-              totalPrice={availability.totalPrice}
-              label="Book now"
-            />
+            onSelectRoom ? (
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={onSelectRoom}
+                sx={{
+                  borderRadius: "12px",
+                  px: 2.5,
+                  py: 1.25,
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  bgcolor: sp.blue,
+                  "&:hover": { bgcolor: "#1a4ab8" },
+                }}
+              >
+                Book now
+              </Button>
+            ) : (
+              <WhatsAppCTA
+                phoneNumber={phoneNumber}
+                propertyName={propertyName}
+                roomName={room.name}
+                propertyId={propertyId}
+                roomTypeId={room.id}
+                bookingSlug={bookingSlug}
+                checkin={checkIn}
+                checkout={checkOut}
+                adults={adults}
+                totalPrice={availability.totalPrice}
+                label="Book now"
+              />
+            )
           ) : (
             <Button
               variant="contained"

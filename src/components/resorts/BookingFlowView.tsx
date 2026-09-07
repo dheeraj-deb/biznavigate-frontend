@@ -96,7 +96,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     if (!seeded) return;
     let alive = true;
     setLoading(true);
-    getAvailability(property.slug, checkIn, checkOut)
+    getAvailability(property.slug, checkIn, checkOut, params.s)
       .then((rows) => {
         if (alive) setAvailability(rows);
       })

@@ -123,6 +123,10 @@ export type AvailabilityResult = {
   nights: number;
   totalPrice: number;
   pricePerNight: number;
+  /** Present only when an owner-approved rate replaced the standard one —
+   *  the standard total, to strike through beside the approved price. */
+  standardTotalPrice?: number;
+  approvedRate?: boolean;
 };
 
 export type IntentPageData = {
@@ -154,9 +158,15 @@ export async function getAvailability(
   slug: string,
   checkin: string,
   checkout: string,
+  // The booking-link token. Sent so a guest who negotiated a rate in WhatsApp
+  // is quoted that rate here — the server resolves it; the price is never
+  // sent from this side.
+  sessionToken?: string | null,
 ): Promise<AvailabilityResult[]> {
+  const qs = new URLSearchParams({ checkin, checkout });
+  if (sessionToken) qs.set("s", sessionToken);
   return publicFetch<AvailabilityResult[]>(
-    `/public/resorts/${slug}/availability?checkin=${checkin}&checkout=${checkout}`,
+    `/public/resorts/${slug}/availability?${qs.toString()}`,
   );
 }
 

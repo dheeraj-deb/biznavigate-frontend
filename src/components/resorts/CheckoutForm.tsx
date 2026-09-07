@@ -222,10 +222,24 @@ export function CheckoutForm({
         <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>
           {availability.nights} night{availability.nights !== 1 ? "s" : ""} · {checkIn} – {checkOut}
           {addonsTotal > 0 && ` + extras`}
+          {/* The guest was promised a number in WhatsApp; this is where they
+              confirm it is the number they are about to pay. */}
+          {availability.approvedRate && (
+            <Box component="span" sx={{ display: "block", mt: 0.25, fontWeight: 600, color: sp.blue }}>
+              Special rate approved by the property
+            </Box>
+          )}
         </Typography>
-        <Typography sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
-          ₹{formatINR(grandTotal)}
-        </Typography>
+        <Box sx={{ textAlign: "right" }}>
+          {availability.approvedRate && availability.standardTotalPrice != null && (
+            <Typography sx={{ fontSize: "0.875rem", color: sp.muted, textDecoration: "line-through" }}>
+              ₹{formatINR(availability.standardTotalPrice + addonsTotal)}
+            </Typography>
+          )}
+          <Typography sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
+            ₹{formatINR(grandTotal)}
+          </Typography>
+        </Box>
       </Box>
 
       {error && (
