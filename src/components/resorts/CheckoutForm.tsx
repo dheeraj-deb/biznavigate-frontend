@@ -13,6 +13,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { createPublicBooking } from "@/lib/public-booking-api";
+import { getStoredRef } from "@/lib/attribution";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PropertyAddon } from "@/lib/publicApi";
 
@@ -85,6 +86,7 @@ export function CheckoutForm({
     setError(null);
     bookingLinkEvents.track("checkout_started");
     try {
+      const storedRef = getStoredRef();
       const addonIds = addons.flatMap((addon) =>
         Array(quantities[addon.id] ?? 0).fill(addon.id),
       );
@@ -99,6 +101,11 @@ export function CheckoutForm({
         email: email.trim() || undefined,
         notes: notes.trim() || undefined,
         src: "guest_booking_flow",
+        // Read at submit, not at mount: the guest may have landed on the
+        // creator's link in another tab of the same visit, and this is the
+        // last moment before the code stops being recoverable.
+        ref: storedRef?.code,
+        refSeenAt: storedRef?.firstSeenAt,
         sessionToken: sessionToken ?? undefined,
         addonIds: addonIds.length ? addonIds : undefined,
       });

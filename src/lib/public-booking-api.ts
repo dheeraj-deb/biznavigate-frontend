@@ -40,6 +40,11 @@ export type CreatePublicBookingInput = {
   email?: string;
   notes?: string;
   src?: string;
+  // Creator/referral code the guest arrived carrying (?ref=), with when this
+  // device first saw it. Evidence only — the server re-checks the code, clamps
+  // the timestamp, and credits nobody on the strength of this alone.
+  ref?: string;
+  refSeenAt?: string;
   // Booking-link session token, when the guest arrived via a WhatsApp-minted
   // link — see biznavigo-backend/docs/booking-link-flow-plan.md. Ties the
   // booking to the same Contact/Conversation the chat already had.
