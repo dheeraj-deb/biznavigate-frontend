@@ -26,7 +26,7 @@ const theme = createTheme({
     divider: '#E5E7EB',
   },
   typography: {
-    fontFamily: '"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily: 'var(--font-marketing-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     h1: { fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.1 },
     h2: { fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.15 },
     h3: { fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.2 },

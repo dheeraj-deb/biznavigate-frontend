@@ -1,5 +1,3 @@
-'use client';
-
 import { Box, Container, Typography, Link } from '@mui/material';
 
 const TermsOfService = () => {

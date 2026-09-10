@@ -1,5 +1,3 @@
-'use client';
-
 import { Box, Container, Typography, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 
 const PrivacyPolicy = () => {

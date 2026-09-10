@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams } from "@/lib/booking-flow-url";
+import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability } from "@/lib/publicApi";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
@@ -50,12 +50,16 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   // straight to payment.
   useEffect(() => {
     let alive = true;
-    bookingLinkEvents.setToken(params.s);
+    // Straight from the address bar, not from `params`: this effect runs once,
+    // so it would otherwise close over the hydration render's empty snapshot
+    // and seed defaults over the dates the guest actually arrived with.
+    const arrived = readCurrentBookingFlowParams();
+    bookingLinkEvents.setToken(arrived.s);
 
     async function seed() {
       let prefill: BookingLinkSessionView["prefill"] | undefined;
-      if (params.s) {
-        const resolved = await getBookingLinkSession(params.s);
+      if (arrived.s) {
+        const resolved = await getBookingLinkSession(arrived.s);
         if (!alive) return;
         if (resolved) {
           setSession(resolved);
@@ -64,15 +68,15 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       }
 
       const next: Record<string, string | number | null> = {};
-      if (!params.checkin) next.checkin = prefill?.checkIn ?? defaultDate(1);
-      if (!params.checkout) next.checkout = prefill?.checkOut ?? defaultDate(2);
-      if (params.adults == null) next.adults = prefill?.adults ?? 2;
-      if (params.children == null) next.children = prefill?.children ?? 0;
+      if (!arrived.checkin) next.checkin = prefill?.checkIn ?? defaultDate(1);
+      if (!arrived.checkout) next.checkout = prefill?.checkOut ?? defaultDate(2);
+      if (arrived.adults == null) next.adults = prefill?.adults ?? 2;
+      if (arrived.children == null) next.children = prefill?.children ?? 0;
       // Only when the URL is silent. A card tap already carries `room`, and a
       // guest who closed checkout must not have it pushed back at them — once
       // seeded the URL is the sole source of truth, which is why this effect
       // runs exactly once.
-      if (!params.room && prefill?.roomTypeId) next.room = prefill.roomTypeId;
+      if (!arrived.room && prefill?.roomTypeId) next.room = prefill.roomTypeId;
 
       if (Object.keys(next).length > 0) updateParams(next);
       setSeeded(true);

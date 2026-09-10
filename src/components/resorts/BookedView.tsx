@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -12,7 +11,12 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
-import { useBookingFlowParams } from "@/lib/booking-flow-url";
+import {
+  useBookingFlowParams,
+  useSearchParamsSnapshot,
+  useHydrated,
+  readCurrentBookingFlowParams,
+} from "@/lib/booking-flow-url";
 import { getCheckoutStatus, type CheckoutStatus } from "@/lib/checkout-status-api";
 
 // Capture settles on a webhook, not on this redirect, so PENDING on arrival is
@@ -32,18 +36,29 @@ function waHref(number: string | null | undefined, propertyName: string | null):
 }
 
 export function BookedView({ propertyName }: { propertyName: string }) {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParamsSnapshot();
   const params = useBookingFlowParams();
+  const hydrated = useHydrated();
   const checkoutId = searchParams.get("cs");
 
   const [status, setStatus] = useState<CheckoutStatus | null>(null);
-  const [settled, setSettled] = useState(!checkoutId);
+  const [polled, setPolled] = useState(false);
   const pollsRef = useRef(0);
 
+  // Derived rather than seeded from `checkoutId`, because the page is
+  // prerendered: the hydration render always reads an empty query string, so a
+  // guest arriving with a real `cs` would otherwise be shown the finished
+  // screen before the first status call went out. Until the query string has
+  // actually been read, nothing is settled.
+  const settled = hydrated && (checkoutId ? polled : true);
+
   useEffect(() => {
-    bookingLinkEvents.setToken(params.s);
-    bookingLinkEvents.track("payment_returned", { checkoutId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // From the address bar - a mount-once effect sees empty params on the
+    // hydration render, and the event queue drops everything without a token.
+    bookingLinkEvents.setToken(readCurrentBookingFlowParams().s);
+    bookingLinkEvents.track("payment_returned", {
+      checkoutId: new URLSearchParams(window.location.search).get("cs"),
+    });
   }, []);
 
   useEffect(() => {
@@ -57,11 +72,11 @@ export function BookedView({ propertyName }: { propertyName: string }) {
       if (next) setStatus(next);
       pollsRef.current += 1;
       if (next && next.status !== "PENDING") {
-        setSettled(true);
+        setPolled(true);
         return;
       }
       if (pollsRef.current >= MAX_POLLS) {
-        setSettled(true);
+        setPolled(true);
         return;
       }
       timer = setTimeout(() => void poll(), POLL_MS);

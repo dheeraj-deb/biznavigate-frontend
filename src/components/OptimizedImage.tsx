@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { Box, Skeleton, BoxProps } from '@mui/material';
 
 interface OptimizedImageProps extends Omit<BoxProps, 'component'> {
@@ -10,8 +11,20 @@ interface OptimizedImageProps extends Omit<BoxProps, 'component'> {
   height?: string | number;
   objectFit?: React.CSSProperties['objectFit'];
   priority?: boolean;
+  /** Rendered width across breakpoints, so the optimizer picks a size. */
+  sizes?: string;
 }
 
+/**
+ * Fills its parent with an optimised, resized image.
+ *
+ * This used to render nothing on the server and wait for an IntersectionObserver
+ * to swap in a raw <img>, which put image loading behind hydration — the hero on
+ * a property page did not start downloading until ~6s in. `next/image` emits the
+ * <img> in the prerendered HTML instead, so the browser's preload scanner finds
+ * it immediately, and serves resized AVIF/WebP rather than the owner's original
+ * upload.
+ */
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
@@ -19,96 +32,57 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   height,
   objectFit = 'cover',
   priority = false,
+  sizes = '(max-width: 600px) 100vw, (max-width: 1280px) 50vw, 640px',
   sx,
   ...rest
 }) => {
   const [loaded, setLoaded] = useState(false);
-  const [imgSrc, setImgSrc] = useState<string | null>(priority ? src : null);
-  
-  useEffect(() => {
-    if (priority) {
-      // Priority images skip lazy-loading, but still need to react to a
-      // changed `src` on an already-mounted instance (e.g. a story viewer
-      // swapping slides) — the useState initializer only runs once.
-      setImgSrc(src);
-      return;
-    }
 
-    // Check if this component is in the viewport
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setImgSrc(src);
-          observer.disconnect();
-        }
-      });
-    }, {
-      rootMargin: '200px' // Start loading when image is 200px from viewport
-    });
-
-    const currentRef = document.querySelector(`[data-img-id="${src}"]`);
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [src, priority]);
-  
-  const handleLoad = () => {
-    setLoaded(true);
-  };
-  
-  const handleError = () => {
-    setLoaded(true);
-  };
-  
   return (
     <Box
-      data-img-id={src}
       sx={{
         position: 'relative',
         width,
         height,
         overflow: 'hidden',
-        ...sx
+        ...sx,
       }}
       {...rest}
     >
-      {(!loaded || !imgSrc) && (
-        <Skeleton 
-          variant="rectangular" 
+      {/* Sits behind the image and shows through until it paints. The image
+          itself is never hidden behind an `opacity` flag: an image that
+          finished loading before React hydrated would never fire onLoad, and
+          would then stay invisible. */}
+      {!loaded && (
+        <Skeleton
+          variant="rectangular"
           animation="wave"
-          sx={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-          }} 
-        />
-      )}
-      
-      {imgSrc && (
-        <Box
-          component="img"
-          src={imgSrc}
-          alt={alt}
-          onLoad={handleLoad}
-          onError={handleError}
           sx={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
-            objectFit,
-            display: loaded ? 'block' : 'none',
-            transition: 'opacity 0.3s ease'
+            zIndex: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
           }}
         />
       )}
+
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        // Priority images are already fetched eagerly; `loading` must not be
+        // set alongside it.
+        {...(priority ? {} : { loading: 'lazy' as const })}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        style={{ objectFit, zIndex: 1 }}
+      />
     </Box>
   );
 };
 
-export default OptimizedImage; 
+export default OptimizedImage;

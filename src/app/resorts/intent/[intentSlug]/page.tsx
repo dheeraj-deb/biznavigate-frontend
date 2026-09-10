@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
-import { getIntentBySlug } from '@/lib/publicApi';
+import { getIntentBySlug, getIntentSlugs } from '@/lib/publicApi';
 import { IntentPageView } from '@/components/resorts/IntentPageView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return (await getIntentSlugs()).map((intentSlug) => ({ intentSlug }));
+}
 
 type Params = { params: Promise<{ intentSlug: string }> };
 

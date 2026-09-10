@@ -13,7 +13,7 @@
   --amber:#E8913A;
   --white:#fff;
   --r-sm:10px; --r:16px; --r-lg:24px; --r-xl:32px;
-  --display:'Sora',sans-serif;
+  --display:var(--font-marketing-display),sans-serif;
   --body:'Inter',sans-serif;
   --maxw:1180px;
 }
