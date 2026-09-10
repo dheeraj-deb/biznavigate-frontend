@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { captureReferralCode, captureUtmParams } from "../lib/attribution";
+import { useSearchParamsSnapshot } from "../lib/booking-flow-url";
 
-// Split out from PublicLayout so only this leaf needs a Suspense boundary —
-// useSearchParams() forces a CSR bailout during static generation otherwise.
+// Reads the query string through the prerender-safe store rather than
+// useSearchParams(), so wrapping this in Suspense is no longer what keeps the
+// surrounding route static.
 export function AttributionCapture() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParamsSnapshot();
 
   useEffect(() => {
     captureUtmParams();

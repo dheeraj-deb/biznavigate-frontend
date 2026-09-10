@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
-import { getResort } from '@/lib/publicApi';
+import { getResort, getResortSlugs } from '@/lib/publicApi';
 import { ResortDetailView } from '@/components/resorts/ResortDetailView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
 
 export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return (await getResortSlugs()).map((slug) => ({ slug }));
+}
 
 type Params = { params: Promise<{ slug: string }> };
 

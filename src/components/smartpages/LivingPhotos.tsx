@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
+import NextImage from "next/image";
 import Box from "@mui/material/Box";
 import type { SxProps, Theme } from "@mui/material/styles";
 
@@ -15,6 +16,14 @@ const MOVE_MS = SLIDE_MS + FADE_MS + 600;
 const MOVE_COUNT = 4;
 
 type Layer = { src: string; variant: number; key: number };
+
+// next/image only serves these widths (the framework default `deviceSizes`);
+// asking for anything else 400s, so the preload has to snap to one.
+const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+function closestDeviceSize(target: number): number {
+  return DEVICE_SIZES.find((w) => w >= target) ?? DEVICE_SIZES[DEVICE_SIZES.length - 1];
+}
 
 type Props = {
   photos: string[];
@@ -66,10 +75,14 @@ export function LivingPhotos({ photos, alt, playing, sx }: Props) {
   }, []);
 
   // Preload the upcoming photo so a crossfade never lands on unloaded pixels.
+  // Warms the optimizer URL, not the source file — priming the original would
+  // pull down the owner's full-size upload that nothing ever renders.
   useEffect(() => {
     if (!running || single) return;
+    const src = photos[(idxRef.current + 1) % photos.length];
+    const width = closestDeviceSize(window.innerWidth * (window.devicePixelRatio || 1));
     const next = new Image();
-    next.src = photos[(idxRef.current + 1) % photos.length];
+    next.src = `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`;
   }, [running, single, layers, photos]);
 
   useEffect(() => {
@@ -139,16 +152,21 @@ export function LivingPhotos({ photos, alt, playing, sx }: Props) {
                 : `sp-lp-fade ${FADE_MS}ms ease forwards`,
           }}
         >
-          <Box
-            component="img"
+          {/* next/image rather than a bare <img>: this is the hero, and the
+              LCP element on a property page. It needs to be in the prerendered
+              HTML for the preload scanner to find, and resized — owner uploads
+              run to ~2MB. The camera move goes through `style` because the
+              keyframes above are emitted globally by emotion. */}
+          <NextImage
             src={layer.src}
             alt=""
+            fill
+            sizes="100vw"
+            priority={layer.key === 0}
+            {...(layer.key === 0 ? {} : { loading: "lazy" as const })}
             draggable={false}
-            sx={{
-              width: "100%",
-              height: "100%",
+            style={{
               objectFit: "cover",
-              display: "block",
               willChange: "transform",
               animation: reducedMotion
                 ? "none"

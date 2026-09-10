@@ -27,7 +27,7 @@ import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import { DateGuestCard } from "@/components/resorts/DateGuestCard";
 import { CheckoutForm } from "@/components/resorts/CheckoutForm";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
-import { useBookingFlowParams } from "@/lib/booking-flow-url";
+import { useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { getAvailability } from "@/lib/publicApi";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
@@ -157,12 +157,16 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     // Must precede every track() call. The event queue silently drops
     // everything while it holds no token, which is why this page used to
     // record nothing at all despite firing events.
-    bookingLinkEvents.setToken(params.s);
+    // Read straight from the address bar: this effect runs once, so `params`
+    // here would still hold the hydration render's empty snapshot and lose
+    // whatever the guest arrived with.
+    const arrived = readCurrentBookingFlowParams();
+    bookingLinkEvents.setToken(arrived.s);
 
     async function seed() {
       let prefill: BookingLinkSessionView["prefill"] | undefined;
-      if (params.s) {
-        const resolved = await getBookingLinkSession(params.s);
+      if (arrived.s) {
+        const resolved = await getBookingLinkSession(arrived.s);
         if (!alive) return;
         if (resolved) {
           setSession(resolved);
@@ -173,10 +177,10 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       // The URL wins over the session: a room card carries the room and dates
       // it was actually built for, which are newer than the session's prefill
       // whenever the conversation moved on after the link was first minted.
-      const checkIn = params.checkin ?? prefill?.checkIn ?? null;
-      const checkOut = params.checkout ?? prefill?.checkOut ?? null;
-      const adults = params.adults ?? prefill?.adults ?? null;
-      const children = params.children ?? prefill?.children ?? null;
+      const checkIn = arrived.checkin ?? prefill?.checkIn ?? null;
+      const checkOut = arrived.checkout ?? prefill?.checkOut ?? null;
+      const adults = arrived.adults ?? prefill?.adults ?? null;
+      const children = arrived.children ?? prefill?.children ?? null;
       // #rooms / #gallery are browse links — the agent sent them so the guest
       // could look around. Reopening the checkout they left would override the
       // thing they just asked for, so only an explicit `room` in the URL (or
@@ -184,7 +188,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       const anchor = typeof window !== "undefined" ? window.location.hash : "";
       const browsing = anchor === "#rooms" || anchor === "#gallery";
       const room =
-        params.room ?? (browsing ? null : (prefill?.roomTypeId ?? null));
+        arrived.room ?? (browsing ? null : (prefill?.roomTypeId ?? null));
 
       if (checkIn) setPickCheckIn(checkIn);
       if (checkOut) setPickCheckOut(checkOut);

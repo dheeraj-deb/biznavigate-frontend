@@ -1,8 +1,27 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getResort } from '@/lib/publicApi';
+import { getResort, getResortSlugs } from '@/lib/publicApi';
 import { RoomDetailView } from '@/components/resorts/RoomDetailView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
+
+export const revalidate = 300;
+
+// One entry per (property, room type). Both lookups are cached fetches, so
+// this costs the same requests the pages themselves would have made.
+export async function generateStaticParams() {
+  const slugs = await getResortSlugs();
+  const perProperty = await Promise.all(
+    slugs.map(async (slug) => {
+      try {
+        const { roomTypes } = await getResort(slug);
+        return roomTypes.map((rt) => ({ slug, roomTypeId: rt.id }));
+      } catch {
+        return [];
+      }
+    }),
+  );
+  return perProperty.flat();
+}
 
 type Params = { params: Promise<{ slug: string; roomTypeId: string }> };
 

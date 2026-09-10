@@ -1,9 +1,8 @@
 'use client';
 
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { motion, AnimatePresence } from "framer-motion";
 import OptimizedImage from "../OptimizedImage";
 import { HeroMedia } from "./HeroMedia";
 import { MomentLayer } from "./MomentLayer";
@@ -14,6 +13,13 @@ import type { PageMoment, PropertyMotionMedia } from "../../lib/publicApi";
 import { sp } from "./tokens";
 
 const Lightbox = lazy(() => import("./Lightbox"));
+
+// Horizontal travel that commits to the next photo, and the movement above
+// which a gesture stops counting as a tap.
+const SWIPE_THRESHOLD = 60;
+const TAP_SLOP = 6;
+const DRAG_ELASTIC = 0.2;
+const FADE_MS = 150;
 
 type Props = {
   photos: string[];
@@ -34,6 +40,50 @@ type Props = {
 export function MediaGallery({ photos, videos, motion: motionMedia, name, propertyId, moments, phoneNumber }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mobileIndex, setMobileIndex] = useState(0);
+
+  // Swipe + crossfade for the mobile carousel, on pointer events and CSS.
+  // This was framer-motion, which is a whole animation runtime shipped to
+  // every guest for one drag handler and one 150ms fade on a surface only
+  // phones ever see.
+  const dragStartX = useRef<number | null>(null);
+  const draggedRef = useRef(false);
+  // The offset lives in a ref as well as state: state drives the transform,
+  // but the commit decision on pointer-up must not depend on React having
+  // re-rendered between the last move and the release.
+  const dragXRef = useRef(0);
+  const [dragX, setDragX] = useState(0);
+
+  function onPointerDown(e: React.PointerEvent) {
+    dragStartX.current = e.clientX;
+    draggedRef.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (dragStartX.current === null) return;
+    const dx = e.clientX - dragStartX.current;
+    if (Math.abs(dx) > TAP_SLOP) draggedRef.current = true;
+    // Resist past the first and last photo instead of sliding into nothing —
+    // framer's `dragElastic`.
+    const overscrolling =
+      (mobileIndex === 0 && dx > 0) || (mobileIndex === photos.length - 1 && dx < 0);
+    const offset = overscrolling ? dx * DRAG_ELASTIC : dx;
+    dragXRef.current = offset;
+    setDragX(offset);
+  }
+
+  function onPointerUp() {
+    if (dragStartX.current === null) return;
+    dragStartX.current = null;
+    const travelled = dragXRef.current;
+    dragXRef.current = 0;
+    if (travelled < -SWIPE_THRESHOLD && mobileIndex < photos.length - 1) {
+      setMobileIndex((i) => i + 1);
+    } else if (travelled > SWIPE_THRESHOLD && mobileIndex > 0) {
+      setMobileIndex((i) => i - 1);
+    }
+    setDragX(0);
+  }
 
   if (!photos.length && !videos?.length) {
     return (
@@ -68,26 +118,37 @@ export function MediaGallery({ photos, videos, motion: motionMedia, name, proper
       {/* Mobile: swipeable carousel */}
       <Box sx={{ display: { xs: "block", sm: "none" } }}>
         <Box sx={{ position: "relative", aspectRatio: "4/3", borderRadius: sp.radius, overflow: "hidden", bgcolor: sp.border }}>
-          <AnimatePresence initial={false} mode="wait">
-            <motion.div
+          <Box
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onClick={() => {
+              // A swipe ends with a click event too; only a real tap opens.
+              if (draggedRef.current) return;
+              setLightboxIndex(mobileIndex);
+            }}
+            sx={{
+              width: "100%",
+              height: "100%",
+              // Claim horizontal gestures, leave vertical ones to page scroll.
+              touchAction: "pan-y",
+              transform: dragX ? `translateX(${dragX}px)` : undefined,
+              transition: dragX ? "none" : "transform 200ms ease",
+              "@keyframes sp-mg-fade": {
+                from: { opacity: 0 },
+                to: { opacity: 1 },
+              },
+            }}
+          >
+            {/* Keyed so switching photo remounts and replays the fade. */}
+            <Box
               key={mobileIndex}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -60 && mobileIndex < photos.length - 1) setMobileIndex((i) => i + 1);
-                else if (info.offset.x > 60 && mobileIndex > 0) setMobileIndex((i) => i - 1);
-              }}
-              onClick={() => setLightboxIndex(mobileIndex)}
-              style={{ width: "100%", height: "100%" }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              sx={{ width: "100%", height: "100%", animation: `sp-mg-fade ${FADE_MS}ms ease` }}
             >
               <OptimizedImage src={photos[mobileIndex]} alt={`${name} ${mobileIndex + 1}`} priority={mobileIndex === 0} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </motion.div>
-          </AnimatePresence>
+            </Box>
+          </Box>
           {moments && photos[mobileIndex] && (
             <MomentLayer photoUrl={photos[mobileIndex]} moments={moments} phoneNumber={phoneNumber ?? null} propertyName={name} propertyId={propertyId} />
           )}

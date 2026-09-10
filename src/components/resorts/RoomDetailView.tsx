@@ -12,7 +12,7 @@ import { DateGuestCard } from "./DateGuestCard";
 import { AskAssistantDrawer } from "./AskAssistantDrawer";
 import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
-import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams } from "@/lib/booking-flow-url";
+import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability } from "@/lib/publicApi";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PublicRoomType, ResortDetail } from "@/lib/publicApi";
@@ -37,7 +37,9 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    bookingLinkEvents.setToken(params.s);
+    // From the address bar - a mount-once effect sees empty params on the
+    // hydration render, and the event queue drops everything without a token.
+    bookingLinkEvents.setToken(readCurrentBookingFlowParams().s);
     bookingLinkEvents.track("room_detail_viewed", { roomTypeId: roomType.id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
