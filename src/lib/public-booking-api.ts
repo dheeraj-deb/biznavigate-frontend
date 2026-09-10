@@ -53,6 +53,10 @@ export type CreatePublicBookingInput = {
   // CheckoutForm.tsx). Price is always re-derived server-side from these ids,
   // never trusted from here.
   addonIds?: string[];
+  // Which of the quote's payment options the guest picked. Advisory: the
+  // server clamps it to the property's policy — a guest may pay more than it
+  // asks, never less.
+  paymentChoice?: "FULL" | "DEPOSIT";
 };
 
 export async function createPublicBooking(
@@ -69,4 +73,92 @@ export async function createPublicBooking(
     throw new Error(message ?? `Could not create booking (${res.status})`);
   }
   return res.json() as Promise<PublicBookingResult>;
+}
+
+/** One way the guest may settle — the deposit, or the whole thing. */
+export type QuotePaymentOption = {
+  kind: "FULL" | "DEPOSIT";
+  dueNow: number;
+  balance: number;
+  balanceDueAt: string | null;
+  isDefault: boolean;
+};
+
+/**
+ * An itemised price for the stay, straight from the server.
+ *
+ * This exists because the form used to add the extras up itself and show
+ * `availability.totalPrice + addonsTotal` as the total — a pre-tax subtotal.
+ * On a tax-exclusive property that meant quoting ₹14,500 for a booking created
+ * at ₹17,110, on a button that said "Pay ₹14,500" before sending the guest to
+ * a Cashfree page asking ₹3,422. Every figure on this screen now comes from
+ * the same call the booking itself is priced by.
+ */
+export type BookingQuote = {
+  roomTypeId: string;
+  roomName: string;
+  nights: number;
+  roomCount: number;
+  available: boolean;
+  availableRooms: number;
+  lines: {
+    room: {
+      subtotal: number;
+      perNight: number;
+      approvedRate: boolean;
+      standardSubtotal: number | null;
+    };
+    occupancySurcharge: number;
+    extras: Array<{
+      id: string;
+      name: string;
+      priceUnit: string;
+      unitPrice: number;
+      quantity: number;
+      subtotal: number;
+    }>;
+    extrasTotal: number;
+  };
+  subtotal: number;
+  tax: {
+    rate: number;
+    amount: number;
+    taxableAmount: number;
+    pricesIncludeTax: boolean;
+    note: string | null;
+  };
+  total: number;
+  currency: string;
+  paymentMode: "FULL_UPFRONT" | "TOKEN_THEN_BALANCE";
+  paymentOptions: QuotePaymentOption[];
+};
+
+export type QuoteInput = Pick<
+  CreatePublicBookingInput,
+  | "roomTypeId"
+  | "checkIn"
+  | "checkOut"
+  | "adults"
+  | "children"
+  | "roomCount"
+  | "sessionToken"
+  | "addonIds"
+>;
+
+export async function fetchBookingQuote(
+  slug: string,
+  input: QuoteInput,
+  signal?: AbortSignal,
+): Promise<BookingQuote> {
+  const res = await fetch(`${BASE}/public/resorts/${slug}/quote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    signal,
+  });
+  if (!res.ok) {
+    const message = await extractMessage(res);
+    throw new Error(message ?? `Could not price this stay (${res.status})`);
+  }
+  return res.json() as Promise<BookingQuote>;
 }
