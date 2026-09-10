@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -12,7 +12,11 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
-import { createPublicBooking } from "@/lib/public-booking-api";
+import {
+  createPublicBooking,
+  fetchBookingQuote,
+  type BookingQuote,
+} from "@/lib/public-booking-api";
 import { getStoredRef } from "@/lib/attribution";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PropertyAddon } from "@/lib/publicApi";
@@ -42,6 +46,21 @@ function addonUnitLabel(addon: PropertyAddon): string {
   return "/stay";
 }
 
+/** One line of the price breakdown. `value` null prints the label alone —
+ *  used for "Includes 18% GST", where the amount is already in the total. */
+function PriceRow({ label, value, muted }: { label: string; value: number | null; muted?: boolean }) {
+  return (
+    <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, py: 0.25 }}>
+      <Typography sx={{ fontSize: "0.8125rem", color: muted ? sp.muted : sp.ink }}>{label}</Typography>
+      {value != null && (
+        <Typography sx={{ fontSize: "0.8125rem", color: muted ? sp.muted : sp.ink }}>
+          ₹{formatINR(value)}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 export function CheckoutForm({
   slug,
   availability,
@@ -64,15 +83,73 @@ export function CheckoutForm({
 
   const guestCount = adults + children;
 
-  const addonsTotal = useMemo(
-    () =>
-      addons.reduce((sum, addon) => {
-        const qty = quantities[addon.id] ?? 0;
-        return sum + addonUnitPrice(addon, availability.nights, guestCount) * qty;
-      }, 0),
-    [addons, quantities, availability.nights, guestCount],
+  // The ids as the server wants them: a repeated id is quantity > 1.
+  const addonIds = useMemo(
+    () => addons.flatMap((addon) => Array(quantities[addon.id] ?? 0).fill(addon.id) as string[]),
+    [addons, quantities],
   );
-  const grandTotal = availability.totalPrice + addonsTotal;
+
+  // Every rupee on this screen comes from the server. This form used to add
+  // the extras up itself and show `availability.totalPrice + addonsTotal`,
+  // which is a PRE-TAX subtotal — on a tax-exclusive property that quoted
+  // ₹14,500 for a booking created at ₹17,110, under a button that said
+  // "Pay ₹14,500" before sending the guest to a page asking ₹3,422.
+  const [quote, setQuote] = useState<BookingQuote | null>(null);
+  const [quoting, setQuoting] = useState(true);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [payChoice, setPayChoice] = useState<"FULL" | "DEPOSIT" | null>(null);
+
+  const addonKey = addonIds.join(",");
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    // Every extra the guest ticks re-prices the stay: an extra can change the
+    // total, and on a cheaper room it can change the GST band too. Only the
+    // server knows both rules.
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    // Inside the debounce, not before it: a call that is about to be
+    // superseded by the next keystroke should not flash a spinner, and
+    // setState in an effect body cascades renders.
+    const timer = setTimeout(() => {
+      setQuoting(true);
+      fetchBookingQuote(
+        slug,
+        {
+          roomTypeId: availability.roomTypeId,
+          checkIn,
+          checkOut,
+          adults,
+          children,
+          sessionToken: sessionToken ?? undefined,
+          addonIds: addonKey ? addonKey.split(",") : undefined,
+        },
+        ac.signal,
+      )
+        .then((q) => {
+          setQuote(q);
+          setQuoteError(null);
+          // Follow the server's default until the guest says otherwise.
+          setPayChoice((prev) => prev ?? q.paymentOptions.find((o) => o.isDefault)?.kind ?? "FULL");
+        })
+        .catch((e: unknown) => {
+          if (ac.signal.aborted) return;
+          setQuoteError(e instanceof Error ? e.message : "Could not price this stay.");
+        })
+        .finally(() => {
+          if (!ac.signal.aborted) setQuoting(false);
+        });
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      ac.abort();
+    };
+  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, sessionToken, addonKey]);
+
+  const selectedOption =
+    quote?.paymentOptions.find((o) => o.kind === payChoice) ?? quote?.paymentOptions[0] ?? null;
+  const dueNow = selectedOption?.dueNow ?? null;
 
   function setQuantity(addon: PropertyAddon, next: number) {
     const clamped = Math.max(0, Math.min(addon.maxQuantity, next));
@@ -87,9 +164,6 @@ export function CheckoutForm({
     bookingLinkEvents.track("checkout_started");
     try {
       const storedRef = getStoredRef();
-      const addonIds = addons.flatMap((addon) =>
-        Array(quantities[addon.id] ?? 0).fill(addon.id),
-      );
       const result = await createPublicBooking(slug, {
         roomTypeId: availability.roomTypeId,
         checkIn,
@@ -108,6 +182,9 @@ export function CheckoutForm({
         refSeenAt: storedRef?.firstSeenAt,
         sessionToken: sessionToken ?? undefined,
         addonIds: addonIds.length ? addonIds : undefined,
+        // What the guest actually chose on the summary above. The server
+        // clamps it to the property's policy.
+        paymentChoice: payChoice ?? undefined,
       });
       if (result.requiresPayment && result.checkout) {
         bookingLinkEvents.track("payment_redirected");
@@ -216,37 +293,112 @@ export function CheckoutForm({
         </Box>
       )}
 
-      <Box
-        sx={{
-          borderRadius: sp.radiusSm,
-          bgcolor: sp.bgSoft,
-          p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>
+      {/* Every line here is the server's, itemised, so the guest can see what
+          they are paying for BEFORE they pay it. */}
+      <Box sx={{ borderRadius: sp.radiusSm, bgcolor: sp.bgSoft, p: 2 }}>
+        <Typography sx={{ fontSize: "0.875rem", color: sp.muted, mb: 1 }}>
           {availability.nights} night{availability.nights !== 1 ? "s" : ""} · {checkIn} – {checkOut}
-          {addonsTotal > 0 && ` + extras`}
-          {/* The guest was promised a number in WhatsApp; this is where they
-              confirm it is the number they are about to pay. */}
           {availability.approvedRate && (
             <Box component="span" sx={{ display: "block", mt: 0.25, fontWeight: 600, color: sp.blue }}>
               Special rate approved by the property
             </Box>
           )}
         </Typography>
-        <Box sx={{ textAlign: "right" }}>
-          {availability.approvedRate && availability.standardTotalPrice != null && (
-            <Typography sx={{ fontSize: "0.875rem", color: sp.muted, textDecoration: "line-through" }}>
-              ₹{formatINR(availability.standardTotalPrice + addonsTotal)}
-            </Typography>
-          )}
-          <Typography sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
-            ₹{formatINR(grandTotal)}
-          </Typography>
-        </Box>
+
+        {quoteError && (
+          <Typography sx={{ fontSize: "0.8125rem", color: "#dc2626" }}>{quoteError}</Typography>
+        )}
+
+        {quote && (
+          <>
+            <PriceRow label={`${quote.roomName}`} value={quote.lines.room.subtotal} />
+            {quote.lines.occupancySurcharge > 0 && (
+              <PriceRow label="Extra guests" value={quote.lines.occupancySurcharge} />
+            )}
+            {quote.lines.extras.map((x) => (
+              <PriceRow
+                key={x.id}
+                label={x.quantity > 1 ? `${x.name} × ${x.quantity}` : x.name}
+                value={x.subtotal}
+              />
+            ))}
+            {quote.tax.rate > 0 && (
+              <>
+                <PriceRow label="Subtotal" value={quote.subtotal} />
+                <PriceRow
+                  label={
+                    quote.tax.pricesIncludeTax
+                      ? `Includes ${quote.tax.rate}% GST`
+                      : `GST (${quote.tax.rate}%)`
+                  }
+                  value={quote.tax.pricesIncludeTax ? null : quote.tax.amount}
+                  muted
+                />
+              </>
+            )}
+            <Box sx={{ height: "1px", bgcolor: sp.border, my: 1 }} />
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <Typography sx={{ fontSize: "0.9375rem", fontWeight: 600, color: sp.ink }}>Total</Typography>
+              <Box sx={{ textAlign: "right" }}>
+                {quote.lines.room.approvedRate && quote.lines.room.standardSubtotal != null && (
+                  <Typography sx={{ fontSize: "0.8125rem", color: sp.muted, textDecoration: "line-through" }}>
+                    ₹{formatINR(quote.lines.room.standardSubtotal)}
+                  </Typography>
+                )}
+                <Typography sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
+                  ₹{formatINR(quote.total)}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* A deposit is the property's policy, not a trap: the guest can
+                always choose to be done with it instead. */}
+            {quote.paymentOptions.length > 1 && (
+              <Box sx={{ mt: 1.5, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                {quote.paymentOptions.map((opt) => (
+                  <Box
+                    key={opt.kind}
+                    component="button"
+                    type="button"
+                    onClick={() => setPayChoice(opt.kind)}
+                    sx={{
+                      textAlign: "left",
+                      cursor: "pointer",
+                      borderRadius: sp.radiusSm,
+                      border: `1px solid ${payChoice === opt.kind ? sp.blue : sp.border}`,
+                      bgcolor: payChoice === opt.kind ? "rgba(37,99,235,0.04)" : "#fff",
+                      p: 1.25,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
+                    <Box>
+                      <Typography sx={{ fontSize: "0.875rem", fontWeight: 600, color: sp.ink }}>
+                        {opt.kind === "FULL" ? "Pay in full now" : "Pay a deposit now"}
+                      </Typography>
+                      {opt.balance > 0 && (
+                        <Typography sx={{ fontSize: "0.75rem", color: sp.muted }}>
+                          ₹{formatINR(opt.balance)} due later
+                          {opt.balanceDueAt
+                            ? ` · by ${new Date(opt.balanceDueAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                              })}`
+                            : ""}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Typography sx={{ fontSize: "0.9375rem", fontWeight: 700, color: sp.ink }}>
+                      ₹{formatINR(opt.dueNow)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </>
+        )}
       </Box>
 
       {error && (
@@ -257,10 +409,16 @@ export function CheckoutForm({
         fullWidth
         variant="contained"
         onClick={submit}
-        disabled={!name.trim() || !phone.trim() || submitting}
+        disabled={!name.trim() || !phone.trim() || submitting || quoting || !quote}
         sx={{ mt: 2, borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: sp.blue }, py: 1.25 }}
       >
-        {submitting ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : `Pay ₹${formatINR(grandTotal)}`}
+        {submitting || quoting ? (
+          <CircularProgress size={20} sx={{ color: "#fff" }} />
+        ) : dueNow != null ? (
+          `Pay ₹${formatINR(dueNow)}`
+        ) : (
+          "Pay"
+        )}
       </Button>
     </Box>
   );
