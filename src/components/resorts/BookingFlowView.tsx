@@ -12,6 +12,7 @@ import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { DateGuestCard } from "./DateGuestCard";
 import { RoomAvailabilityCard } from "./RoomAvailabilityCard";
 import { CheckoutForm } from "./CheckoutForm";
+import { OnlineBookingUnavailable } from "./OnlineBookingUnavailable";
 import { AskAssistantDrawer } from "./AskAssistantDrawer";
 import { sp } from "@/components/smartpages/tokens";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
@@ -180,7 +181,14 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       />
 
       <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: 4 }}>
-        {selectedAvailability ? (
+        {selectedAvailability && property.acceptsOnlinePayment === false ? (
+          <OnlineBookingUnavailable
+            propertyName={property.name}
+            roomName={selectedAvailability.name}
+            phone={property.tenant?.gupshupSourceNumber ?? null}
+            onClose={() => updateParams({ room: null }, { push: true })}
+          />
+        ) : selectedAvailability ? (
           <CheckoutForm
             slug={property.slug}
             availability={selectedAvailability}

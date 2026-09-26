@@ -26,6 +26,7 @@ import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import { DateGuestCard } from "@/components/resorts/DateGuestCard";
 import { CheckoutForm } from "@/components/resorts/CheckoutForm";
+import { OnlineBookingUnavailable } from "@/components/resorts/OnlineBookingUnavailable";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
@@ -446,18 +447,27 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                 the current dates. */}
             {selectedAvailability && (
               <Box id="checkout" ref={checkoutRef} sx={{ scrollMarginTop: 16 }}>
-                <CheckoutForm
-                  slug={property.slug}
-                  availability={selectedAvailability}
-                  addons={property.addons}
-                  checkIn={pickCheckIn}
-                  checkOut={pickCheckOut}
-                  adults={pickAdults}
-                  children={pickChildren}
-                  sessionToken={params.s}
-                  initialGuest={session?.guest ?? null}
-                  onClose={() => setSelectedRoomId(null)}
-                />
+                {property.acceptsOnlinePayment === false ? (
+                  <OnlineBookingUnavailable
+                    propertyName={property.name}
+                    roomName={selectedAvailability.name}
+                    phone={property.tenant?.gupshupSourceNumber ?? null}
+                    onClose={() => setSelectedRoomId(null)}
+                  />
+                ) : (
+                  <CheckoutForm
+                    slug={property.slug}
+                    availability={selectedAvailability}
+                    addons={property.addons}
+                    checkIn={pickCheckIn}
+                    checkOut={pickCheckOut}
+                    adults={pickAdults}
+                    children={pickChildren}
+                    sessionToken={params.s}
+                    initialGuest={session?.guest ?? null}
+                    onClose={() => setSelectedRoomId(null)}
+                  />
+                )}
               </Box>
             )}
           </Box>

@@ -123,6 +123,9 @@ export type ResortDetail = PublicProperty & {
   moments?: PageMoment[];
   motion?: PropertyMotionMedia;
   tenant: { gupshupSourceNumber: string | null };
+  /** False until the resort's Cashfree account is active — the server refuses
+   *  a checkout until then. Optional: older API builds don't send it. */
+  acceptsOnlinePayment?: boolean;
 };
 
 export type AvailabilityResult = {
