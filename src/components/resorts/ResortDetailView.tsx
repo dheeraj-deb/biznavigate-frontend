@@ -147,6 +147,17 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     void runAvailability(pickCheckIn, pickCheckOut, { scrollToRooms: true });
   }
 
+  // Book now on a room card, before availability is known: check THIS room
+  // and, when it is free for these dates, open its checkout in the same tap.
+  // It used to run only the generic check, leaving the guest to find and press
+  // Book now a second time. Unavailable still lands on the room list.
+  function bookRoom(roomTypeId: string) {
+    void runAvailability(pickCheckIn, pickCheckOut, {
+      autoSelectRoomId: roomTypeId,
+      scrollToRooms: true,
+    });
+  }
+
   // Resolve the booking-link session FIRST, then seed from it — the session is
   // everything the guest already told the WhatsApp agent, and it can only beat
   // this page's calendar defaults if we wait for it. Runs exactly once: after
@@ -420,7 +431,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                                 }
                               : null
                           }
-                          onBookNow={checkAvailability}
+                          onBookNow={bookRoom}
                           onSelectRoom={() => selectRoom(room.id)}
                         />
                       );
