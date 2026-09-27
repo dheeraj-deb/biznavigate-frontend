@@ -380,13 +380,17 @@ export function CheckoutForm({
                       </Typography>
                       {opt.balance > 0 && (
                         <Typography sx={{ fontSize: "0.75rem", color: sp.muted }}>
-                          ₹{formatINR(opt.balance)} due later
+                          {/* Paid on arrival day: a link that morning, or at the
+                              desk. Not a deadline, so no "by". */}
+                          ₹{formatINR(opt.balance)} due on check-in day
                           {opt.balanceDueAt
-                            ? ` · by ${new Date(opt.balanceDueAt).toLocaleDateString("en-IN", {
+                            ? ` (${new Date(opt.balanceDueAt).toLocaleDateString("en-IN", {
                                 day: "numeric",
                                 month: "short",
-                              })}`
+                                timeZone: "UTC",
+                              })})`
                             : ""}
+                          , online or at the resort
                         </Typography>
                       )}
                     </Box>
