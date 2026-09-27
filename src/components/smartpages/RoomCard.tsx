@@ -46,7 +46,7 @@ type Props = {
   } | null;
   /** Book now before availability is known: runs the same inline check as
    *  the date card above, instead of jumping straight into checkout unverified. */
-  onBookNow?: () => void;
+  onBookNow?: (roomTypeId: string) => void;
   /** Book now once this room IS confirmed available — opens checkout for it
    *  right there on the page. Falls back to a /book link (via WhatsAppCTA's
    *  bookingSlug) only if a caller doesn't supply this. */
@@ -315,7 +315,7 @@ export function RoomCard({
             <Button
               variant="contained"
               disableElevation
-              onClick={onBookNow}
+              onClick={() => onBookNow?.(room.id)}
               sx={{
                 borderRadius: "12px",
                 px: 2.5,

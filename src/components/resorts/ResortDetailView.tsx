@@ -26,6 +26,7 @@ import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { AskAssistantDrawer } from "@/components/resorts/AskAssistantDrawer";
 import { DateGuestCard } from "@/components/resorts/DateGuestCard";
 import { CheckoutForm } from "@/components/resorts/CheckoutForm";
+import { OnlineBookingUnavailable } from "@/components/resorts/OnlineBookingUnavailable";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
@@ -145,6 +146,17 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
 
   function checkAvailability() {
     void runAvailability(pickCheckIn, pickCheckOut, { scrollToRooms: true });
+  }
+
+  // Book now on a room card, before availability is known: check THIS room
+  // and, when it is free for these dates, open its checkout in the same tap.
+  // It used to run only the generic check, leaving the guest to find and press
+  // Book now a second time. Unavailable still lands on the room list.
+  function bookRoom(roomTypeId: string) {
+    void runAvailability(pickCheckIn, pickCheckOut, {
+      autoSelectRoomId: roomTypeId,
+      scrollToRooms: true,
+    });
   }
 
   // Resolve the booking-link session FIRST, then seed from it — the session is
@@ -420,7 +432,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                                 }
                               : null
                           }
-                          onBookNow={checkAvailability}
+                          onBookNow={bookRoom}
                           onSelectRoom={() => selectRoom(room.id)}
                         />
                       );
@@ -435,18 +447,27 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                 the current dates. */}
             {selectedAvailability && (
               <Box id="checkout" ref={checkoutRef} sx={{ scrollMarginTop: 16 }}>
-                <CheckoutForm
-                  slug={property.slug}
-                  availability={selectedAvailability}
-                  addons={property.addons}
-                  checkIn={pickCheckIn}
-                  checkOut={pickCheckOut}
-                  adults={pickAdults}
-                  children={pickChildren}
-                  sessionToken={params.s}
-                  initialGuest={session?.guest ?? null}
-                  onClose={() => setSelectedRoomId(null)}
-                />
+                {property.acceptsOnlinePayment === false ? (
+                  <OnlineBookingUnavailable
+                    propertyName={property.name}
+                    roomName={selectedAvailability.name}
+                    phone={property.tenant?.gupshupSourceNumber ?? null}
+                    onClose={() => setSelectedRoomId(null)}
+                  />
+                ) : (
+                  <CheckoutForm
+                    slug={property.slug}
+                    availability={selectedAvailability}
+                    addons={property.addons}
+                    checkIn={pickCheckIn}
+                    checkOut={pickCheckOut}
+                    adults={pickAdults}
+                    children={pickChildren}
+                    sessionToken={params.s}
+                    initialGuest={session?.guest ?? null}
+                    onClose={() => setSelectedRoomId(null)}
+                  />
+                )}
               </Box>
             )}
           </Box>
