@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -16,6 +15,7 @@ import { AmenitiesGrid } from "@/components/smartpages/AmenitiesGrid";
 import { LodgingSchema } from "@/components/smartpages/LodgingSchema";
 import { ReviewSection } from "@/components/smartpages/ReviewSection";
 import { AmenityHighlights } from "@/components/smartpages/AmenityHighlights";
+import { StayHeroMobile } from "@/components/resorts/StayHeroMobile";
 import {
   SectionTitle,
   LocationSection,
@@ -296,7 +296,15 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     <>
       <LodgingSchema property={property} todayRate={property.todayRate} />
 
-      <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 4 }}>
+      <StayHeroMobile
+        property={property}
+        photos={galleryPhotos}
+        photosHref={buildHref(`/resorts/${property.slug}/photos`)}
+        phone={phone}
+      />
+
+      {/* Desktop header + gallery; phones get StayHeroMobile above. */}
+      <Box sx={{ display: { xs: "none", sm: "block" }, mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 4 }}>
         {/* Header */}
         <Box>
           {property.propertyType && (
@@ -363,27 +371,6 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             moments={property.moments}
             phoneNumber={phone}
           />
-          {galleryPhotos.length + (property.videos?.length ?? 0) > 1 && (
-            <Box
-              component={NextLink}
-              href={buildHref(`/resorts/${property.slug}/photos`)}
-              replace
-              sx={{
-                display: { xs: "flex", sm: "none" },
-                justifyContent: "center",
-                mt: 1.5,
-                py: 1.25,
-                borderRadius: sp.radiusSm,
-                border: `1px solid ${sp.borderSoft}`,
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                color: sp.ink,
-                textDecoration: "none",
-              }}
-            >
-              See all photos
-            </Box>
-          )}
         </Box>
       </Box>
 
@@ -428,7 +415,9 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       </Box>
 
       <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 4, sm: 6 } }}>
-        {/* Highlights strip */}
+        {/* Highlights + description: desktop only — the phone hero's sheet
+            carries both. */}
+        <Box sx={{ display: { xs: "none", sm: "block" } }}>
         <AmenityHighlights
           highlights={highlights}
           moments={property.moments ?? []}
@@ -443,6 +432,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             {property.description}
           </Typography>
         )}
+        </Box>
 
         {/* Room types — the core decision, given the most visual weight.
             Once dates are checked, only rooms actually available for them
@@ -450,7 +440,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             the generic nightly rate, and a Book now that goes straight to
             /book (already pre-verified) instead of re-checking there. */}
         {property.roomTypes.length > 0 && (
-          <Box component="section" id="rooms" ref={roomsRef} sx={{ mt: 6, scrollMarginTop: 16 }}>
+          <Box component="section" id="rooms" ref={roomsRef} sx={{ mt: { xs: 2, sm: 6 }, scrollMarginTop: 16 }}>
             <SectionTitle>Room types</SectionTitle>
             {checkingAvailability ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>

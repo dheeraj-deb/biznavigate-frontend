@@ -11,6 +11,10 @@ export const TAB_BAR_HEIGHT = 64;
 /** Height of the mobile top app bar. */
 export const TOP_BAR_HEIGHT = 56;
 
+/** How far Stay scrolls before its top bar slides in — about where the name,
+ *  printed over the bottom of the photo hero, has gone off the top. */
+export const HERO_REVEAL_OFFSET = 360;
+
 /**
  * For event handlers and mount-once effects. A `useMediaQuery` value is still
  * `false` on the hydration render, so an effect that runs once on mount would

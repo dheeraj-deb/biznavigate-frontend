@@ -126,6 +126,8 @@ export type ResortDetail = PublicProperty & {
   /** False until the resort's Cashfree account is active — the server refuses
    *  a checkout until then. Optional: older API builds don't send it. */
   acceptsOnlinePayment?: boolean;
+  /** Bookings confirm without the owner approving each one. */
+  instantBooking?: boolean;
 };
 
 export type AvailabilityResult = {

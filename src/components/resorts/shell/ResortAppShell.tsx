@@ -11,7 +11,9 @@ import { useBookingFlowHref, useSearchParamsSnapshot } from "@/lib/booking-flow-
 import { GuestChatProvider } from "./GuestChatProvider";
 import { MobileTabBar, type ShellTab } from "./MobileTabBar";
 import { MobileTopBar } from "./MobileTopBar";
+import { shareResort } from "./share";
 import {
+  HERO_REVEAL_OFFSET,
   TAB_BAR_HEIGHT,
   canGoBackInApp,
   consumeArrival,
@@ -39,19 +41,6 @@ function screenFor(segments: string[]): Screen {
   if (first === "photos" || first === "chat" || first === "book" || first === "booked") return first;
   if (first === "rooms") return "room";
   return "other";
-}
-
-async function shareProperty(property: ShellProperty) {
-  const url = `${window.location.origin}/resorts/${property.slug}`;
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: property.name, url });
-      return;
-    }
-    await navigator.clipboard.writeText(url);
-  } catch {
-    // Share sheet dismissed, or no clipboard — nothing to report.
-  }
 }
 
 /**
@@ -115,9 +104,9 @@ export function ResortAppShell({ property, children }: { property: ShellProperty
       <MobileTopBar
         title={property.name}
         subtitle={property.city ?? undefined}
-        revealAfter={140}
+        revealAfter={HERO_REVEAL_OFFSET}
         actions={
-          <IconButton aria-label="Share" onClick={() => void shareProperty(property)} sx={{ width: 48, height: 48, color: sp.ink }}>
+          <IconButton aria-label="Share" onClick={() => void shareResort(property.slug, property.name)} sx={{ width: 48, height: 48, color: sp.ink }}>
             <IosShareIcon sx={{ fontSize: 22 }} />
           </IconButton>
         }
