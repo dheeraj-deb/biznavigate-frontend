@@ -19,6 +19,7 @@ import { sp } from "./tokens";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   wifi: WifiIcon,
+  "wi-fi": WifiIcon,
   parking: LocalParkingIcon,
   pool: PoolIcon,
   restaurant: RestaurantIcon,
@@ -32,10 +33,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   location: PlaceIcon,
 };
 
-function AmenityIcon({ name }: { name: string }) {
+export function AmenityIcon({ name, size = 20 }: { name: string; size?: number }) {
   const key = name.toLowerCase();
   const Icon = Object.entries(ICON_MAP).find(([k]) => key.includes(k))?.[1] ?? StarIcon;
-  return <Icon sx={{ fontSize: 20, color: sp.blue }} />;
+  return <Icon sx={{ fontSize: size, color: sp.blue }} />;
 }
 
 export function AmenitiesGrid({ amenities }: { amenities: string[] }) {
