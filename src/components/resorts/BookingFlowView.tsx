@@ -1,19 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability } from "@/lib/publicApi";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { DateGuestCard } from "./DateGuestCard";
+import { StaySummary } from "./StaySummary";
 import { RoomAvailabilityCard } from "./RoomAvailabilityCard";
 import { CheckoutForm } from "./CheckoutForm";
 import { OnlineBookingUnavailable } from "./OnlineBookingUnavailable";
 import { AskAssistantDrawer } from "./AskAssistantDrawer";
+import { MobileTopBar } from "./shell/MobileTopBar";
+import { canGoBackInApp } from "./shell/mobile";
 import { sp } from "@/components/smartpages/tokens";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
@@ -27,6 +34,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   const params = useBookingFlowParams();
   const updateParams = useUpdateBookingFlowParams();
   const buildHref = useBookingFlowHref();
+  const router = useRouter();
 
   const checkIn = params.checkin ?? defaultDate(1);
   const checkOut = params.checkout ?? defaultDate(2);
@@ -153,16 +161,48 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     });
   }
 
+  // The Book flow's back arrow: checkout → the room list → wherever they
+  // came from. A step we pushed ourselves is popped; one they landed on
+  // straight from a link is stepped out of instead of closing the site.
+  function back() {
+    if (canGoBackInApp()) {
+      router.back();
+    } else if (selectedAvailability) {
+      updateParams({ room: null });
+    } else {
+      router.push(buildHref(`/resorts/${property.slug}`, { room: null }));
+    }
+  }
+
   function handleBook(roomTypeId: string) {
     bookingLinkEvents.track("room_selected", { roomTypeId });
     bookingLinkEvents.track("checkout_opened", { roomTypeId });
     updateParams({ room: roomTypeId }, { push: true });
   }
 
+  const inCheckout = Boolean(selectedAvailability);
+
   return (
     <Box>
+      <MobileTopBar
+        title={inCheckout ? "Confirm and pay" : "Choose your room"}
+        subtitle={`Step ${inCheckout ? 2 : 1} of 2 · ${property.name}`}
+        onBack={back}
+        actions={
+          <IconButton
+            component={NextLink}
+            href={buildHref(`/resorts/${property.slug}/chat`)}
+            aria-label="Ask a question"
+            sx={{ width: 48, height: 48, color: sp.ink }}
+          >
+            <ChatBubbleOutlineIcon sx={{ fontSize: 22 }} />
+          </IconButton>
+        }
+      />
+
       <Box
         sx={{
+          display: { xs: "none", sm: "block" },
           height: { xs: 200, sm: 260 },
           width: "100%",
           bgcolor: sp.border,
@@ -172,7 +212,18 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
         }}
       />
 
-      <DateGuestCard
+      <Box sx={{ display: { xs: "none", sm: "block" } }}>
+        <DateGuestCard
+          checkIn={checkIn}
+          checkOut={checkOut}
+          adults={adults}
+          children={childrenCount}
+          onChange={handleDateGuestChange}
+        />
+      </Box>
+      <StaySummary
+        // A new step starts with the stay folded away again.
+        key={inCheckout ? "checkout" : "rooms"}
         checkIn={checkIn}
         checkOut={checkOut}
         adults={adults}
@@ -180,7 +231,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
         onChange={handleDateGuestChange}
       />
 
-      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: 4 }}>
+      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 4 } }}>
         {selectedAvailability && property.acceptsOnlinePayment === false ? (
           <OnlineBookingUnavailable
             propertyName={property.name}
@@ -249,7 +300,6 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       </Box>
 
       <AskAssistantDrawer
-        slug={property.slug}
         phoneNumber={property.tenant?.gupshupSourceNumber ?? null}
         propertyName={property.name}
         context={{

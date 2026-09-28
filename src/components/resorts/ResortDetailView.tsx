@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
+import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -13,7 +15,6 @@ import { RoomCard } from "@/components/smartpages/RoomCard";
 import { AmenitiesGrid } from "@/components/smartpages/AmenitiesGrid";
 import { LodgingSchema } from "@/components/smartpages/LodgingSchema";
 import { ReviewSection } from "@/components/smartpages/ReviewSection";
-import { StickyCtaBar } from "@/components/smartpages/StickyCtaBar";
 import { AmenityHighlights } from "@/components/smartpages/AmenityHighlights";
 import {
   SectionTitle,
@@ -28,7 +29,8 @@ import { DateGuestCard } from "@/components/resorts/DateGuestCard";
 import { CheckoutForm } from "@/components/resorts/CheckoutForm";
 import { OnlineBookingUnavailable } from "@/components/resorts/OnlineBookingUnavailable";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
-import { useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
+import { useBookingFlowHref, useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
+import { consumeArrival, isMobileViewport } from "@/components/resorts/shell/mobile";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { getAvailability } from "@/lib/publicApi";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
@@ -45,6 +47,8 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   // agent, and Google's hotel price card appends the same date/party params,
   // so an organic visitor arrives prefilled by the same code path.
   const params = useBookingFlowParams();
+  const buildHref = useBookingFlowHref();
+  const router = useRouter();
 
   // Resolved from `s`. Carries the guest's name/phone/email and the prefill
   // the conversation established — the reason this page never has to ask for
@@ -152,7 +156,25 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   // and, when it is free for these dates, open its checkout in the same tap.
   // It used to run only the generic check, leaving the guest to find and press
   // Book now a second time. Unavailable still lands on the room list.
+  // On a phone, booking is its own flow (the Book button's screens), not a
+  // form that opens halfway down this page.
+  function openBookFlow(roomTypeId?: string) {
+    router.push(
+      buildHref(`/resorts/${property.slug}/book`, {
+        checkin: pickCheckIn,
+        checkout: pickCheckOut,
+        adults: pickAdults,
+        children: pickChildren,
+        room: roomTypeId ?? null,
+      }),
+    );
+  }
+
   function bookRoom(roomTypeId: string) {
+    if (isMobileViewport()) {
+      openBookFlow(roomTypeId);
+      return;
+    }
     void runAvailability(pickCheckIn, pickCheckOut, {
       autoSelectRoomId: roomTypeId,
       scrollToRooms: true,
@@ -174,6 +196,24 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     // whatever the guest arrived with.
     const arrived = readCurrentBookingFlowParams();
     bookingLinkEvents.setToken(arrived.s);
+
+    // A WhatsApp booking link (`s`), or a link that already carries dates, is
+    // someone who came to book. On a phone that lands them in the Book flow —
+    // the same thing this page does on desktop by opening checkout inline —
+    // with Stay one back-arrow away. Only on arrival: a guest who taps the
+    // Stay tab mid-booking came here to look around, not to be bounced back.
+    // #gallery / #rooms browse links are the shell's to route.
+    const hash = window.location.hash;
+    const browseLink = hash === "#gallery" || hash === "#rooms";
+    if (
+      consumeArrival() &&
+      isMobileViewport() &&
+      !browseLink &&
+      (arrived.s || (arrived.checkin && arrived.checkout))
+    ) {
+      router.replace(`/resorts/${property.slug}/book${window.location.search}`);
+      return;
+    }
 
     async function seed() {
       let prefill: BookingLinkSessionView["prefill"] | undefined;
@@ -240,6 +280,10 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   }, [seeded]);
 
   function selectRoom(roomTypeId: string) {
+    if (isMobileViewport()) {
+      openBookFlow(roomTypeId);
+      return;
+    }
     bookingLinkEvents.track("room_selected", { roomTypeId });
     bookingLinkEvents.track("checkout_opened", { roomTypeId });
     setSelectedRoomId(roomTypeId);
@@ -319,12 +363,35 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             moments={property.moments}
             phoneNumber={phone}
           />
+          {galleryPhotos.length + (property.videos?.length ?? 0) > 1 && (
+            <Box
+              component={NextLink}
+              href={buildHref(`/resorts/${property.slug}/photos`)}
+              replace
+              sx={{
+                display: { xs: "flex", sm: "none" },
+                justifyContent: "center",
+                mt: 1.5,
+                py: 1.25,
+                borderRadius: sp.radiusSm,
+                border: `1px solid ${sp.borderSoft}`,
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: sp.ink,
+                textDecoration: "none",
+              }}
+            >
+              See all photos
+            </Box>
+          )}
         </Box>
       </Box>
 
       {/* One check-in/out/guests card, reused verbatim on /book and
           /rooms/[id] — picking dates here just hands off; nothing here is
           re-queried against real availability until /book. */}
+      {/* Desktop only — on a phone, dates are picked inside the Book flow. */}
+      <Box sx={{ display: { xs: "none", sm: "block" } }}>
       <DateGuestCard
         overlap={false}
         checkIn={pickCheckIn}
@@ -358,8 +425,9 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           </Button>
         }
       />
+      </Box>
 
-      <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 12, sm: 6 } }}>
+      <Box sx={{ mx: "auto", maxWidth: 1280, px: { xs: 2, sm: 3 }, pt: 3, pb: { xs: 4, sm: 6 } }}>
         {/* Highlights strip */}
         <AmenityHighlights
           highlights={highlights}
@@ -495,17 +563,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
         <FaqSection faqs={property.faqs} />
       </Box>
 
-      {/* Sticky mobile CTA */}
-      <StickyCtaBar
-        todayRate={property.todayRate}
-        phoneNumber={phone}
-        propertyName={property.name}
-        propertyId={property.id}
-        bookingSlug={property.slug}
-      />
-
       <AskAssistantDrawer
-        slug={property.slug}
         phoneNumber={phone}
         propertyName={property.name}
         context={{
@@ -517,7 +575,6 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           roomTypeId: selectedAvailability?.roomTypeId,
           roomName: selectedAvailability?.name,
         }}
-        mobileBottomOffset={88}
       />
     </>
   );

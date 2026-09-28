@@ -11,24 +11,17 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import { sp } from "@/components/smartpages/tokens";
-import { useBookingFlowParams, useUpdateBookingFlowParams } from "@/lib/booking-flow-url";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
-import { startWebVisitorSession } from "@/lib/booking-link-api";
-import { askWebAssistant, type WebAssistantContext } from "@/lib/web-assistant-api";
-
-type ChatTurn = { role: "guest" | "assistant"; text: string };
+import type { WebAssistantContext } from "@/lib/web-assistant-api";
+import { useGuestChat } from "@/components/resorts/shell/GuestChatProvider";
 
 type Props = {
-  slug: string;
   phoneNumber: string | null;
   propertyName: string;
   context: WebAssistantContext;
-  /** Clears StickyCtaBar's mobile-only fixed bottom bar (the experience
-   *  page has both) — otherwise the closed-state FAB sits on top of it. */
-  mobileBottomOffset?: number;
 };
 
-function buildWaUrl(phoneNumber: string | null, propertyName: string): string | null {
+export function buildWaUrl(phoneNumber: string | null, propertyName: string): string | null {
   if (!phoneNumber) return null;
   const number = `91${phoneNumber.replace(/\D/g, "").slice(-10)}`;
   const text = `Hi, I have a question about ${propertyName}.`;
@@ -36,47 +29,31 @@ function buildWaUrl(phoneNumber: string | null, propertyName: string): string | 
 }
 
 /**
- * Present on all three built Phase C screens (docs/guest-experience-handoff.md).
+ * Desktop only: the floating "Ask a question" panel. On phones the Chat tab
+ * (ChatScreen) is the chat, and this button would only sit on top of it.
+ * Both read the same thread from GuestChatProvider, so a question asked here
+ * is still there after the guest moves between pages.
+ *
  * Always opens the real chat panel, whether the guest arrived via a
- * WhatsApp-minted `?s=` link or organically (Phase C open question #3, now
- * closed): with no session yet, the first message lazily mints one
- * (startWebVisitorSession — a real Contact + Conversation) rather than
- * falling back to a WhatsApp-only button. "Continue on WhatsApp instead"
- * stays available inside the panel as an escape hatch, never as the only
- * option.
+ * WhatsApp-minted `?s=` link or organically: with no session yet, the first
+ * message lazily mints one. "Continue on WhatsApp instead" stays available
+ * inside the panel as an escape hatch, never as the only option.
  */
-export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, mobileBottomOffset }: Props) {
-  const params = useBookingFlowParams();
-  const updateParams = useUpdateBookingFlowParams();
-  const [sessionToken, setSessionToken] = useState<string | null>(params.s);
+export function AskAssistantDrawer({ phoneNumber, propertyName, context }: Props) {
+  const { turns, sending, error, send, setVisible } = useGuestChat();
   const [open, setOpen] = useState(false);
-  const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const openedTrackedRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const waUrl = buildWaUrl(phoneNumber, propertyName);
 
   useEffect(() => {
-    if (params.s) setSessionToken(params.s);
-  }, [params.s]);
-
-  useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [turns, sending]);
 
-  async function ensureSession(): Promise<string | null> {
-    if (sessionToken) return sessionToken;
-    try {
-      const token = await startWebVisitorSession(slug);
-      setSessionToken(token);
-      updateParams({ s: token });
-      return token;
-    } catch {
-      return null;
-    }
-  }
+  useEffect(() => {
+    setVisible(open);
+  }, [open, setVisible]);
 
   function openPanel() {
     setOpen(true);
@@ -92,24 +69,11 @@ export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, m
     bookingLinkEvents.flush();
   }
 
-  async function send() {
+  function submit() {
     const message = input.trim();
     if (!message || sending) return;
     setInput("");
-    setError(null);
-    setTurns((prev) => [...prev, { role: "guest", text: message }]);
-    setSending(true);
-    bookingLinkEvents.track("web_chat_message_sent", { fromStep: context.step });
-    try {
-      const token = await ensureSession();
-      if (!token) throw new Error("no session");
-      const result = await askWebAssistant(token, message, context);
-      setTurns((prev) => [...prev, { role: "assistant", text: result.reply }]);
-    } catch {
-      setError("Couldn't send that — please try again, or continue on WhatsApp below.");
-    } finally {
-      setSending(false);
-    }
+    void send(message, context);
   }
 
   return (
@@ -120,8 +84,9 @@ export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, m
           variant="extended"
           aria-label="Ask a question"
           sx={{
+            display: { xs: "none", sm: "inline-flex" },
             position: "fixed",
-            bottom: { xs: mobileBottomOffset ?? 20, sm: 20 },
+            bottom: 20,
             right: 20,
             zIndex: 31,
             bgcolor: sp.ink,
@@ -139,20 +104,20 @@ export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, m
           sx={{
             position: "fixed",
             zIndex: 40,
-            inset: { xs: "auto 0 0 0", sm: "auto 20px 20px auto" },
-            display: "flex",
-            justifyContent: { xs: "center", sm: "flex-end" },
+            inset: "auto 20px 20px auto",
+            display: { xs: "none", sm: "flex" },
+            justifyContent: "flex-end",
           }}
         >
           <Box
             sx={{
               display: "flex",
               flexDirection: "column",
-              width: { xs: "100%", sm: 380 },
-              height: { xs: "70vh", sm: 512 },
+              width: 380,
+              height: 512,
               bgcolor: "#fff",
               border: `1px solid ${sp.border}`,
-              borderRadius: { xs: "16px 16px 0 0", sm: sp.radius },
+              borderRadius: sp.radius,
               boxShadow: sp.cardShadowHover,
               overflow: "hidden",
             }}
@@ -216,11 +181,11 @@ export function AskAssistantDrawer({ slug, phoneNumber, propertyName, context, m
                   disabled={sending}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") void send();
+                    if (e.key === "Enter") submit();
                   }}
                 />
                 <IconButton
-                  onClick={() => void send()}
+                  onClick={submit}
                   disabled={sending || !input.trim()}
                   sx={{ bgcolor: sp.blue, color: "#fff", "&:hover": { bgcolor: sp.blue }, "&.Mui-disabled": { bgcolor: sp.chipBg } }}
                 >

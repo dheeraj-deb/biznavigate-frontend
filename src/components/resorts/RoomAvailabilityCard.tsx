@@ -90,7 +90,19 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook 
           </Typography>
         )}
 
-        <Box sx={{ mt: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, pt: 1 }}>
+        {/* Phones: price on its own line, then two equal full-width buttons —
+            side by side with the price, "View room" wrapped onto two lines. */}
+        <Box
+          sx={{
+            mt: "auto",
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+            justifyContent: "space-between",
+            gap: { xs: 1.25, sm: 2 },
+            pt: 1,
+          }}
+        >
           <Box>
             {availability.available && (
               <Typography sx={{ fontSize: "1rem" }}>
@@ -109,7 +121,7 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook 
               href={viewHref}
               variant="outlined"
               size="small"
-              sx={{ borderRadius: 9999 }}
+              sx={{ borderRadius: 9999, whiteSpace: "nowrap", flex: { xs: 1, sm: "none" }, minHeight: { xs: 44, sm: 0 } }}
             >
               View room
             </Button>
@@ -118,7 +130,13 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook 
               size="small"
               disabled={!availability.available}
               onClick={onBook}
-              sx={{ borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: sp.blue } }}
+              sx={{
+                borderRadius: 9999,
+                bgcolor: sp.blue,
+                "&:hover": { bgcolor: sp.blue },
+                flex: { xs: 1, sm: "none" },
+                minHeight: { xs: 44, sm: 0 },
+              }}
             >
               Book
             </Button>

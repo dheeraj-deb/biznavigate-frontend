@@ -1,10 +1,10 @@
-import PublicLayout from '@/layouts/PublicLayout';
+import { GuestThemeRoot } from '@/layouts/PublicChrome';
 import { guestFontClass } from '@/lib/guest-fonts';
 
 export default function ResortsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={guestFontClass}>
-      <PublicLayout>{children}</PublicLayout>
+      <GuestThemeRoot>{children}</GuestThemeRoot>
     </div>
   );
 }

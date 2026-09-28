@@ -9,6 +9,7 @@ import NextLink from "next/link";
 import { MediaGallery } from "@/components/smartpages/MediaGallery";
 import { AmenitiesGrid } from "@/components/smartpages/AmenitiesGrid";
 import { DateGuestCard } from "./DateGuestCard";
+import { StaySummary } from "./StaySummary";
 import { AskAssistantDrawer } from "./AskAssistantDrawer";
 import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
@@ -83,6 +84,8 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
     <Box>
       <Box
         sx={{
+          // Phones skip the banner: the gallery below opens on the same photo.
+          display: { xs: "none", sm: "block" },
           position: "relative",
           height: { xs: 200, sm: 260 },
           width: "100%",
@@ -109,18 +112,15 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
         </Box>
       </Box>
 
-      <Box sx={{ display: { xs: "block", sm: "none" } }}>
-        <DateGuestCard
-          mt={2}
-          checkIn={checkIn}
-          checkOut={checkOut}
-          adults={adults}
-          children={childrenCount}
-          onChange={handleDateGuestChange}
-        />
-      </Box>
+      <StaySummary
+        checkIn={checkIn}
+        checkOut={checkOut}
+        adults={adults}
+        children={childrenCount}
+        onChange={handleDateGuestChange}
+      />
 
-      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: 4 }}>
+      <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 } }}>
         <Typography
           component="h1"
           sx={{ fontFamily: guestDisplayFontFamily, fontSize: { xs: "2rem", sm: "2.5rem" }, fontWeight: 400, color: sp.ink }}
@@ -154,7 +154,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
           sx={{
             mt: 4,
             position: "sticky",
-            bottom: 16,
+            bottom: { xs: "calc(12px + env(safe-area-inset-bottom))", sm: 16 },
             borderRadius: sp.radius,
             border: `1px solid ${sp.border}`,
             bgcolor: "#fff",
@@ -199,7 +199,6 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
       </Box>
 
       <AskAssistantDrawer
-        slug={property.slug}
         phoneNumber={property.tenant?.gupshupSourceNumber ?? null}
         propertyName={property.name}
         context={{

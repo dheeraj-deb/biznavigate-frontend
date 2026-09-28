@@ -409,12 +409,29 @@ export function CheckoutForm({
         <Typography sx={{ mt: 1.5, fontSize: "0.8125rem", color: "#dc2626" }}>{error}</Typography>
       )}
 
+      {/* Pinned to the bottom of the screen on phones, so the pay button
+          is always one thumb away however long the extras list runs. */}
+      <Box
+        sx={{
+          position: { xs: "sticky", sm: "static" },
+          bottom: 0,
+          zIndex: 2,
+          mx: { xs: -2, sm: 0 },
+          mb: { xs: -2, sm: 0 },
+          px: { xs: 2, sm: 0 },
+          pt: { xs: 1.5, sm: 0 },
+          pb: { xs: "calc(12px + env(safe-area-inset-bottom))", sm: 0 },
+          bgcolor: "#fff",
+          borderTop: { xs: `1px solid ${sp.divider}`, sm: "none" },
+          borderRadius: { xs: `0 0 ${sp.radius} ${sp.radius}`, sm: 0 },
+        }}
+      >
       <Button
         fullWidth
         variant="contained"
         onClick={submit}
         disabled={!name.trim() || !phone.trim() || submitting || quoting || !quote}
-        sx={{ mt: 2, borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: sp.blue }, py: 1.25 }}
+        sx={{ mt: { xs: 0, sm: 2 }, borderRadius: 9999, bgcolor: sp.blue, "&:hover": { bgcolor: sp.blue }, py: 1.25 }}
       >
         {submitting || quoting ? (
           <CircularProgress size={20} sx={{ color: "#fff" }} />
@@ -424,6 +441,7 @@ export function CheckoutForm({
           "Pay"
         )}
       </Button>
+      </Box>
     </Box>
   );
 }
