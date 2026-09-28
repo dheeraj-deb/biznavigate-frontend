@@ -15,30 +15,23 @@ import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import OptimizedImage from "@/components/OptimizedImage";
-import { AmenityIcon } from "@/components/smartpages/AmenitiesGrid";
+import { AmenityLineIcon } from "@/components/smartpages/amenityLineIcons";
 import { MomentLayer } from "@/components/smartpages/MomentLayer";
 import { MomentPopover } from "@/components/smartpages/MomentPopover";
 import type { LightboxSlide } from "@/components/smartpages/Lightbox";
 import { formatINR, sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { useBookingFlowHref, useHydrated } from "@/lib/booking-flow-url";
+import { formatTime } from "@/lib/formatTime";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { ResortDetail } from "@/lib/publicApi";
 import { shareResort } from "./shell/share";
 
 const Lightbox = lazy(() => import("@/components/smartpages/Lightbox"));
 
-/** "14:00" → "2:00 PM". Anything unparseable is shown as the owner typed it. */
-function formatTime(value: string | null): string | null {
-  if (!value) return null;
-  const m = /^(\d{1,2}):(\d{2})/.exec(value);
-  if (!m) return value;
-  const h = Number(m[1]);
-  const suffix = h >= 12 ? "PM" : "AM";
-  return `${h % 12 || 12}:${m[2]} ${suffix}`;
-}
 
 const OFFERS_PREVIEW = 6;
 
@@ -469,9 +462,14 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
         </Box>
 
         {offers.length > 0 && (
-          <Box sx={{ mt: 3.5 }}>
-            <Typography sx={{ mb: 1.5, fontSize: "1.0625rem", fontWeight: 700, color: sp.ink }}>What this place offers</Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 1.5, rowGap: 1.75 }}>
+          <Box sx={{ mt: 4, pt: 3.5, borderTop: `1px solid ${sp.divider}` }}>
+            <Typography
+              component="h2"
+              sx={{ mb: 1.5, fontFamily: guestDisplayFontFamily, fontSize: "1.625rem", fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", color: sp.ink }}
+            >
+              What this place offers
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 2.5 }}>
               {(showAllOffers ? offers : offers.slice(0, OFFERS_PREVIEW)).map((name) => {
                 const moment = highlightMoments.get(name.toLowerCase());
                 const row = (onClick?: (e: React.MouseEvent<HTMLElement>) => void) => (
@@ -482,40 +480,36 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1.25,
+                      gap: 1.5,
                       minWidth: 0,
-                      p: 0,
+                      width: "100%",
+                      minHeight: 60,
+                      py: 1.5,
+                      px: 0,
                       border: 0,
+                      borderBottom: `1px solid ${sp.divider}`,
                       bgcolor: "transparent",
                       fontFamily: "inherit",
                       textAlign: "left",
                       cursor: moment ? "pointer" : "default",
                     }}
                   >
-                    <Box
-                      sx={{
-                        flexShrink: 0,
-                        width: 38,
-                        height: 38,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: moment ? sp.blue : sp.blueBgSoft,
-                        "& svg": moment ? { color: "#fff" } : undefined,
-                      }}
-                    >
-                      {moment ? <AutoAwesomeIcon sx={{ fontSize: 18 }} /> : <AmenityIcon name={name} size={19} />}
-                    </Box>
+                    {moment ? (
+                      <AutoAwesomeOutlinedIcon sx={{ flexShrink: 0, fontSize: 22, color: sp.star }} />
+                    ) : (
+                      <Box sx={{ flexShrink: 0, display: "flex" }}>
+                        <AmenityLineIcon name={name} size={22} color={sp.ink} />
+                      </Box>
+                    )}
                     <Typography
                       sx={{
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
+                        fontSize: "0.9375rem",
+                        fontWeight: 400,
                         color: sp.ink,
-                        lineHeight: 1.3,
-                        textDecoration: moment ? "underline" : "none",
-                        textDecorationColor: sp.borderSoft,
-                        textUnderlineOffset: 3,
+                        lineHeight: 1.35,
+                        textDecoration: moment ? "underline dotted" : "none",
+                        textDecorationColor: sp.star,
+                        textUnderlineOffset: 4,
                       }}
                     >
                       {name}
@@ -540,30 +534,46 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
               <Box
                 component="button"
                 type="button"
+                aria-expanded={showAllOffers}
                 onClick={() => setShowAllOffers((v) => !v)}
                 sx={{
-                  mt: 2,
+                  mt: 2.5,
                   width: "100%",
-                  py: 1.25,
-                  borderRadius: sp.radiusSm,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.75,
+                  borderRadius: 999,
                   border: `1px solid ${sp.ink}`,
-                  bgcolor: "#fff",
+                  bgcolor: "transparent",
                   fontFamily: "inherit",
                   fontSize: "0.875rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
+                  letterSpacing: "0.01em",
                   color: sp.ink,
                   cursor: "pointer",
+                  transition: "background-color 150ms ease",
+                  "&:hover": { bgcolor: sp.bgSoft },
                 }}
               >
                 {showAllOffers ? "Show fewer" : `Show all ${offers.length} amenities`}
+                <KeyboardArrowDownRoundedIcon
+                  sx={{ fontSize: 20, transition: "transform 200ms ease", transform: showAllOffers ? "rotate(180deg)" : "none" }}
+                />
               </Box>
             )}
           </Box>
         )}
 
         {description && (
-          <Box sx={{ mt: 3 }}>
-            <Typography sx={{ mb: 1, fontSize: "1.0625rem", fontWeight: 700, color: sp.ink }}>About the stay</Typography>
+          <Box sx={{ mt: 4 }}>
+            <Typography
+              component="h2"
+              sx={{ mb: 1.25, fontFamily: guestDisplayFontFamily, fontSize: "1.625rem", fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", color: sp.ink }}
+            >
+              About the stay
+            </Typography>
             <Typography
               sx={{
                 fontSize: "0.9375rem",

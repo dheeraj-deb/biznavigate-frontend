@@ -22,7 +22,8 @@ import { AskAssistantDrawer } from "./AskAssistantDrawer";
 import { MobileTopBar } from "./shell/MobileTopBar";
 import { canGoBackInApp } from "./shell/mobile";
 import { sp } from "@/components/smartpages/tokens";
-import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
+import { guestDisplayFontFamily } from "@/lib/guestTheme";
+import { isBookable, partyLabel, type AvailabilityResult, type ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -109,7 +110,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     if (!seeded) return;
     let alive = true;
     setLoading(true);
-    getAvailability(property.slug, checkIn, checkOut, params.s)
+    getAvailability(property.slug, checkIn, checkOut, params.s, { adults, children: childrenCount })
       .then((rows) => {
         if (alive) setAvailability(rows);
       })
@@ -122,7 +123,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     return () => {
       alive = false;
     };
-  }, [property.slug, checkIn, checkOut, seeded]);
+  }, [property.slug, checkIn, checkOut, adults, childrenCount, seeded]);
 
   useEffect(() => {
     if (availability) {
@@ -140,11 +141,15 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   // guest changes dates on this same page for a room they'd already
   // selected, and that must fall back to the room list, not a ₹0 checkout.
   const selectedAvailability = useMemo(
-    () => availability?.find((a) => a.roomTypeId === params.room && a.available) ?? null,
+    () => availability?.find((a) => a.roomTypeId === params.room && isBookable(a)) ?? null,
     [availability, params.room],
   );
 
   const anyAvailable = availability?.some((a) => a.available) ?? true;
+  const anyBookable = availability?.some(isBookable) ?? true;
+  // Rooms the group can book first; too-small and sold-out ones after, so the
+  // first card is always one the guest can actually take.
+  const orderedAvailability = [...(availability ?? [])].sort((x, y) => Number(isBookable(y)) - Number(isBookable(x)));
 
   function handleDateGuestChange(next: {
     checkIn?: string;
@@ -251,10 +256,17 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             sessionToken={params.s}
             initialGuest={session?.guest ?? null}
             onClose={() => updateParams({ room: null }, { push: true })}
+            room={roomTypeById.get(selectedAvailability.roomTypeId)}
+            cancellationPolicy={property.cancellationPolicy}
+            checkInTime={property.checkInTime}
+            checkOutTime={property.checkOutTime}
           />
         ) : (
           <>
-            <Typography sx={{ fontSize: "1rem", fontWeight: 600, color: sp.ink, mb: 2 }}>
+            <Typography
+              component="h2"
+              sx={{ mb: 2, fontFamily: guestDisplayFontFamily, fontSize: "1.625rem", fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.01em", color: sp.ink }}
+            >
               {loading ? "Checking availability…" : "Available rooms"}
             </Typography>
 
@@ -284,10 +296,21 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
               </Box>
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {(availability ?? []).map((a) => (
+                {!anyBookable && (
+                  <Box sx={{ borderRadius: sp.radius, border: `1px solid ${sp.border}`, bgcolor: sp.bgSoft, p: 2.5 }}>
+                    <Typography sx={{ color: sp.ink, fontWeight: 600 }}>
+                      No single room fits {partyLabel(adults, childrenCount)}
+                    </Typography>
+                    <Typography sx={{ mt: 0.5, fontSize: "0.875rem", lineHeight: 1.6, color: sp.muted }}>
+                      Try fewer guests, or message the resort to book more than one room.
+                    </Typography>
+                  </Box>
+                )}
+                {orderedAvailability.map((a) => (
                   <RoomAvailabilityCard
                     key={a.roomTypeId}
                     availability={a}
+                    party={partyLabel(adults, childrenCount)}
                     roomType={roomTypeById.get(a.roomTypeId)}
                     viewHref={buildHref(`/resorts/${property.slug}/rooms/${a.roomTypeId}`)}
                     onBook={() => handleBook(a.roomTypeId)}

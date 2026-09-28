@@ -32,7 +32,7 @@ import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { useBookingFlowHref, useBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { consumeArrival, isMobileViewport } from "@/components/resorts/shell/mobile";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
-import { getAvailability } from "@/lib/publicApi";
+import { getAvailability, isBookable, partyLabel } from "@/lib/publicApi";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
@@ -75,7 +75,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   // range has nothing to say about another.
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const selectedAvailability =
-    availability?.find((a) => a.roomTypeId === selectedRoomId && a.available) ?? null;
+    availability?.find((a) => a.roomTypeId === selectedRoomId && isBookable(a)) ?? null;
   const checkoutRef = useRef<HTMLDivElement>(null);
 
   // Page-view event so the funnel (view → moment → book) starts at the top.
@@ -115,7 +115,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     setCheckingAvailability(true);
     let rows: AvailabilityResult[] = [];
     try {
-      rows = await getAvailability(property.slug, checkIn, checkOut, params.s);
+      rows = await getAvailability(property.slug, checkIn, checkOut, params.s, { adults: pickAdults, children: pickChildren });
     } catch {
       rows = [];
     }
@@ -124,7 +124,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     bookingLinkEvents.track("availability_viewed", {
       checkIn,
       checkOut,
-      roomsAvailable: rows.filter((r) => r.available).length,
+      roomsAvailable: rows.filter(isBookable).length,
     });
 
     // A room the guest already picked in chat opens its checkout directly —
@@ -133,7 +133,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
     // available for these dates; otherwise they land on the room list, which
     // is the honest answer rather than a checkout for a room that has gone.
     const auto = opts.autoSelectRoomId
-      ? rows.find((r) => r.roomTypeId === opts.autoSelectRoomId && r.available)
+      ? rows.find((r) => r.roomTypeId === opts.autoSelectRoomId && isBookable(r))
       : undefined;
     if (auto) {
       setSelectedRoomId(auto.roomTypeId);
@@ -450,14 +450,21 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
               (() => {
                 const visibleRooms = availability
                   ? property.roomTypes.filter(
-                      (room) => availability.find((a) => a.roomTypeId === room.id)?.available,
+                      (room) => {
+                        const a = availability.find((row) => row.roomTypeId === room.id);
+                        return a ? isBookable(a) : false;
+                      },
                     )
                   : property.roomTypes;
 
                 if (availability && visibleRooms.length === 0) {
+                  // Rooms are free but none holds this group: say that, not "sold out".
+                  const freeButSmall = availability.some((a) => a.available);
                   return (
-                    <Typography sx={{ fontSize: "0.9375rem", color: sp.muted }}>
-                      No rooms available for these dates. Try different dates.
+                    <Typography sx={{ fontSize: "0.9375rem", lineHeight: 1.6, color: sp.muted }}>
+                      {freeButSmall
+                        ? `No single room fits ${partyLabel(pickAdults, pickChildren)}. Try fewer guests, or message the resort to book more than one room.`
+                        : "No rooms available for these dates. Try different dates."}
                     </Typography>
                   );
                 }
@@ -484,6 +491,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                             thisAvailability
                               ? {
                                   totalPrice: thisAvailability.totalPrice,
+                                  occupancySurcharge: thisAvailability.occupancySurcharge,
                                   nights: thisAvailability.nights,
                                   standardTotalPrice: thisAvailability.standardTotalPrice,
                                   approvedRate: thisAvailability.approvedRate,
@@ -492,6 +500,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                           }
                           onBookNow={bookRoom}
                           onSelectRoom={() => selectRoom(room.id)}
+                          detailsHref={buildHref(`/resorts/${property.slug}/rooms/${room.id}`)}
                         />
                       );
                     })}
@@ -524,6 +533,10 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     sessionToken={params.s}
                     initialGuest={session?.guest ?? null}
                     onClose={() => setSelectedRoomId(null)}
+                    room={property.roomTypes.find((rt) => rt.id === selectedAvailability.roomTypeId)}
+                    cancellationPolicy={property.cancellationPolicy}
+                    checkInTime={property.checkInTime}
+                    checkOutTime={property.checkOutTime}
                   />
                 )}
               </Box>
