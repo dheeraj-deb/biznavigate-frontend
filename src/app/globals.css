@@ -32,7 +32,10 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  /* clip, not hidden: `hidden` on both html and body makes body a scroll
+     container that never scrolls, which silently breaks every
+     position: sticky on the site (headers, the photo filter row). */
+  overflow-x: clip;
 }
 
 a {

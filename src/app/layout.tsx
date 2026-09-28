@@ -5,6 +5,9 @@ import './globals.css';
 
 export const viewport: Viewport = {
   themeColor: '#184ABB',
+  // Without this, iOS reports every env(safe-area-inset-*) as 0 and a bar
+  // fixed to the bottom sits under the home indicator.
+  viewportFit: 'cover',
 };
 
 export const metadata: Metadata = {
