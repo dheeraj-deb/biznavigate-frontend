@@ -144,18 +144,23 @@ export function useBookingFlowHref() {
  * like changing dates on the /book card — a new history entry per keystroke
  * would make the back button useless. Pass `push: true` for a real
  * navigation (e.g. selecting a room opens checkout).
+ *
+ * Merges onto the query string as it is *when called*, not as of the last
+ * render: the /book seed effect holds the hydration render's copy of this
+ * callback, whose snapshot is the server's empty string, so merging onto that
+ * wiped every param the guest arrived with (dates, utm_*) the moment the seed
+ * filled in a missing one (adults, say).
  */
 export function useUpdateBookingFlowParams() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParamsSnapshot();
 
   return useCallback(
     (
       updates: Partial<Record<keyof BookingFlowParams, string | number | null>>,
       opts: { push?: boolean } = {},
     ) => {
-      const qs = new URLSearchParams(searchParams.toString());
+      const qs = new URLSearchParams(getSearchSnapshot());
       for (const [key, value] of Object.entries(updates)) {
         if (value === null || value === undefined || value === "") {
           qs.delete(key);
@@ -169,6 +174,6 @@ export function useUpdateBookingFlowParams() {
       if (opts.push) router.push(url);
       else router.replace(url, { scroll: false });
     },
-    [router, pathname, searchParams],
+    [router, pathname],
   );
 }
