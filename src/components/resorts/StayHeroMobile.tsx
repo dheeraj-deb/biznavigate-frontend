@@ -9,8 +9,7 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import PlaceIcon from "@mui/icons-material/Place";
 import StarIcon from "@mui/icons-material/Star";
-import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
+import NightsStayRoundedIcon from "@mui/icons-material/NightsStayRounded";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -37,6 +36,24 @@ function formatTime(value: string | null): string | null {
   return `${h % 12 || 12}:${m[2]} ${suffix}`;
 }
 
+const OFFERS_PREVIEW = 6;
+
+const ticketLabel = {
+  fontSize: "0.6875rem",
+  fontWeight: 600,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: sp.muted,
+} as const;
+
+const ticketValue = {
+  mt: 0.25,
+  fontSize: "1.125rem",
+  fontWeight: 700,
+  color: sp.ink,
+  letterSpacing: "-0.01em",
+} as const;
+
 const glass = {
   bgcolor: "rgba(255,255,255,0.88)",
   backdropFilter: "blur(10px)",
@@ -54,8 +71,8 @@ type Props = {
 
 /**
  * Phone-only top of Stay: the photos full-bleed with the name set over them,
- * then a sheet that rises over the photo's bottom edge with the facts a guest
- * decides on (times, who fits, how booking works), what the place offers,
+ * then a sheet that rises over the photo's bottom edge with the stay as a
+ * ticket (times, who fits, how booking works), what the place offers,
  * and the description. Replaces the web-page stack of title → rounded photo
  * → "See all photos" button → chips → paragraph.
  */
@@ -63,6 +80,7 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
   const [index, setIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [showAllOffers, setShowAllOffers] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   const location = [property.city, property.region].filter(Boolean).join(", ");
@@ -89,11 +107,11 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
     setIndex(Math.round(el.scrollLeft / el.clientWidth));
   }
 
-  const facts = [
-    checkIn && { icon: <LoginRoundedIcon />, label: "Check-in", value: checkIn },
-    checkOut && { icon: <LogoutRoundedIcon />, label: "Check-out", value: checkOut },
-    maxGuests > 0 && { icon: <PeopleAltOutlinedIcon />, label: "Sleeps", value: `Up to ${maxGuests}` },
-  ].filter(Boolean) as { icon: React.ReactNode; label: string; value: string }[];
+  const perks = [
+    maxGuests > 0 && { icon: <PeopleAltOutlinedIcon />, label: `Sleeps up to ${maxGuests}`, tone: sp.blue },
+    property.instantBooking && { icon: <BoltRoundedIcon />, label: "Instant confirmation", tone: "#16a34a" },
+    property.acceptsOnlinePayment && { icon: <LockOutlinedIcon />, label: "Secure payment", tone: "#16a34a" },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string; tone: string }[];
 
   return (
     <Box sx={{ display: { xs: "block", sm: "none" } }}>
@@ -280,94 +298,138 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
           pt: 2.5,
         }}
       >
-        {facts.length > 0 && (
+        {/* The stay as a ticket: in → night → out, then who it sleeps and
+            how booking works under a perforation. */}
+        {(checkIn || checkOut || perks.length > 0) && (
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${facts.length}, 1fr)`,
-              borderRadius: sp.radius,
+              position: "relative",
+              borderRadius: "20px",
               border: `1px solid ${sp.border}`,
-              bgcolor: sp.bgSoft,
+              background: `linear-gradient(135deg, ${sp.blueBgTint} 0%, #fff 70%)`,
+              boxShadow: sp.cardShadow,
             }}
           >
-            {facts.map((f, i) => (
-              <Box
-                key={f.label}
-                sx={{
-                  px: 1.5,
-                  py: 1.5,
-                  borderLeft: i === 0 ? "none" : `1px solid ${sp.border}`,
-                  "& svg": { fontSize: 18, color: sp.blue },
-                }}
-              >
-                {f.icon}
-                <Typography sx={{ mt: 0.5, fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: sp.muted }}>
-                  {f.label}
-                </Typography>
-                <Typography sx={{ fontSize: "0.9375rem", fontWeight: 700, color: sp.ink }}>{f.value}</Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-
-        {(property.instantBooking || property.acceptsOnlinePayment) && (
-          <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", gap: 2, fontSize: "0.8125rem", color: sp.body }}>
-            {property.instantBooking && (
-              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                <BoltRoundedIcon sx={{ fontSize: 17, color: "#16a34a" }} />
-                Instant confirmation
+            {(checkIn || checkOut) && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.25, pt: 2, pb: 1.75 }}>
+                <Box>
+                  <Typography sx={ticketLabel}>Check-in</Typography>
+                  <Typography sx={ticketValue}>{checkIn ?? "—"}</Typography>
+                </Box>
+                <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 0.75, color: sp.faint }}>
+                  <Box sx={{ flex: 1, borderTop: `1.5px dashed ${sp.borderSoft}` }} />
+                  <NightsStayRoundedIcon sx={{ fontSize: 18, color: sp.blue }} />
+                  <Box sx={{ flex: 1, borderTop: `1.5px dashed ${sp.borderSoft}` }} />
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography sx={ticketLabel}>Check-out</Typography>
+                  <Typography sx={ticketValue}>{checkOut ?? "—"}</Typography>
+                </Box>
               </Box>
             )}
-            {property.acceptsOnlinePayment && (
-              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-                <LockOutlinedIcon sx={{ fontSize: 16, color: "#16a34a" }} />
-                Secure online payment
-              </Box>
+
+            {perks.length > 0 && (
+              <>
+                {(checkIn || checkOut) && (
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: "relative",
+                      mx: 2,
+                      borderTop: `1.5px dashed ${sp.border}`,
+                      // Punched notches at both ends of the perforation.
+                      "&::before, &::after": {
+                        content: '""',
+                        position: "absolute",
+                        top: -9,
+                        width: 16,
+                        height: 16,
+                        borderRadius: "50%",
+                        bgcolor: "#fff",
+                        border: `1px solid ${sp.border}`,
+                      },
+                      "&::before": { left: -25, clipPath: "inset(0 0 0 50%)" },
+                      "&::after": { right: -25, clipPath: "inset(0 50% 0 0)" },
+                    }}
+                  />
+                )}
+                <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 0.75, px: 2.25, py: 1.5 }}>
+                  {perks.map((p) => (
+                    <Box
+                      key={p.label}
+                      component="span"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 0.625,
+                        fontSize: "0.8125rem",
+                        fontWeight: 600,
+                        color: sp.ink,
+                        "& svg": { fontSize: 16, color: p.tone },
+                      }}
+                    >
+                      {p.icon}
+                      {p.label}
+                    </Box>
+                  ))}
+                </Box>
+              </>
             )}
           </Box>
         )}
 
         {offers.length > 0 && (
-          <Box sx={{ mt: 3 }}>
-            <Typography sx={{ mb: 1.25, fontSize: "1.0625rem", fontWeight: 700, color: sp.ink }}>What this place offers</Typography>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                mx: -2,
-                px: 2,
-                overflowX: "auto",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": { display: "none" },
-              }}
-            >
-              {offers.map((name) => {
+          <Box sx={{ mt: 3.5 }}>
+            <Typography sx={{ mb: 1.5, fontSize: "1.0625rem", fontWeight: 700, color: sp.ink }}>What this place offers</Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 1.5, rowGap: 1.75 }}>
+              {(showAllOffers ? offers : offers.slice(0, OFFERS_PREVIEW)).map((name) => {
                 const moment = highlightMoments.get(name.toLowerCase());
-                const tile = (onClick?: (e: React.MouseEvent<HTMLElement>) => void) => (
+                const row = (onClick?: (e: React.MouseEvent<HTMLElement>) => void) => (
                   <Box
                     component={moment ? "button" : "div"}
                     type={moment ? "button" : undefined}
                     onClick={onClick}
                     sx={{
-                      flex: "0 0 auto",
-                      width: 92,
-                      minHeight: 84,
                       display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: 1,
-                      p: 1.25,
-                      borderRadius: sp.radiusSm,
-                      border: `1px solid ${moment ? sp.blue : sp.border}`,
-                      bgcolor: moment ? sp.blueBgTint : "#fff",
+                      alignItems: "center",
+                      gap: 1.25,
+                      minWidth: 0,
+                      p: 0,
+                      border: 0,
+                      bgcolor: "transparent",
                       fontFamily: "inherit",
                       textAlign: "left",
                       cursor: moment ? "pointer" : "default",
                     }}
                   >
-                    {moment ? <AutoAwesomeIcon sx={{ fontSize: 20, color: sp.blue }} /> : <AmenityIcon name={name} size={22} />}
-                    <Typography sx={{ fontSize: "0.8125rem", fontWeight: 600, color: sp.ink, lineHeight: 1.25 }}>{name}</Typography>
+                    <Box
+                      sx={{
+                        flexShrink: 0,
+                        width: 38,
+                        height: 38,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: moment ? sp.blue : sp.blueBgSoft,
+                        "& svg": moment ? { color: "#fff" } : undefined,
+                      }}
+                    >
+                      {moment ? <AutoAwesomeIcon sx={{ fontSize: 18 }} /> : <AmenityIcon name={name} size={19} />}
+                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        color: sp.ink,
+                        lineHeight: 1.3,
+                        textDecoration: moment ? "underline" : "none",
+                        textDecorationColor: sp.borderSoft,
+                        textUnderlineOffset: 3,
+                      }}
+                    >
+                      {name}
+                    </Typography>
                   </Box>
                 );
                 return moment ? (
@@ -377,13 +439,35 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
                     phoneNumber={phone}
                     propertyName={property.name}
                     propertyId={property.id}
-                    trigger={(onClick) => tile(onClick)}
+                    trigger={(onClick) => row(onClick)}
                   />
                 ) : (
-                  <React.Fragment key={name}>{tile()}</React.Fragment>
+                  <React.Fragment key={name}>{row()}</React.Fragment>
                 );
               })}
             </Box>
+            {offers.length > OFFERS_PREVIEW && (
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setShowAllOffers((v) => !v)}
+                sx={{
+                  mt: 2,
+                  width: "100%",
+                  py: 1.25,
+                  borderRadius: sp.radiusSm,
+                  border: `1px solid ${sp.ink}`,
+                  bgcolor: "#fff",
+                  fontFamily: "inherit",
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
+                  color: sp.ink,
+                  cursor: "pointer",
+                }}
+              >
+                {showAllOffers ? "Show fewer" : `Show all ${offers.length} amenities`}
+              </Box>
+            )}
           </Box>
         )}
 

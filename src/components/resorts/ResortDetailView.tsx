@@ -531,9 +531,9 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
           </Box>
         )}
 
-        {/* Amenities */}
+        {/* Amenities — desktop; on phones the hero sheet lists them. */}
         {property.amenities?.length > 0 && (
-          <Box component="section" sx={{ mt: 5 }}>
+          <Box component="section" sx={{ display: { xs: "none", sm: "block" }, mt: 5 }}>
             <SectionTitle>Amenities</SectionTitle>
             <AmenitiesGrid amenities={property.amenities} />
           </Box>
