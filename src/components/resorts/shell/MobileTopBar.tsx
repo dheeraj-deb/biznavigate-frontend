@@ -14,8 +14,9 @@ type Props = {
   onBack?: () => void;
   /** Trailing icon buttons (share, chat…). */
   actions?: React.ReactNode;
-  /** Hide the title until the page has scrolled this far — for screens whose
-   *  own big heading already says it, so the name isn't printed twice. */
+  /** Keep the whole bar out of the way until the page has scrolled this far,
+   *  then slide it in over the content — for screens whose own big heading
+   *  already names them, where a bar at the top would be an empty strip. */
   revealAfter?: number;
 };
 
@@ -33,14 +34,26 @@ function useScrolledPast(offset: number | undefined): boolean {
 
 /** Phone-only app bar: optional back arrow, a title, trailing actions. */
 export function MobileTopBar({ title, subtitle, onBack, actions, revealAfter }: Props) {
-  const showTitle = useScrolledPast(revealAfter);
+  const shown = useScrolledPast(revealAfter);
+  // Revealed bars overlay the page (fixed, so they take no room while hidden);
+  // the rest sit in the flow and stick.
+  const overlay = revealAfter !== undefined;
   return (
     <Box
       component="header"
+      aria-hidden={overlay && !shown ? true : undefined}
       sx={{
-        position: "sticky",
+        position: overlay ? "fixed" : "sticky",
         top: 0,
+        left: overlay ? 0 : undefined,
+        right: overlay ? 0 : undefined,
         zIndex: 40,
+        transform: overlay && !shown ? "translateY(-100%)" : "none",
+        // Hidden bars must not catch taps; visibility flips after the slide.
+        visibility: overlay && !shown ? "hidden" : "visible",
+        transition: overlay
+          ? `transform 200ms ease, visibility 0s linear ${shown ? "0s" : "200ms"}`
+          : undefined,
         display: { xs: "flex", sm: "none" },
         alignItems: "center",
         gap: 0.5,
@@ -57,7 +70,7 @@ export function MobileTopBar({ title, subtitle, onBack, actions, revealAfter }: 
           <ArrowBackIcon />
         </IconButton>
       )}
-      <Box sx={{ flex: 1, minWidth: 0, opacity: showTitle ? 1 : 0, transition: "opacity 150ms ease" }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography noWrap sx={{ fontSize: "1rem", fontWeight: 700, color: sp.ink, lineHeight: 1.25 }}>
           {title}
         </Typography>
