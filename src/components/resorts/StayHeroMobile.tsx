@@ -2,6 +2,7 @@
 
 import React, { Suspense, lazy, useRef, useState } from "react";
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -9,7 +10,8 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import PlaceIcon from "@mui/icons-material/Place";
 import StarIcon from "@mui/icons-material/Star";
-import NightsStayRoundedIcon from "@mui/icons-material/NightsStayRounded";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -19,8 +21,10 @@ import { AmenityIcon } from "@/components/smartpages/AmenitiesGrid";
 import { MomentLayer } from "@/components/smartpages/MomentLayer";
 import { MomentPopover } from "@/components/smartpages/MomentPopover";
 import type { LightboxSlide } from "@/components/smartpages/Lightbox";
-import { sp } from "@/components/smartpages/tokens";
+import { formatINR, sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
+import { useBookingFlowHref, useHydrated } from "@/lib/booking-flow-url";
+import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { ResortDetail } from "@/lib/publicApi";
 import { shareResort } from "./shell/share";
 
@@ -38,21 +42,51 @@ function formatTime(value: string | null): string | null {
 
 const OFFERS_PREVIEW = 6;
 
-const ticketLabel = {
-  fontSize: "0.6875rem",
-  fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: sp.muted,
-} as const;
+type QuickStay = { label: string; detail: string; checkIn: string; checkOut: string };
 
-const ticketValue = {
-  mt: 0.25,
-  fontSize: "1.125rem",
-  fontWeight: 700,
-  color: sp.ink,
-  letterSpacing: "-0.01em",
-} as const;
+/** A date as the booking URL spells it, in the guest's own day. */
+function isoDay(d: Date): string {
+  return d.toLocaleDateString("en-CA");
+}
+
+function addDays(d: Date, n: number): Date {
+  const out = new Date(d);
+  out.setDate(out.getDate() + n);
+  return out;
+}
+
+function shortDay(d: Date): string {
+  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+}
+
+/**
+ * The stays most guests mean: tonight, tomorrow, and the next two weekends
+ * (Friday to Sunday; from today when it is already Friday or Saturday).
+ */
+export function quickStayOptions(now: Date): QuickStay[] {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const night = (label: string, from: Date): QuickStay => ({
+    label,
+    detail: shortDay(from),
+    checkIn: isoDay(from),
+    checkOut: isoDay(addDays(from, 1)),
+  });
+  const dow = today.getDay(); // 0 Sun … 5 Fri, 6 Sat
+  const weekendStart = dow === 5 || dow === 6 ? today : addDays(today, (5 - dow + 7) % 7);
+  const weekendEnd = addDays(weekendStart, weekendStart.getDay() === 6 ? 1 : 2);
+  const weekend = (label: string, from: Date, to: Date): QuickStay => ({
+    label,
+    detail: `${from.toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${to.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`,
+    checkIn: isoDay(from),
+    checkOut: isoDay(to),
+  });
+  return [
+    night("Tonight", today),
+    night("Tomorrow", addDays(today, 1)),
+    weekend("This weekend", weekendStart, weekendEnd),
+    weekend("Next weekend", addDays(weekendStart, 7), addDays(weekendEnd, 7)),
+  ];
+}
 
 const glass = {
   bgcolor: "rgba(255,255,255,0.88)",
@@ -71,8 +105,9 @@ type Props = {
 
 /**
  * Phone-only top of Stay: the photos full-bleed with the name set over them,
- * then a sheet that rises over the photo's bottom edge with the stay as a
- * ticket (times, who fits, how booking works), what the place offers,
+ * then a sheet that rises over the photo's bottom edge — opening on "when
+ * are you visiting?" quick dates (one tap into Book on those dates) with the
+ * times and booking guarantees as one quiet line — what the place offers,
  * and the description. Replaces the web-page stack of title → rounded photo
  * → "See all photos" button → chips → paragraph.
  */
@@ -81,6 +116,8 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [showAllOffers, setShowAllOffers] = useState(false);
+  const router = useRouter();
+  const buildHref = useBookingFlowHref();
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   const location = [property.city, property.region].filter(Boolean).join(", ");
@@ -107,11 +144,29 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
     setIndex(Math.round(el.scrollLeft / el.clientWidth));
   }
 
-  const perks = [
-    maxGuests > 0 && { icon: <PeopleAltOutlinedIcon />, label: `Sleeps up to ${maxGuests}`, tone: sp.blue },
+  const times = [checkIn && `Check-in ${checkIn}`, checkOut && `out ${checkOut}`].filter(Boolean).join(" · ");
+  const meta = [
+    times && { icon: <ScheduleRoundedIcon />, label: times, tone: sp.muted },
+    maxGuests > 0 && { icon: <PeopleAltOutlinedIcon />, label: `Sleeps ${maxGuests}`, tone: sp.muted },
     property.instantBooking && { icon: <BoltRoundedIcon />, label: "Instant confirmation", tone: "#16a34a" },
     property.acceptsOnlinePayment && { icon: <LockOutlinedIcon />, label: "Secure payment", tone: "#16a34a" },
   ].filter(Boolean) as { icon: React.ReactNode; label: string; tone: string }[];
+
+  // The page is prerendered and cached, so dates computed on the server can
+  // be a day stale and would disagree with the browser's. Labels render
+  // straight away; the dates only once we are on the client.
+  const hydrated = useHydrated();
+  const quickStays = quickStayOptions(new Date());
+
+  function openBook(stay: QuickStay | null) {
+    if (stay) bookingLinkEvents.track("dates_selected", { checkIn: stay.checkIn, checkOut: stay.checkOut, source: "quick_dates" });
+    router.push(
+      buildHref(`/resorts/${property.slug}/book`, {
+        ...(stay ? { checkin: stay.checkIn, checkout: stay.checkOut } : {}),
+        room: null,
+      }),
+    );
+  }
 
   return (
     <Box sx={{ display: { xs: "block", sm: "none" } }}>
@@ -298,85 +353,120 @@ export function StayHeroMobile({ property, photos, photosHref, phone }: Props) {
           pt: 2.5,
         }}
       >
-        {/* The stay as a ticket: in → night → out, then who it sleeps and
-            how booking works under a perforation. */}
-        {(checkIn || checkOut || perks.length > 0) && (
-          <Box
-            sx={{
-              position: "relative",
-              borderRadius: "20px",
-              border: `1px solid ${sp.border}`,
-              background: `linear-gradient(135deg, ${sp.blueBgTint} 0%, #fff 70%)`,
-              boxShadow: sp.cardShadow,
-            }}
-          >
-            {(checkIn || checkOut) && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2.25, pt: 2, pb: 1.75 }}>
-                <Box>
-                  <Typography sx={ticketLabel}>Check-in</Typography>
-                  <Typography sx={ticketValue}>{checkIn ?? "—"}</Typography>
+        {/* The first thing on the sheet is the thing a guest came to do:
+            pick when. One tap opens the Book flow on those dates. */}
+        <Box
+          sx={{
+            borderRadius: "20px",
+            border: `1px solid ${sp.border}`,
+            bgcolor: "#fff",
+            boxShadow: sp.cardShadow,
+            pt: 1.75,
+            pb: 1.5,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, px: 2 }}>
+            <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: sp.ink }}>When are you visiting?</Typography>
+            {property.todayRate > 0 && (
+              <Typography sx={{ flexShrink: 0, fontSize: "0.8125rem", color: sp.muted }}>
+                from{" "}
+                <Box component="span" sx={{ fontWeight: 700, color: sp.ink }}>
+                  ₹{formatINR(property.todayRate)}
                 </Box>
-                <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 0.75, color: sp.faint }}>
-                  <Box sx={{ flex: 1, borderTop: `1.5px dashed ${sp.borderSoft}` }} />
-                  <NightsStayRoundedIcon sx={{ fontSize: 18, color: sp.blue }} />
-                  <Box sx={{ flex: 1, borderTop: `1.5px dashed ${sp.borderSoft}` }} />
-                </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography sx={ticketLabel}>Check-out</Typography>
-                  <Typography sx={ticketValue}>{checkOut ?? "—"}</Typography>
-                </Box>
-              </Box>
-            )}
-
-            {perks.length > 0 && (
-              <>
-                {(checkIn || checkOut) && (
-                  <Box
-                    aria-hidden
-                    sx={{
-                      position: "relative",
-                      mx: 2,
-                      borderTop: `1.5px dashed ${sp.border}`,
-                      // Punched notches at both ends of the perforation.
-                      "&::before, &::after": {
-                        content: '""',
-                        position: "absolute",
-                        top: -9,
-                        width: 16,
-                        height: 16,
-                        borderRadius: "50%",
-                        bgcolor: "#fff",
-                        border: `1px solid ${sp.border}`,
-                      },
-                      "&::before": { left: -25, clipPath: "inset(0 0 0 50%)" },
-                      "&::after": { right: -25, clipPath: "inset(0 50% 0 0)" },
-                    }}
-                  />
-                )}
-                <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 0.75, px: 2.25, py: 1.5 }}>
-                  {perks.map((p) => (
-                    <Box
-                      key={p.label}
-                      component="span"
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 0.625,
-                        fontSize: "0.8125rem",
-                        fontWeight: 600,
-                        color: sp.ink,
-                        "& svg": { fontSize: 16, color: p.tone },
-                      }}
-                    >
-                      {p.icon}
-                      {p.label}
-                    </Box>
-                  ))}
-                </Box>
-              </>
+                /night
+              </Typography>
             )}
           </Box>
-        )}
+
+          <Box
+            sx={{
+              mt: 1.25,
+              display: "flex",
+              gap: 1,
+              px: 2,
+              overflowX: "auto",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
+          >
+            {quickStays.map((q) => (
+              <Box
+                key={q.label}
+                component="button"
+                type="button"
+                onClick={() => openBook(q)}
+                sx={{
+                  flex: "0 0 auto",
+                  minWidth: 104,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: sp.radiusSm,
+                  border: `1px solid ${sp.borderSoft}`,
+                  bgcolor: sp.bgSoft,
+                  fontFamily: "inherit",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "border-color 120ms ease, background-color 120ms ease",
+                  "&:active": { borderColor: sp.blue, bgcolor: sp.blueBgTint },
+                }}
+              >
+                <Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: sp.ink, lineHeight: 1.3 }}>{q.label}</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: sp.muted, lineHeight: 1.3, whiteSpace: "nowrap" }}>{hydrated ? q.detail : "\u00a0"}</Typography>
+              </Box>
+            ))}
+            <Box
+              component="button"
+              type="button"
+              onClick={() => openBook(null)}
+              sx={{
+                flex: "0 0 auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                px: 1.5,
+                py: 1,
+                borderRadius: sp.radiusSm,
+                border: `1px dashed ${sp.blue}`,
+                bgcolor: "#fff",
+                color: sp.blue,
+                fontFamily: "inherit",
+                fontSize: "0.875rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <CalendarMonthOutlinedIcon sx={{ fontSize: 18 }} />
+              Pick dates
+            </Box>
+          </Box>
+
+          {meta.length > 0 && (
+            <Box
+              sx={{
+                mt: 1.25,
+                px: 2,
+                display: "flex",
+                flexWrap: "wrap",
+                columnGap: 1.5,
+                rowGap: 0.5,
+                fontSize: "0.75rem",
+                color: sp.muted,
+              }}
+            >
+              {meta.map((m) => (
+                <Box
+                  key={m.label}
+                  component="span"
+                  sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, "& svg": { fontSize: 14, color: m.tone } }}
+                >
+                  {m.icon}
+                  {m.label}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
 
         {offers.length > 0 && (
           <Box sx={{ mt: 3.5 }}>
