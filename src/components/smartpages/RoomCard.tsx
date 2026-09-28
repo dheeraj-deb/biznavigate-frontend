@@ -3,21 +3,28 @@
 import React, { useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
-import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
-import CheckIcon from "@mui/icons-material/Check";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
-import OptimizedImage from "../OptimizedImage";
-import type { PublicRoomType } from "../../lib/publicApi";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import { stayTotal, type PublicRoomType } from "../../lib/publicApi";
 import { WhatsAppCTA } from "./WhatsAppCTA";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
 import { claimPlayback, releasePlayback } from "../../lib/videoPlayback";
 import { sp, formatINR } from "./tokens";
-import { guestDisplayFontFamily } from "../../lib/guestTheme";
+import {
+  RoomAmenityPreview,
+  RoomCardFooter,
+  RoomDescription,
+  RoomDetailsLink,
+  RoomName,
+  RoomPhotoCarousel,
+  RoomSpecs,
+  bookButtonSx,
+  photoPillSx,
+  stayPriceNote,
+  roomCardBodySx,
+  roomCardShellSx,
+} from "./roomCardParts";
 
 type Props = {
   room: PublicRoomType;
@@ -37,6 +44,8 @@ type Props = {
   availability?: {
     totalPrice: number;
     nights: number;
+    /** Extra adults/children for the party picked above; added to the total shown. */
+    occupancySurcharge?: number;
     /** Set when the owner approved a rate for this guest in WhatsApp — the
      *  standard total, struck through beside what they were actually
      *  promised. Without it the page quotes rack rate for a guest who
@@ -51,6 +60,10 @@ type Props = {
    *  right there on the page. Falls back to a /book link (via WhatsAppCTA's
    *  bookingSlug) only if a caller doesn't supply this. */
   onSelectRoom?: () => void;
+  /** The room's own page (/resorts/:slug/rooms/:id), session-carrying. When
+   *  set, the name, photo and "View details" open it — the description is
+   *  clamped here, so the card must not be a dead end. */
+  detailsHref?: string;
 };
 
 export function RoomCard({
@@ -66,15 +79,15 @@ export function RoomCard({
   availability,
   onBookNow,
   onSelectRoom,
+  detailsHref,
 }: Props) {
   const photos = room.photos ?? [];
   const roomVideo = (room.videos ?? []).find(isDirectVideo) ?? tourUrl ?? undefined;
-  const [index, setIndex] = useState(0);
   const [playingVideo, setPlayingVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   function startPreview() {
-    if (!roomVideo) return;
+    if (!roomVideo || playingVideo) return;
     setPlayingVideo(true);
     trackListingClick({ propertyId, roomTypeId: room.id, action: "video_play" });
   }
@@ -90,246 +103,101 @@ export function RoomCard({
     video.play().catch(() => {});
   }
 
+  const price = availability ? (
+    <>
+      <Box>
+        {availability.approvedRate && availability.standardTotalPrice != null && (
+          <Typography component="span" sx={{ mr: 0.75, fontSize: "0.9375rem", color: sp.muted, textDecoration: "line-through" }}>
+            ₹{formatINR(availability.standardTotalPrice)}
+          </Typography>
+        )}
+        <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em" }}>
+          ₹{formatINR(stayTotal(availability))}
+        </Typography>
+      </Box>
+      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
+      {availability.approvedRate && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
+          Special rate approved for you
+        </Typography>
+      )}
+    </>
+  ) : (
+    <>
+      <Typography sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+        ₹{formatINR(Number(room.basePrice))}
+      </Typography>
+      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>per night</Typography>
+    </>
+  );
+
+  const action = availability ? (
+    onSelectRoom ? (
+      <Button variant="contained" disableElevation onClick={onSelectRoom} sx={bookButtonSx}>
+        Book now
+      </Button>
+    ) : (
+      <WhatsAppCTA
+        phoneNumber={phoneNumber}
+        propertyName={propertyName}
+        roomName={room.name}
+        propertyId={propertyId}
+        roomTypeId={room.id}
+        bookingSlug={bookingSlug}
+        checkin={checkIn}
+        checkout={checkOut}
+        adults={adults}
+        totalPrice={stayTotal(availability)}
+        label="Book now"
+      />
+    )
+  ) : (
+    <Button variant="contained" disableElevation onClick={() => onBookNow?.(room.id)} sx={bookButtonSx}>
+      Book now
+    </Button>
+  );
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
-        gap: 2,
-        borderRadius: sp.radius,
-        border: `1px solid ${sp.border}`,
-        bgcolor: "#fff",
-        p: 2.5,
-        boxShadow: sp.cardShadow,
-      }}
-    >
+    <Box component="article" sx={roomCardShellSx}>
       {(photos.length > 0 || roomVideo) && (
-        <Box
+        <RoomPhotoCarousel
+          photos={photos}
+          alt={room.name}
+          href={detailsHref}
+          controlsHidden={playingVideo}
           onMouseEnter={startPreview}
           onMouseLeave={stopPreview}
-          onClick={() => (playingVideo ? stopPreview() : roomVideo && startPreview())}
-          sx={{
-            position: "relative",
-            height: { xs: 176, sm: 144 },
-            width: { xs: "100%", sm: 192 },
-            flexShrink: 0,
-            borderRadius: sp.radiusSm,
-            bgcolor: sp.border,
-            overflow: "hidden",
-            cursor: roomVideo ? "pointer" : "default",
-          }}
         >
-          {playingVideo && roomVideo ? (
-            <VideoEmbed
-              url={roomVideo}
-              poster={photos[0]}
-              muted
-              loop
-              videoRef={(el) => {
-                videoRef.current = el;
-                handleVideoMounted(el);
-              }}
-            />
-          ) : photos.length > 0 ? (
-            <OptimizedImage src={photos[index]} alt={room.name} sx={{ width: "100%", height: "100%" }} />
-          ) : null}
-
-          {roomVideo && !playingVideo && (
-            <Box sx={{ position: "absolute", right: 6, bottom: 6, color: "#fff", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-              <PlayCircleOutlineIcon sx={{ fontSize: 22 }} />
+          {playingVideo && roomVideo && (
+            <Box onClick={stopPreview} sx={{ position: "absolute", inset: 0, zIndex: 1, bgcolor: "#000", cursor: "pointer" }}>
+              <VideoEmbed
+                url={roomVideo}
+                poster={photos[0]}
+                muted
+                loop
+                videoRef={(el) => {
+                  videoRef.current = el;
+                  handleVideoMounted(el);
+                }}
+              />
             </Box>
           )}
-
-          {photos.length > 1 && !playingVideo && (
-            <>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIndex((i) => (i - 1 + photos.length) % photos.length);
-                }}
-                sx={{ position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)", bgcolor: "rgba(0,0,0,0.35)", color: "#fff", p: 0.5, "&:hover": { bgcolor: "rgba(0,0,0,0.55)" } }}
-              >
-                <ChevronLeftIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIndex((i) => (i + 1) % photos.length);
-                }}
-                sx={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", bgcolor: "rgba(0,0,0,0.35)", color: "#fff", p: 0.5, "&:hover": { bgcolor: "rgba(0,0,0,0.55)" } }}
-              >
-                <ChevronRightIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              <Box sx={{ position: "absolute", bottom: 6, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 0.5 }}>
-                {photos.map((_, i) => (
-                  <Box key={i} sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: i === index ? "#fff" : "rgba(255,255,255,0.5)" }} />
-                ))}
-              </Box>
-            </>
+          {roomVideo && !playingVideo && (
+            <Box component="button" type="button" onClick={startPreview} sx={{ ...photoPillSx, pl: 0.75, cursor: "pointer" }}>
+              <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />
+              Room tour
+            </Box>
           )}
-        </Box>
+        </RoomPhotoCarousel>
       )}
-      <Box sx={{ display: "flex", flex: 1, flexDirection: "column", gap: 1.5 }}>
-        <Box>
-          <Typography sx={{ fontFamily: guestDisplayFontFamily, fontSize: "1.375rem", fontWeight: 400, color: sp.ink }}>
-            {room.name}
-          </Typography>
-          {room.description && (
-            <Typography
-              sx={{
-                mt: 0.5,
-                fontSize: "0.875rem",
-                lineHeight: 1.4,
-                color: "#657792",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {room.description}
-            </Typography>
-          )}
-        </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, color: sp.body }}>
-          <Typography sx={{ fontSize: "0.8125rem", display: "flex", alignItems: "center", gap: 0.75 }}>
-            <CheckIcon sx={{ fontSize: 15, color: sp.blue, flexShrink: 0 }} />
-            Up to {room.capacityAdults} adults
-            {room.capacityChildren > 0 ? ` + ${room.capacityChildren} children` : ""}
-          </Typography>
-          {room.totalRooms > 1 && (
-            <Typography sx={{ fontSize: "0.8125rem", display: "flex", alignItems: "center", gap: 0.75 }}>
-              <CheckIcon sx={{ fontSize: 15, color: sp.blue, flexShrink: 0 }} />
-              {room.totalRooms} rooms available
-            </Typography>
-          )}
-        </Box>
-
-        {room.amenities?.length > 0 && (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-            {room.amenities.slice(0, 4).map((a) => (
-              <Chip
-                key={a}
-                label={a}
-                size="small"
-                sx={{
-                  borderRadius: "8px",
-                  bgcolor: sp.chipBg,
-                  color: sp.chipText,
-                  fontSize: "0.6875rem",
-                  height: 24,
-                }}
-              />
-            ))}
-          </Box>
-        )}
-
-        <Box
-          sx={{
-            mt: "auto",
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 1.5,
-            borderTop: "1px solid #f0f4fa",
-            pt: 1.5,
-          }}
-        >
-          <Box>
-            {availability ? (
-              <>
-                {availability.approvedRate && availability.standardTotalPrice != null && (
-                  <Typography
-                    component="span"
-                    sx={{
-                      mr: 0.75,
-                      fontSize: "0.9375rem",
-                      color: sp.muted,
-                      textDecoration: "line-through",
-                    }}
-                  >
-                    ₹{formatINR(availability.standardTotalPrice)}
-                  </Typography>
-                )}
-                <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
-                  ₹{formatINR(availability.totalPrice)}
-                </Typography>
-                <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
-                  {" "}for {availability.nights} night{availability.nights !== 1 ? "s" : ""}
-                </Typography>
-                {availability.approvedRate && (
-                  <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
-                    Special rate approved for you
-                  </Typography>
-                )}
-              </>
-            ) : (
-              <>
-                <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: sp.ink }}>
-                  ₹{formatINR(Number(room.basePrice))}
-                </Typography>
-                <Typography component="span" sx={{ fontSize: "0.875rem", color: sp.muted }}>
-                  /night
-                </Typography>
-              </>
-            )}
-          </Box>
-          {availability ? (
-            onSelectRoom ? (
-              <Button
-                variant="contained"
-                disableElevation
-                onClick={onSelectRoom}
-                sx={{
-                  borderRadius: "12px",
-                  px: 2.5,
-                  py: 1.25,
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  bgcolor: sp.blue,
-                  "&:hover": { bgcolor: "#1a4ab8" },
-                }}
-              >
-                Book now
-              </Button>
-            ) : (
-              <WhatsAppCTA
-                phoneNumber={phoneNumber}
-                propertyName={propertyName}
-                roomName={room.name}
-                propertyId={propertyId}
-                roomTypeId={room.id}
-                bookingSlug={bookingSlug}
-                checkin={checkIn}
-                checkout={checkOut}
-                adults={adults}
-                totalPrice={availability.totalPrice}
-                label="Book now"
-              />
-            )
-          ) : (
-            <Button
-              variant="contained"
-              disableElevation
-              onClick={() => onBookNow?.(room.id)}
-              sx={{
-                borderRadius: "12px",
-                px: 2.5,
-                py: 1.25,
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                bgcolor: sp.blue,
-                "&:hover": { bgcolor: "#1a4ab8" },
-              }}
-            >
-              Book now
-            </Button>
-          )}
-        </Box>
+      <Box sx={roomCardBodySx}>
+        <RoomName name={room.name} href={detailsHref} />
+        <RoomSpecs room={room} />
+        {room.description && <RoomDescription text={room.description} />}
+        <RoomAmenityPreview amenities={room.amenities ?? []} />
+        {detailsHref && <RoomDetailsLink href={detailsHref} />}
+        <RoomCardFooter price={price} action={action} />
       </Box>
     </Box>
   );

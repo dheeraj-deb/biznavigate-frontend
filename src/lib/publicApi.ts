@@ -60,12 +60,56 @@ export type PublicRoomType = {
   photos: string[];
   videos?: string[];
   isActive: boolean;
+  // Physical description and extra-guest pricing. Optional: older API builds
+  // don't send them, and every reader treats "missing" as "don't show".
+  isEntirePlace?: boolean;
+  /** Adults the base price covers; beyond it each adult adds extraAdultPrice. */
+  baseOccupancy?: number;
+  extraAdultPrice?: number;
+  childPrice?: number;
+  mealPlan?: MealPlan;
+  beds?: { type: BedType; count: number }[];
+  bathrooms?: number;
+  bathroomShared?: boolean;
+  roomSizeSqft?: number | null;
+  /** Total guests allowed when LESS than adults + children; null = no extra cap. */
+  maxOccupancy?: number | null;
+  /** Infants in a cot, on top of the bed capacity. */
+  occupancyInfants?: number;
+  extraBedAvailable?: boolean;
+  extraBedPrice?: number;
+  virtualTourUrl?: string | null;
 };
+
+/** EP room only · CP breakfast · MAP breakfast + one meal · AP all meals. */
+export type MealPlan = "EP" | "CP" | "MAP" | "AP";
+export type BedType = "SINGLE" | "DOUBLE" | "QUEEN" | "KING" | "TWIN" | "BUNK" | "SOFA_BED" | "FLOOR_MATTRESS";
 
 export type PublicFaq = {
   id: string;
   question: string;
   answer: string;
+  /** Seeded from the property record — the page shows those facts in their
+   *  own sections, so it lists only the others. Still sent for FAQ schema. */
+  fromPropertyDetails?: boolean;
+};
+
+/** Property.guestRules — fixed-choice house rules; every key optional (unset = owner never said). */
+export type GuestRules = {
+  unmarriedCouples?: "yes" | "no";
+  localId?: "yes" | "no";
+  foreignNationals?: "yes" | "no";
+  alcohol?: "yes" | "bar_only" | "no";
+  outsideFood?: "yes" | "no";
+  visitors?: "yes" | "day_only" | "no";
+  earlyCheckIn?: "free_if_available" | "charged" | "no";
+  lateCheckOut?: "free_if_available" | "charged" | "no";
+  parties?: "yes" | "no";
+  smoking?: "no" | "designated" | "yes";
+  idProofs?: ("aadhaar" | "passport" | "driving_licence" | "voter_id")[];
+  minCheckInAge?: 18 | 21;
+  /** "HH:mm", 24-hour. */
+  quietHoursFrom?: string;
 };
 
 export type ResortListItem = PublicProperty & {
@@ -128,6 +172,18 @@ export type ResortDetail = PublicProperty & {
   acceptsOnlinePayment?: boolean;
   /** Bookings confirm without the owner approving each one. */
   instantBooking?: boolean;
+  // Detail-only fields — optional because older API builds don't send them.
+  email?: string | null;
+  directions?: string | null;
+  childPolicy?: string | null;
+  petPolicy?: string | null;
+  guestRules?: GuestRules;
+  /** Older yes/no column; guestRules.smoking wins when set. */
+  smokingAllowed?: boolean;
+  childAgeMax?: number;
+  infantAgeMax?: number;
+  virtualTourUrl?: string | null;
+  pricesIncludeTax?: boolean;
 };
 
 export type AvailabilityResult = {
@@ -142,7 +198,29 @@ export type AvailabilityResult = {
    *  the standard total, to strike through beside the approved price. */
   standardTotalPrice?: number;
   approvedRate?: boolean;
+  /** What extra adults/children add at checkout, for the party sent with the
+   *  request (0 without one, or on an approved rate). Not in totalPrice. */
+  occupancySurcharge?: number;
+  /** False when one room of this type can't hold the party sent with the
+   *  request — separate from `available`, which is inventory. */
+  fitsParty?: boolean;
 };
+
+/** Free on these dates AND big enough for the party — what "Book" requires. */
+export function isBookable(a: Pick<AvailabilityResult, "available" | "fitsParty">): boolean {
+  return a.available && a.fitsParty !== false;
+}
+
+/** "2 adults, 1 child" — the party as the guest picked it. */
+export function partyLabel(adults: number, children: number): string {
+  const a = `${adults} adult${adults !== 1 ? "s" : ""}`;
+  return children > 0 ? `${a}, ${children} ${children === 1 ? "child" : "children"}` : a;
+}
+
+/** The stay as the guest will pay it: the room total plus any extra-guest charge. */
+export function stayTotal(a: Pick<AvailabilityResult, "totalPrice" | "occupancySurcharge">): number {
+  return a.totalPrice + (a.occupancySurcharge ?? 0);
+}
 
 export type IntentPageData = {
   id: string;
@@ -176,6 +254,19 @@ export async function getResortSlugs(): Promise<string[]> {
 
 export async function getResort(slug: string): Promise<ResortDetail> {
   return publicFetch<ResortDetail>(`/public/resorts/${slug}`);
+}
+
+/**
+ * The resort's active checkout extras, uncached. The page's copy is up to
+ * CATALOGUE_TTL old, so an extra the owner just added was missing from
+ * checkout — and one they just switched off still showed, then failed to
+ * price. Checkout reads the live list, as it already reads live prices.
+ */
+export async function getLiveAddons(slug: string, signal?: AbortSignal): Promise<PropertyAddon[]> {
+  const res = await fetch(`${BASE}/public/resorts/${slug}`, { cache: "no-store", signal });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const resort = (await res.json()) as Pick<ResortDetail, "addons">;
+  return resort.addons ?? [];
 }
 
 /** Newest-first index of published occasion pages. */
@@ -214,9 +305,14 @@ export async function getAvailability(
   // is quoted that rate here — the server resolves it; the price is never
   // sent from this side.
   sessionToken?: string | null,
+  // The party, so each room's extra-guest charge comes back with it and the
+  // page quotes what checkout will charge — not the base-occupancy rate.
+  party?: { adults?: number; children?: number },
 ): Promise<AvailabilityResult[]> {
   const qs = new URLSearchParams({ checkin, checkout });
   if (sessionToken) qs.set("s", sessionToken);
+  if (party?.adults != null) qs.set("adults", String(party.adults));
+  if (party?.children != null) qs.set("children", String(party.children));
   return publicFetch<AvailabilityResult[]>(
     `/public/resorts/${slug}/availability?${qs.toString()}`,
     0,

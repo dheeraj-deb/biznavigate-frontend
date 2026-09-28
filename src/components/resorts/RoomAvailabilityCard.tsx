@@ -3,145 +3,108 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
-import NextLink from "next/link";
-import OptimizedImage from "@/components/OptimizedImage";
 import { sp, formatINR } from "@/components/smartpages/tokens";
-import { guestDisplayFontFamily } from "@/lib/guestTheme";
-import type { AvailabilityResult, PublicRoomType } from "@/lib/publicApi";
+import {
+  RoomAmenityPreview,
+  RoomCardFooter,
+  RoomDescription,
+  RoomDetailsLink,
+  RoomName,
+  RoomPhotoCarousel,
+  RoomSpecs,
+  bookButtonSx,
+  photoPillSx,
+  stayPriceNote,
+  roomCardBodySx,
+  roomCardShellSx,
+} from "@/components/smartpages/roomCardParts";
+import { stayTotal, type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
 
 type Props = {
   availability: AvailabilityResult;
   roomType: PublicRoomType | undefined;
   viewHref: string;
   onBook: () => void;
+  /** "2 adults, 1 child" — named when the room is too small for it. */
+  party?: string;
 };
 
-export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook }: Props) {
-  const photo = roomType?.photos?.[0];
+/** At or below this many rooms left, the card says so — above it, the count is noise. */
+const SCARCITY_THRESHOLD = 3;
 
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
-        gap: 2,
-        borderRadius: sp.radius,
-        border: `1px solid ${sp.border}`,
-        bgcolor: "#fff",
-        overflow: "hidden",
-        boxShadow: sp.cardShadow,
-      }}
-    >
-      <Box sx={{ width: { xs: "100%", sm: 220 }, height: { xs: 160, sm: "auto" }, flexShrink: 0, bgcolor: sp.border }}>
-        {photo ? (
-          <OptimizedImage src={photo} alt={availability.name} width="100%" height="100%" />
-        ) : null}
-      </Box>
+/**
+ * A room on /book once dates are picked: the same card as on the Stay page
+ * (RoomCard), with the real total for the stay and a single Book action. The
+ * room's own page is reached from its name, photo or "View room details".
+ */
+export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook, party }: Props) {
+  const photos = roomType?.photos ?? [];
+  const { availableRooms } = availability;
+  const tooSmall = availability.available && availability.fitsParty === false;
+  const available = availability.available && !tooSmall;
+  const scarce = available && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
 
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1, p: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-          <Box>
-            <Typography sx={{ fontFamily: guestDisplayFontFamily, fontSize: "1.25rem", fontWeight: 400, color: sp.ink }}>
-              {availability.name}
-            </Typography>
-            {roomType && (
-              <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", color: sp.muted }}>
-                Sleeps {roomType.capacityAdults} adult{roomType.capacityAdults !== 1 ? "s" : ""}
-                {roomType.capacityChildren ? ` + ${roomType.capacityChildren} children` : ""}
-              </Typography>
-            )}
-          </Box>
-          {availability.available ? (
-            <Box
-              sx={{
-                flexShrink: 0,
-                borderRadius: "999px",
-                bgcolor: "rgba(34,197,94,0.1)",
-                color: "#16a34a",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                px: 1.25,
-                py: 0.5,
-              }}
-            >
-              {availability.availableRooms} left
-            </Box>
-          ) : (
-            <Box
-              sx={{
-                flexShrink: 0,
-                borderRadius: "999px",
-                bgcolor: sp.chipBg,
-                color: sp.muted,
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                px: 1.25,
-                py: 0.5,
-              }}
-            >
-              Sold out
-            </Box>
-          )}
-        </Box>
-
-        {roomType?.description && (
-          <Typography sx={{ fontSize: "0.875rem", color: sp.body, lineHeight: 1.6 }}>
-            {roomType.description}
+  const price = available ? (
+    <>
+      <Box>
+        {availability.approvedRate && availability.standardTotalPrice != null && (
+          <Typography component="span" sx={{ mr: 0.75, fontSize: "0.9375rem", color: sp.muted, textDecoration: "line-through" }}>
+            ₹{formatINR(availability.standardTotalPrice)}
           </Typography>
         )}
+        <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em" }}>
+          ₹{formatINR(stayTotal(availability))}
+        </Typography>
+      </Box>
+      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
+      {availability.approvedRate && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
+          Special rate approved for you
+        </Typography>
+      )}
+    </>
+  ) : tooSmall ? (
+    <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.5, color: sp.muted }}>
+      Too small for {party ?? "your group"}
+    </Typography>
+  ) : (
+    <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>Not available for these dates</Typography>
+  );
 
-        {/* Phones: price on its own line, then two equal full-width buttons —
-            side by side with the price, "View room" wrapped onto two lines. */}
-        <Box
-          sx={{
-            mt: "auto",
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "stretch", sm: "center" },
-            justifyContent: "space-between",
-            gap: { xs: 1.25, sm: 2 },
-            pt: 1,
-          }}
-        >
-          <Box>
-            {availability.available && (
-              <Typography sx={{ fontSize: "1rem" }}>
-                <Box component="span" sx={{ fontWeight: 700, color: sp.ink }}>
-                  ₹{formatINR(availability.totalPrice)}
-                </Box>{" "}
-                <Box component="span" sx={{ fontSize: "0.8125rem", color: sp.muted }}>
-                  for {availability.nights} night{availability.nights !== 1 ? "s" : ""}
-                </Box>
-              </Typography>
-            )}
+  return (
+    <Box component="article" sx={roomCardShellSx}>
+      <RoomPhotoCarousel photos={photos} alt={availability.name} href={viewHref}>
+        {!available && (
+          <Box sx={{ position: "absolute", inset: 0, zIndex: 1, bgcolor: "rgba(255,255,255,0.45)", pointerEvents: "none" }} />
+        )}
+        {(scarce || !available) && (
+          <Box sx={{ ...photoPillSx, pointerEvents: "none" }}>
+            <Box component="span" sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: available ? "#d97706" : sp.muted }} />
+            {available
+              ? availableRooms === 1
+                ? "Last room left"
+                : `Only ${availableRooms} left`
+              : tooSmall
+                ? "Doesn't fit your group"
+                : "Sold out"}
           </Box>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button
-              component={NextLink}
-              href={viewHref}
-              variant="outlined"
-              size="small"
-              sx={{ borderRadius: 9999, whiteSpace: "nowrap", flex: { xs: 1, sm: "none" }, minHeight: { xs: 44, sm: 0 } }}
-            >
-              View room
+        )}
+      </RoomPhotoCarousel>
+
+      <Box sx={roomCardBodySx}>
+        <RoomName name={availability.name} href={viewHref} />
+        {roomType && <RoomSpecs room={roomType} />}
+        {roomType?.description && <RoomDescription text={roomType.description} />}
+        <RoomAmenityPreview amenities={roomType?.amenities ?? []} />
+        <RoomDetailsLink href={viewHref} />
+        <RoomCardFooter
+          price={price}
+          action={
+            <Button variant="contained" disableElevation disabled={!available} onClick={onBook} sx={bookButtonSx}>
+              {available ? "Book" : tooSmall ? "Too small" : "Sold out"}
             </Button>
-            <Button
-              variant="contained"
-              size="small"
-              disabled={!availability.available}
-              onClick={onBook}
-              sx={{
-                borderRadius: 9999,
-                bgcolor: sp.blue,
-                "&:hover": { bgcolor: sp.blue },
-                flex: { xs: 1, sm: "none" },
-                minHeight: { xs: 44, sm: 0 },
-              }}
-            >
-              Book
-            </Button>
-          </Box>
-        </Box>
+          }
+        />
       </Box>
     </Box>
   );

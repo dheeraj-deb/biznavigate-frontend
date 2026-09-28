@@ -85,23 +85,27 @@ export function PublicFooter({ hideOnMobile = false }: { hideOnMobile?: boolean 
           mx: "auto",
           maxWidth: 1280,
           px: { xs: 2, sm: 3 },
-          py: 3,
+          pt: { xs: 3.5, sm: 3 },
+          pb: { xs: 4, sm: 3 },
           display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "center", sm: "center" },
           justifyContent: "space-between",
-          gap: 1.5,
+          gap: { xs: 1.5, sm: 2 },
+          textAlign: { xs: "center", sm: "left" },
         }}
       >
-        <Typography sx={{ fontSize: "0.75rem", color: sp.muted }}>
-          Powered by <Box component="span" sx={{ fontWeight: 600, color: sp.ink }}>BizNavigate</Box> — direct
-          bookings on autopilot
+        <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.6, color: sp.muted }}>
+          Book direct, powered by{" "}
+          <Box component="span" sx={{ fontWeight: 600, color: sp.ink }}>
+            BizNavigate
+          </Box>
         </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Link component={NextLink} href="/privacy-policy" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+          <Link component={NextLink} href="/privacy-policy" underline="hover" sx={{ fontSize: "0.8125rem", color: sp.muted }}>
             Privacy
           </Link>
-          <Link component={NextLink} href="/terms" underline="hover" sx={{ fontSize: "0.75rem", color: sp.muted }}>
+          <Link component={NextLink} href="/terms" underline="hover" sx={{ fontSize: "0.8125rem", color: sp.muted }}>
             Terms
           </Link>
         </Box>
