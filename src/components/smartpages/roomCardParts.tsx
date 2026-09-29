@@ -381,6 +381,7 @@ export function RoomSpecs({ room }: { room: PublicRoomType }) {
 export function stayPriceNote(a: { nights: number; pricePerNight?: number; occupancySurcharge?: number }): string {
   const nights = a.nights > 1 ? `total for ${plural(a.nights, "night", "nights")}` : "for 1 night";
   if (a.occupancySurcharge && a.occupancySurcharge > 0) return `${nights} · incl. ₹${formatINR(a.occupancySurcharge)} for extra guests`;
+  if (a.occupancySurcharge && a.occupancySurcharge < 0) return `${nights} · incl. ₹${formatINR(-a.occupancySurcharge)} off for 1 guest`;
   if (a.nights > 1 && a.pricePerNight) return `${nights} · ₹${formatINR(a.pricePerNight)}/night`;
   return nights;
 }

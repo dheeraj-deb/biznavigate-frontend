@@ -159,6 +159,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   const checkOut = params.checkout ?? defaultDate(2);
   const adults = params.adults ?? 2;
   const childrenCount = params.children ?? 0;
+  const childAgesKey = params.childAges?.join(",") ?? "";
 
   const [availability, setAvailability] = useState<AvailabilityResult[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -174,7 +175,11 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    getAvailability(property.slug, checkIn, checkOut, params.s, { adults, children: childrenCount })
+    getAvailability(property.slug, checkIn, checkOut, params.s, {
+      adults,
+      children: childrenCount,
+      childAges: params.childAges,
+    })
       .then((rows) => {
         if (alive) setAvailability(rows);
       })
@@ -187,7 +192,8 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
     return () => {
       alive = false;
     };
-  }, [property.slug, checkIn, checkOut, adults, childrenCount, params.s]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- childAgesKey stands in for the array
+  }, [property.slug, checkIn, checkOut, adults, childrenCount, childAgesKey, params.s]);
 
   const thisRoom = availability?.find((a) => a.roomTypeId === roomType.id) ?? null;
   // Free on these dates, but one room of this type can't hold the party picked.

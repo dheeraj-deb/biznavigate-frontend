@@ -23,6 +23,8 @@ export type BookingLinkSessionView = {
     checkOut: string | null;
     adults: number | null;
     children: number | null;
+    /** Ages the guest gave in WhatsApp, one per child; absent or empty when not. */
+    childAges?: number[];
     roomTypeId: string | null;
   };
 };

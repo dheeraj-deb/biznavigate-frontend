@@ -41,6 +41,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   const checkOut = params.checkout ?? defaultDate(2);
   const adults = params.adults ?? 2;
   const childrenCount = params.children ?? 0;
+  const childAgesKey = params.childAges?.join(",") ?? "";
 
   const [session, setSession] = useState<BookingLinkSessionView | null>(null);
   const [availability, setAvailability] = useState<AvailabilityResult[] | null>(null);
@@ -82,6 +83,12 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       if (!arrived.checkout) next.checkout = prefill?.checkOut ?? defaultDate(2);
       if (arrived.adults == null) next.adults = prefill?.adults ?? 2;
       if (arrived.children == null) next.children = prefill?.children ?? 0;
+      // Ages the chat already collected, so checkout doesn't ask again — only
+      // when they are for the party the URL ends up with.
+      const seededChildren = arrived.children ?? prefill?.children ?? 0;
+      if (!arrived.childAges && prefill?.childAges?.length && prefill.childAges.length === seededChildren) {
+        next.childAges = prefill.childAges.join(",");
+      }
       // Only when the URL is silent. A card tap already carries `room`, and a
       // guest who closed checkout must not have it pushed back at them — once
       // seeded the URL is the sole source of truth, which is why this effect
@@ -110,7 +117,11 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     if (!seeded) return;
     let alive = true;
     setLoading(true);
-    getAvailability(property.slug, checkIn, checkOut, params.s, { adults, children: childrenCount })
+    getAvailability(property.slug, checkIn, checkOut, params.s, {
+      adults,
+      children: childrenCount,
+      childAges: params.childAges,
+    })
       .then((rows) => {
         if (alive) setAvailability(rows);
       })
@@ -123,7 +134,8 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     return () => {
       alive = false;
     };
-  }, [property.slug, checkIn, checkOut, adults, childrenCount, seeded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- childAgesKey stands in for the array
+  }, [property.slug, checkIn, checkOut, adults, childrenCount, childAgesKey, seeded]);
 
   useEffect(() => {
     if (availability) {
@@ -253,6 +265,8 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             checkOut={checkOut}
             adults={adults}
             children={childrenCount}
+            initialChildAges={params.childAges}
+            onChildAgesChange={(ages) => updateParams({ childAges: ages ? ages.join(",") : null })}
             sessionToken={params.s}
             initialGuest={session?.guest ?? null}
             onClose={() => updateParams({ room: null }, { push: true })}
