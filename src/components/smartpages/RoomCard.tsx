@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { stayTotal, type PublicRoomType } from "../../lib/publicApi";
+import { groupRoomsLabel, roomsForParty } from "../../lib/party-rooms";
 import { WhatsAppCTA } from "./WhatsAppCTA";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
@@ -46,6 +47,10 @@ type Props = {
     nights: number;
     /** Extra adults/children for the party picked above; added to the total shown. */
     occupancySurcharge?: number;
+    /** Rooms of this type the party books, when one room can't hold it. */
+    roomsNeeded?: number;
+    /** Every room plus extra guests — the total shown when set. */
+    totalPriceForParty?: number;
     /** Set when the owner approved a rate for this guest in WhatsApp — the
      *  standard total, struck through beside what they were actually
      *  promised. Without it the page quotes rack rate for a guest who
@@ -116,6 +121,11 @@ export function RoomCard({
         </Typography>
       </Box>
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
+      {groupRoomsLabel(roomsForParty(availability)) && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>
+          {groupRoomsLabel(roomsForParty(availability))}
+        </Typography>
+      )}
       {availability.approvedRate && (
         <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
           Special rate approved for you

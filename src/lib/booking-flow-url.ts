@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { parseRooms } from "./party-rooms";
 
 /**
  * The URL is the source of truth across /resorts/[slug], /book, and
@@ -19,7 +20,15 @@ export type BookingFlowParams = {
   /** "3,9" — one age per child, where young children stay free. */
   childAges: number[] | null;
   room: string | null; // selected roomTypeId
+  /**
+   * Rooms of `room` the party books — the WhatsApp agent's "3 rooms for your
+   * party", minted onto the link only when above 1. Checkout opens at this
+   * count when the party can book it (party-rooms.ts#checkoutRoomCount);
+   * cleared whenever the party changes, since it was sized for the old one.
+   */
+  rooms: number | null;
 };
+
 
 /** "3,9" → [3, 9]; null for anything that isn't a clean list of child ages. */
 export function parseChildAges(raw: string | null): number[] | null {
@@ -39,6 +48,7 @@ export function readBookingFlowParams(searchParams: URLSearchParams): BookingFlo
     children: childrenRaw ? parseInt(childrenRaw, 10) : null,
     childAges: parseChildAges(searchParams.get("childAges")),
     room: searchParams.get("room"),
+    rooms: parseRooms(searchParams.get("rooms")),
   };
 }
 
@@ -145,6 +155,7 @@ export function useBookingFlowHref() {
         qs.set("childAges", merged.childAges.join(","));
       }
       if (merged.room) qs.set("room", merged.room);
+      if (merged.room && merged.rooms != null && merged.rooms > 1) qs.set("rooms", String(merged.rooms));
       const query = qs.toString();
       return query ? `${path}?${query}` : path;
     },

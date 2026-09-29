@@ -33,6 +33,7 @@ import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability, isBookable, partyLabel, stayTotal } from "@/lib/publicApi";
+import { groupRoomsLabel, roomsForParty, tooFewRoomsLeft } from "@/lib/party-rooms";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PublicRoomType, ResortDetail } from "@/lib/publicApi";
 
@@ -196,8 +197,12 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   }, [property.slug, checkIn, checkOut, adults, childrenCount, childAgesKey, params.s]);
 
   const thisRoom = availability?.find((a) => a.roomTypeId === roomType.id) ?? null;
-  // Free on these dates, but one room of this type can't hold the party picked.
-  const tooSmall = !!thisRoom?.available && thisRoom.fitsParty === false;
+  // A group one room can't hold books several — "3 rooms for your group".
+  // Free but not bookable is either too few of them left, or a type the
+  // group can't take at all.
+  const groupRooms = thisRoom ? roomsForParty(thisRoom) : 1;
+  const shortOfRooms = !!thisRoom && tooFewRoomsLeft(thisRoom);
+  const tooSmall = !!thisRoom?.available && !isBookable(thisRoom) && !shortOfRooms;
 
   const checkInTime = formatTime(property.checkInTime);
   const checkOutTime = formatTime(property.checkOutTime);
@@ -211,11 +216,15 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
     children?: number;
   }) {
     bookingLinkEvents.track("dates_changed_inline");
+    const nextAdults = next.adults ?? adults;
+    const nextChildren = next.children ?? childrenCount;
     updateParams({
       checkin: next.checkIn ?? checkIn,
       checkout: next.checkOut ?? checkOut,
-      adults: next.adults ?? adults,
-      children: next.children ?? childrenCount,
+      adults: nextAdults,
+      children: nextChildren,
+      // A room count from the chat was sized for the old party.
+      ...(nextAdults !== adults || nextChildren !== childrenCount ? { rooms: null } : {}),
     });
   }
 
@@ -402,6 +411,9 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
                 </Typography>
               </Box>
               <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.4, color: sp.muted }}>{stayPriceNote(thisRoom)}</Typography>
+              {groupRoomsLabel(groupRooms) && (
+                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupRoomsLabel(groupRooms)}</Typography>
+              )}
               {thisRoom.approvedRate ? (
                 <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>Special rate approved for you</Typography>
               ) : thisRoom.availableRooms > 0 && thisRoom.availableRooms <= 3 ? (
@@ -409,6 +421,13 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
                   {thisRoom.availableRooms === 1 ? "Last room left" : `Only ${thisRoom.availableRooms} left`} for these dates
                 </Typography>
               ) : null}
+            </Box>
+          ) : shortOfRooms && thisRoom ? (
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: "0.9375rem", fontWeight: 600, lineHeight: 1.3, color: sp.ink }}>Not enough rooms left</Typography>
+              <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", lineHeight: 1.4, color: sp.muted }}>
+                Your group needs {groupRooms} — only {thisRoom.availableRooms} free for these dates
+              </Typography>
             </Box>
           ) : tooSmall ? (
             <Box sx={{ minWidth: 0 }}>
@@ -444,7 +463,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
               disabled={loading}
               sx={bookButtonSx}
             >
-              Book
+              {groupRooms > 1 ? `Book ${groupRooms} rooms` : "Book"}
             </Button>
           )}
         </Box>
