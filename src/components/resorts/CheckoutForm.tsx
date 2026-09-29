@@ -43,6 +43,10 @@ type Props = {
   checkOut: string;
   adults: number;
   children: number;
+  /** Ages already known (the URL, or given in WhatsApp) — one per child. */
+  initialChildAges?: number[] | null;
+  /** Told whenever every child has an age (or not), so the page can keep it. */
+  onChildAgesChange?: (ages: number[] | null) => void;
   sessionToken: string | null;
   initialGuest: { name: string | null; phone: string | null; email: string | null } | null;
   onClose: () => void;
@@ -111,7 +115,7 @@ function PriceRow({ label, value, muted, strike }: { label: string; value: numbe
               ₹{formatINR(strike)}
             </Box>
           )}
-          ₹{formatINR(value)}
+          {value < 0 ? `−₹${formatINR(-value)}` : `₹${formatINR(value)}`}
         </Typography>
       )}
     </Box>
@@ -126,6 +130,8 @@ export function CheckoutForm({
   checkOut,
   adults,
   children,
+  initialChildAges,
+  onChildAgesChange,
   sessionToken,
   initialGuest,
   onClose,
@@ -158,6 +164,34 @@ export function CheckoutForm({
   }, [slug]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Children's ages, asked only where young children stay free — the price
+  // depends on them there and nowhere else. One slot per child; "" = not yet.
+  const freeAge = room?.freeChildAgeMax ?? null;
+  const asksAges = freeAge != null && children > 0;
+  const [ageSlots, setAgeSlots] = useState<string[]>(() =>
+    Array.from({ length: children }, (_, i) =>
+      initialChildAges?.length === children ? String(initialChildAges[i]) : "",
+    ),
+  );
+  // The party can change under an open checkout; keep one slot per child.
+  const [slotsFor, setSlotsFor] = useState(children);
+  if (slotsFor !== children) {
+    setSlotsFor(children);
+    setAgeSlots((prev) => Array.from({ length: children }, (_, i) => prev[i] ?? ""));
+  }
+  const childAges = useMemo(
+    () => (asksAges && ageSlots.length === children && ageSlots.every((a) => a !== "") ? ageSlots.map(Number) : null),
+    [asksAges, ageSlots, children],
+  );
+  const childAgesKey = childAges?.join(",") ?? "";
+  const agesError = asksAges && !childAges ? "Choose each child's age — children up to " + freeAge + " stay free" : null;
+
+  function setAge(index: number, value: string) {
+    const next = ageSlots.map((a, i) => (i === index ? value : a));
+    setAgeSlots(next);
+    onChildAgesChange?.(next.every((a) => a !== "") ? next.map(Number) : null);
+  }
 
   const guestCount = adults + children;
 
@@ -200,6 +234,7 @@ export function CheckoutForm({
           checkOut,
           adults,
           children,
+          childAges: childAgesKey ? childAgesKey.split(",").map(Number) : undefined,
           sessionToken: sessionToken ?? undefined,
           addonIds: addonKey ? addonKey.split(",") : undefined,
         },
@@ -223,7 +258,7 @@ export function CheckoutForm({
       clearTimeout(timer);
       ac.abort();
     };
-  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, sessionToken, addonKey]);
+  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, sessionToken, addonKey]);
 
   const selectedOption =
     quote?.paymentOptions.find((o) => o.kind === payChoice) ?? quote?.paymentOptions[0] ?? null;
@@ -246,9 +281,15 @@ export function CheckoutForm({
   async function submit() {
     if (submitting) return;
     setAttempted(true);
-    if (nameError || phoneError || emailError) {
+    if (agesError || nameError || phoneError || emailError) {
       // Take the guest to the first field that needs them.
-      const first = nameError ? "checkout-name" : phoneError ? "checkout-phone" : "checkout-email";
+      const first = agesError
+        ? "checkout-child-age-0"
+        : nameError
+          ? "checkout-name"
+          : phoneError
+            ? "checkout-phone"
+            : "checkout-email";
       const el = document.getElementById(first);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
       el?.focus({ preventScroll: true });
@@ -265,6 +306,7 @@ export function CheckoutForm({
         checkOut,
         adults,
         children,
+        childAges: childAges ?? undefined,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -322,9 +364,11 @@ export function CheckoutForm({
   ];
   const photo = room?.photos?.[0];
   const extraAdults = room?.baseOccupancy != null ? Math.max(0, adults - room.baseOccupancy) : 0;
+  // With ages in hand, only the children who pay are named.
+  const payingChildren = childAges && freeAge != null ? childAges.filter((a) => a > freeAge).length : children;
   const extraGuestsLabel = [
     extraAdults > 0 ? `${extraAdults} adult${extraAdults !== 1 ? "s" : ""}` : null,
-    children > 0 ? `${children} ${children === 1 ? "child" : "children"}` : null,
+    payingChildren > 0 ? `${payingChildren} ${payingChildren === 1 ? "child" : "children"}` : null,
   ]
     .filter(Boolean)
     .join(", ");
@@ -400,6 +444,40 @@ export function CheckoutForm({
 
       {availability.approvedRate && (
         <Typography sx={{ mt: 1.5, fontSize: "0.8125rem", fontWeight: 600, color: sp.blue }}>Special rate approved by the property</Typography>
+      )}
+
+      {asksAges && (
+        <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${sp.divider}` }}>
+          <SectionLabel>{children === 1 ? "Child's age" : "Children's ages"}</SectionLabel>
+          <Typography sx={{ mt: -0.75, mb: 1.5, fontSize: "0.875rem", color: sp.muted }}>
+            Children up to {freeAge} stay free — the price below updates once you choose.
+          </Typography>
+          <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(3, 1fr)" } }}>
+            {ageSlots.map((age, i) => (
+              <TextField
+                key={i}
+                id={`checkout-child-age-${i}`}
+                select
+                label={children === 1 ? "Age" : `Child ${i + 1}`}
+                value={age}
+                onChange={(e) => setAge(i, e.target.value)}
+                error={attempted && age === ""}
+                slotProps={{ select: { native: true }, inputLabel: { shrink: true } }}
+                sx={fieldSx}
+              >
+                <option value="">Choose</option>
+                {Array.from({ length: 18 }, (_, a) => (
+                  <option key={a} value={a}>
+                    {a === 0 ? "Under 1" : `${a} year${a === 1 ? "" : "s"}`}
+                  </option>
+                ))}
+              </TextField>
+            ))}
+          </Box>
+          {attempted && agesError && (
+            <Typography sx={{ mt: 1, fontSize: "0.8125rem", color: "#dc2626" }}>{agesError}</Typography>
+          )}
+        </Box>
       )}
 
       <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${sp.divider}` }}>
@@ -544,6 +622,9 @@ export function CheckoutForm({
             />
             {quote.lines.occupancySurcharge > 0 && (
               <PriceRow label={`Extra guests${extraGuestsLabel ? ` (${extraGuestsLabel})` : ""}`} value={quote.lines.occupancySurcharge} />
+            )}
+            {quote.lines.occupancySurcharge < 0 && (
+              <PriceRow label="1 guest price" value={quote.lines.occupancySurcharge} />
             )}
             {quote.lines.extras.map((x) => (
               <PriceRow key={x.id} label={x.quantity > 1 ? `${x.name} × ${x.quantity}` : x.name} value={x.subtotal} />

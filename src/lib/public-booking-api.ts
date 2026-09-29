@@ -34,6 +34,8 @@ export type CreatePublicBookingInput = {
   checkOut: string;
   adults: number;
   children?: number;
+  /** One per child — only sent once every child has an age. */
+  childAges?: number[];
   roomCount?: number;
   name: string;
   phone: string;
@@ -140,6 +142,7 @@ export type QuoteInput = Pick<
   | "checkOut"
   | "adults"
   | "children"
+  | "childAges"
   | "roomCount"
   | "sessionToken"
   | "addonIds"

@@ -67,6 +67,10 @@ export type PublicRoomType = {
   baseOccupancy?: number;
   extraAdultPrice?: number;
   childPrice?: number;
+  /** What one guest alone pays a night at the usual price; null when not set. */
+  singleOccupancyPrice?: number | null;
+  /** Children this age or younger stay free; null when every child pays. */
+  freeChildAgeMax?: number | null;
   mealPlan?: MealPlan;
   beds?: { type: BedType; count: number }[];
   bathrooms?: number;
@@ -198,8 +202,9 @@ export type AvailabilityResult = {
    *  the standard total, to strike through beside the approved price. */
   standardTotalPrice?: number;
   approvedRate?: boolean;
-  /** What extra adults/children add at checkout, for the party sent with the
-   *  request (0 without one, or on an approved rate). Not in totalPrice. */
+  /** What the party changes at checkout, for the party sent with the request
+   *  (0 without one, or on an approved rate): extra adults and children add,
+   *  one guest alone can take off (negative). Not in totalPrice. */
   occupancySurcharge?: number;
   /** False when one room of this type can't hold the party sent with the
    *  request — separate from `available`, which is inventory. */
@@ -307,12 +312,15 @@ export async function getAvailability(
   sessionToken?: string | null,
   // The party, so each room's extra-guest charge comes back with it and the
   // page quotes what checkout will charge — not the base-occupancy rate.
-  party?: { adults?: number; children?: number },
+  party?: { adults?: number; children?: number; childAges?: number[] | null },
 ): Promise<AvailabilityResult[]> {
   const qs = new URLSearchParams({ checkin, checkout });
   if (sessionToken) qs.set("s", sessionToken);
   if (party?.adults != null) qs.set("adults", String(party.adults));
   if (party?.children != null) qs.set("children", String(party.children));
+  if (party?.childAges?.length && party.childAges.length === party.children) {
+    qs.set("childAges", party.childAges.join(","));
+  }
   return publicFetch<AvailabilityResult[]>(
     `/public/resorts/${slug}/availability?${qs.toString()}`,
     0,

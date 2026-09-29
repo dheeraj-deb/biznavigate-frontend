@@ -530,6 +530,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     checkOut={pickCheckOut}
                     adults={pickAdults}
                     children={pickChildren}
+                    initialChildAges={params.childAges ?? session?.prefill.childAges ?? null}
                     sessionToken={params.s}
                     initialGuest={session?.guest ?? null}
                     onClose={() => setSelectedRoomId(null)}

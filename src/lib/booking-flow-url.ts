@@ -16,8 +16,17 @@ export type BookingFlowParams = {
   checkout: string | null;
   adults: number | null;
   children: number | null;
+  /** "3,9" — one age per child, where young children stay free. */
+  childAges: number[] | null;
   room: string | null; // selected roomTypeId
 };
+
+/** "3,9" → [3, 9]; null for anything that isn't a clean list of child ages. */
+export function parseChildAges(raw: string | null): number[] | null {
+  if (!raw) return null;
+  const ages = raw.split(",").map((a) => Number(a.trim()));
+  return ages.length > 0 && ages.every((a) => Number.isInteger(a) && a >= 0 && a <= 17) ? ages : null;
+}
 
 export function readBookingFlowParams(searchParams: URLSearchParams): BookingFlowParams {
   const adultsRaw = searchParams.get("adults");
@@ -28,6 +37,7 @@ export function readBookingFlowParams(searchParams: URLSearchParams): BookingFlo
     checkout: searchParams.get("checkout"),
     adults: adultsRaw ? parseInt(adultsRaw, 10) : null,
     children: childrenRaw ? parseInt(childrenRaw, 10) : null,
+    childAges: parseChildAges(searchParams.get("childAges")),
     room: searchParams.get("room"),
   };
 }
@@ -131,6 +141,9 @@ export function useBookingFlowHref() {
       if (merged.checkout) qs.set("checkout", merged.checkout);
       if (merged.adults != null) qs.set("adults", String(merged.adults));
       if (merged.children != null) qs.set("children", String(merged.children));
+      if (merged.childAges?.length && merged.childAges.length === merged.children) {
+        qs.set("childAges", merged.childAges.join(","));
+      }
       if (merged.room) qs.set("room", merged.room);
       const query = qs.toString();
       return query ? `${path}?${query}` : path;
