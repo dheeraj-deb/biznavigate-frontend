@@ -18,7 +18,8 @@ import {
   roomCardBodySx,
   roomCardShellSx,
 } from "@/components/smartpages/roomCardParts";
-import { stayTotal, type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
+import { type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
+import { groupRoomsLabel, isBookable, roomsForParty, stayTotal, tooFewRoomsLeft } from "@/lib/party-rooms";
 
 type Props = {
   availability: AvailabilityResult;
@@ -40,9 +41,15 @@ const SCARCITY_THRESHOLD = 3;
 export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook, party }: Props) {
   const photos = roomType?.photos ?? [];
   const { availableRooms } = availability;
-  const tooSmall = availability.available && availability.fitsParty === false;
-  const available = availability.available && !tooSmall;
+  // A group one room can't hold books several rooms of the type — the same
+  // count the WhatsApp agent quoted. "Too small" is only for a type the group
+  // can't book at all; too few rooms left is said as that.
+  const available = isBookable(availability);
+  const rooms = roomsForParty(availability);
+  const shortOfRooms = tooFewRoomsLeft(availability);
+  const tooSmall = availability.available && !available && !shortOfRooms;
   const scarce = available && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
+  const groupLabel = available ? groupRoomsLabel(rooms) : null;
 
   const price = available ? (
     <>
@@ -57,12 +64,19 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
         </Typography>
       </Box>
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
+      {groupLabel && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupLabel}</Typography>
+      )}
       {availability.approvedRate && (
         <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
           Special rate approved for you
         </Typography>
       )}
     </>
+  ) : shortOfRooms ? (
+    <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.5, color: sp.muted }}>
+      Your group needs {rooms} rooms — only {availableRooms} left
+    </Typography>
   ) : tooSmall ? (
     <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.5, color: sp.muted }}>
       Too small for {party ?? "your group"}
@@ -84,9 +98,11 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
               ? availableRooms === 1
                 ? "Last room left"
                 : `Only ${availableRooms} left`
-              : tooSmall
-                ? "Doesn't fit your group"
-                : "Sold out"}
+              : shortOfRooms
+                ? "Not enough rooms left"
+                : tooSmall
+                  ? "Doesn't fit your group"
+                  : "Sold out"}
           </Box>
         )}
       </RoomPhotoCarousel>
@@ -101,7 +117,7 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
           price={price}
           action={
             <Button variant="contained" disableElevation disabled={!available} onClick={onBook} sx={bookButtonSx}>
-              {available ? "Book" : tooSmall ? "Too small" : "Sold out"}
+              {available ? (rooms > 1 ? `Book ${rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : "Sold out"}
             </Button>
           }
         />

@@ -24,6 +24,7 @@ import { canGoBackInApp } from "./shell/mobile";
 import { sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { isBookable, partyLabel, type AvailabilityResult, type ResortDetail } from "@/lib/publicApi";
+import { checkoutRoomCount } from "@/lib/party-rooms";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -157,6 +158,10 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     [availability, params.room],
   );
 
+  // How many rooms of the chosen type checkout opens at: the party's need, or
+  // the count the WhatsApp link carried when the party can book it.
+  const roomCount = selectedAvailability ? checkoutRoomCount(selectedAvailability, params.rooms) : 1;
+
   const anyAvailable = availability?.some((a) => a.available) ?? true;
   const anyBookable = availability?.some(isBookable) ?? true;
   // Rooms the group can book first; too-small and sold-out ones after, so the
@@ -170,11 +175,17 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     children?: number;
   }) {
     bookingLinkEvents.track("dates_changed_inline");
+    const nextAdults = next.adults ?? adults;
+    const nextChildren = next.children ?? childrenCount;
+    const partyChanged = nextAdults !== adults || nextChildren !== childrenCount;
     updateParams({
       checkin: next.checkIn ?? checkIn,
       checkout: next.checkOut ?? checkOut,
-      adults: next.adults ?? adults,
-      children: next.children ?? childrenCount,
+      adults: nextAdults,
+      children: nextChildren,
+      // The chat's room count was for the old party; the new one is sized
+      // afresh by the availability call.
+      ...(partyChanged ? { rooms: null } : {}),
     });
   }
 
@@ -185,16 +196,17 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     if (canGoBackInApp()) {
       router.back();
     } else if (selectedAvailability) {
-      updateParams({ room: null });
+      updateParams({ room: null, rooms: null });
     } else {
-      router.push(buildHref(`/resorts/${property.slug}`, { room: null }));
+      router.push(buildHref(`/resorts/${property.slug}`, { room: null, rooms: null }));
     }
   }
 
   function handleBook(roomTypeId: string) {
     bookingLinkEvents.track("room_selected", { roomTypeId });
     bookingLinkEvents.track("checkout_opened", { roomTypeId });
-    updateParams({ room: roomTypeId }, { push: true });
+    // A count carried for one room type says nothing about another.
+    updateParams({ room: roomTypeId, rooms: roomTypeId === params.room ? params.rooms : null }, { push: true });
   }
 
   const inCheckout = Boolean(selectedAvailability);
@@ -254,7 +266,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             propertyName={property.name}
             roomName={selectedAvailability.name}
             phone={property.tenant?.gupshupSourceNumber ?? null}
-            onClose={() => updateParams({ room: null }, { push: true })}
+            onClose={() => updateParams({ room: null, rooms: null }, { push: true })}
           />
         ) : selectedAvailability ? (
           <CheckoutForm
@@ -265,11 +277,12 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             checkOut={checkOut}
             adults={adults}
             children={childrenCount}
+            roomCount={roomCount}
             initialChildAges={params.childAges}
             onChildAgesChange={(ages) => updateParams({ childAges: ages ? ages.join(",") : null })}
             sessionToken={params.s}
             initialGuest={session?.guest ?? null}
-            onClose={() => updateParams({ room: null }, { push: true })}
+            onClose={() => updateParams({ room: null, rooms: null }, { push: true })}
             room={roomTypeById.get(selectedAvailability.roomTypeId)}
             cancellationPolicy={property.cancellationPolicy}
             checkInTime={property.checkInTime}
@@ -313,10 +326,10 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
                 {!anyBookable && (
                   <Box sx={{ borderRadius: sp.radius, border: `1px solid ${sp.border}`, bgcolor: sp.bgSoft, p: 2.5 }}>
                     <Typography sx={{ color: sp.ink, fontWeight: 600 }}>
-                      No single room fits {partyLabel(adults, childrenCount)}
+                      Not enough rooms free for {partyLabel(adults, childrenCount)}
                     </Typography>
                     <Typography sx={{ mt: 0.5, fontSize: "0.875rem", lineHeight: 1.6, color: sp.muted }}>
-                      Try fewer guests, or message the resort to book more than one room.
+                      Try other dates or fewer guests, or message the resort to split your group across room types.
                     </Typography>
                   </Box>
                 )}

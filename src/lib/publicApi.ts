@@ -209,12 +209,20 @@ export type AvailabilityResult = {
   /** False when one room of this type can't hold the party sent with the
    *  request — separate from `available`, which is inventory. */
   fitsParty?: boolean;
+  /** Rooms of this type the party needs; 1 when one room holds it. Sized by
+   *  the same helper the WhatsApp agent quotes "3 rooms for your party" from. */
+  roomsNeeded?: number;
+  /** The party can book this type in roomsNeeded rooms: free, enough left. */
+  enoughRoomsAvailable?: boolean;
+  /** roomsNeeded rooms plus extra guests, before tax. Set only when bookable.
+   *  With occupancySurcharge, taken across all roomsNeeded rooms. */
+  totalPriceForParty?: number;
 };
 
-/** Free on these dates AND big enough for the party — what "Book" requires. */
-export function isBookable(a: Pick<AvailabilityResult, "available" | "fitsParty">): boolean {
-  return a.available && a.fitsParty !== false;
-}
+// Group sizing lives in party-rooms.ts (plain arithmetic, tested on its own).
+// isBookable: free on these dates AND bookable by the party — in one room or
+// several — which is what "Book" requires.
+export { isBookable, stayTotal, roomsForParty } from "./party-rooms";
 
 /** "2 adults, 1 child" — the party as the guest picked it. */
 export function partyLabel(adults: number, children: number): string {
@@ -222,10 +230,6 @@ export function partyLabel(adults: number, children: number): string {
   return children > 0 ? `${a}, ${children} ${children === 1 ? "child" : "children"}` : a;
 }
 
-/** The stay as the guest will pay it: the room total plus any extra-guest charge. */
-export function stayTotal(a: Pick<AvailabilityResult, "totalPrice" | "occupancySurcharge">): number {
-  return a.totalPrice + (a.occupancySurcharge ?? 0);
-}
 
 export type IntentPageData = {
   id: string;

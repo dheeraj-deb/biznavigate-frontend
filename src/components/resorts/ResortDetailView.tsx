@@ -33,6 +33,7 @@ import { useBookingFlowHref, useBookingFlowParams, readCurrentBookingFlowParams 
 import { consumeArrival, isMobileViewport } from "@/components/resorts/shell/mobile";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { getAvailability, isBookable, partyLabel } from "@/lib/publicApi";
+import { checkoutRoomCount } from "@/lib/party-rooms";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
@@ -463,7 +464,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                   return (
                     <Typography sx={{ fontSize: "0.9375rem", lineHeight: 1.6, color: sp.muted }}>
                       {freeButSmall
-                        ? `No single room fits ${partyLabel(pickAdults, pickChildren)}. Try fewer guests, or message the resort to book more than one room.`
+                        ? `Not enough rooms free for ${partyLabel(pickAdults, pickChildren)}. Try other dates or fewer guests, or message the resort to split your group across room types.`
                         : "No rooms available for these dates. Try different dates."}
                     </Typography>
                   );
@@ -492,6 +493,8 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                               ? {
                                   totalPrice: thisAvailability.totalPrice,
                                   occupancySurcharge: thisAvailability.occupancySurcharge,
+                                  roomsNeeded: thisAvailability.roomsNeeded,
+                                  totalPriceForParty: thisAvailability.totalPriceForParty,
                                   nights: thisAvailability.nights,
                                   standardTotalPrice: thisAvailability.standardTotalPrice,
                                   approvedRate: thisAvailability.approvedRate,
@@ -530,6 +533,15 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     checkOut={pickCheckOut}
                     adults={pickAdults}
                     children={pickChildren}
+                    roomCount={checkoutRoomCount(
+                      selectedAvailability,
+                      // The chat's count only for the room and party it was quoted for.
+                      selectedAvailability.roomTypeId === params.room &&
+                        pickAdults === params.adults &&
+                        pickChildren === (params.children ?? 0)
+                        ? params.rooms
+                        : null,
+                    )}
                     initialChildAges={params.childAges ?? session?.prefill.childAges ?? null}
                     sessionToken={params.s}
                     initialGuest={session?.guest ?? null}

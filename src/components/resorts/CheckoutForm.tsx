@@ -43,6 +43,12 @@ type Props = {
   checkOut: string;
   adults: number;
   children: number;
+  /**
+   * Rooms of this type being booked — more than 1 for a group one room can't
+   * hold, the count the WhatsApp agent quoted. Priced and held by the server
+   * (roomCount on the quote and the booking); the form only shows it.
+   */
+  roomCount?: number;
   /** Ages already known (the URL, or given in WhatsApp) — one per child. */
   initialChildAges?: number[] | null;
   /** Told whenever every child has an age (or not), so the page can keep it. */
@@ -130,6 +136,7 @@ export function CheckoutForm({
   checkOut,
   adults,
   children,
+  roomCount = 1,
   initialChildAges,
   onChildAgesChange,
   sessionToken,
@@ -235,6 +242,7 @@ export function CheckoutForm({
           adults,
           children,
           childAges: childAgesKey ? childAgesKey.split(",").map(Number) : undefined,
+          roomCount,
           sessionToken: sessionToken ?? undefined,
           addonIds: addonKey ? addonKey.split(",") : undefined,
         },
@@ -258,7 +266,7 @@ export function CheckoutForm({
       clearTimeout(timer);
       ac.abort();
     };
-  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, sessionToken, addonKey]);
+  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, roomCount, sessionToken, addonKey]);
 
   const selectedOption =
     quote?.paymentOptions.find((o) => o.kind === payChoice) ?? quote?.paymentOptions[0] ?? null;
@@ -307,6 +315,9 @@ export function CheckoutForm({
         adults,
         children,
         childAges: childAges ?? undefined,
+        // The count the quote above was priced at — never fewer rooms than
+        // the group needs, or the booking is refused for capacity.
+        roomCount,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -356,14 +367,15 @@ export function CheckoutForm({
       label: "Stay",
       icon: <NightsStayOutlinedIcon />,
       value: `${availability.nights} night${availability.nights !== 1 ? "s" : ""}`,
-      sub: "1 room",
+      sub: roomCount > 1 ? `${roomCount} rooms for your group` : "1 room",
     },
     ...(beds || size
       ? [{ label: "Room", icon: <BedOutlinedIcon />, value: [beds, size].filter(Boolean).join(" · "), wide: true }]
       : []),
   ];
   const photo = room?.photos?.[0];
-  const extraAdults = room?.baseOccupancy != null ? Math.max(0, adults - room.baseOccupancy) : 0;
+  // Every room booked already covers its base occupancy.
+  const extraAdults = room?.baseOccupancy != null ? Math.max(0, adults - room.baseOccupancy * roomCount) : 0;
   // With ages in hand, only the children who pay are named.
   const payingChildren = childAges && freeAge != null ? childAges.filter((a) => a > freeAge).length : children;
   const extraGuestsLabel = [
@@ -616,7 +628,7 @@ export function CheckoutForm({
         {quote && (
           <>
             <PriceRow
-              label={`₹${formatINR(quote.lines.room.perNight)} × ${quote.nights} night${quote.nights !== 1 ? "s" : ""}`}
+              label={`₹${formatINR(quote.lines.room.perNight)} × ${quote.roomCount > 1 ? `${quote.roomCount} rooms × ` : ""}${quote.nights} night${quote.nights !== 1 ? "s" : ""}`}
               value={quote.lines.room.subtotal}
               strike={quote.lines.room.approvedRate ? quote.lines.room.standardSubtotal : null}
             />
