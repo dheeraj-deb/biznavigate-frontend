@@ -4,7 +4,7 @@ import { ResortListView } from '@/components/resorts/ResortListView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
 
 export const metadata: Metadata = {
-  title: 'Resorts & Stays — Book Direct on WhatsApp | BizNavigate',
+  title: 'Resorts & Stays — Book Direct on WhatsApp | BizNavigo',
   description:
     'Browse resorts, villas and homestays. Book directly with the property on WhatsApp — no middlemen, best price guaranteed.',
   alternates: { canonical: '/resorts' },

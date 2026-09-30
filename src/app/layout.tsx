@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     apple: '/logo192.png',
   },
   openGraph: {
-    siteName: 'BizNavigate',
-    title: 'BizNavigate — Direct bookings on autopilot for resorts',
+    siteName: 'BizNavigo',
+    title: 'BizNavigo — Direct bookings on autopilot for resorts',
     description: 'Book resorts and stays directly on WhatsApp — no middlemen, best price guaranteed.',
     type: 'website',
     images: ['/logo192.png'],

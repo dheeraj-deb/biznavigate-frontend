@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   try {
     const property = await getResort(slug);
-    return { title: `Book ${property.name} — BizNavigate` };
+    return { title: `Book ${property.name} — BizNavigo` };
   } catch {
     return { title: 'Resort not found' };
   }
