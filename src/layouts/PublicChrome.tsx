@@ -55,7 +55,7 @@ export function PublicHeader({ hideOnMobile = false }: { hideOnMobile?: boolean 
         }}
       >
         <Box component={NextLink} href="/" sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}>
-          <Box component="img" src="/logo.png" alt="BizNavigate" sx={{ height: 28, width: "auto" }} />
+          <Box component="img" src="/logo.png" alt="BizNavigo" sx={{ height: 28, width: "auto" }} />
         </Box>
         <Link
           component={NextLink}
@@ -98,7 +98,7 @@ export function PublicFooter({ hideOnMobile = false }: { hideOnMobile?: boolean 
         <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.6, color: sp.muted }}>
           Book direct, powered by{" "}
           <Box component="span" sx={{ fontWeight: 600, color: sp.ink }}>
-            BizNavigate
+            BizNavigo
           </Box>
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
