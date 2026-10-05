@@ -19,7 +19,7 @@ import {
   roomCardShellSx,
 } from "@/components/smartpages/roomCardParts";
 import { type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
-import { groupRoomsLabel, isBookable, roomsForParty, stayTotal, tooFewRoomsLeft } from "@/lib/party-rooms";
+import { alternativeLabel, arrangementLabel, arrangementsFor, isBookable, roomsForParty, surchargeFor, tooFewRoomsLeft } from "@/lib/party-rooms";
 
 type Props = {
   availability: AvailabilityResult;
@@ -44,12 +44,17 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
   // A group one room can't hold books several rooms of the type — the same
   // count the WhatsApp agent quoted. "Too small" is only for a type the group
   // can't book at all; too few rooms left is said as that.
+  //
+  // When the room takes extra beds, the group can also share fewer rooms: the
+  // card leads with the cheaper way and names the other, and checkout lets
+  // the guest switch.
   const available = isBookable(availability);
   const rooms = roomsForParty(availability);
   const shortOfRooms = tooFewRoomsLeft(availability);
   const tooSmall = availability.available && !available && !shortOfRooms;
   const scarce = available && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
-  const groupLabel = available ? groupRoomsLabel(rooms) : null;
+  const [lead, other] = arrangementsFor(availability);
+  const groupLabel = lead ? arrangementLabel(lead) : null;
 
   const price = available ? (
     <>
@@ -60,12 +65,19 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
           </Typography>
         )}
         <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em" }}>
-          ₹{formatINR(stayTotal(availability))}
+          ₹{formatINR(lead?.total ?? 0)}
         </Typography>
       </Box>
-      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
+      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>
+        {stayPriceNote({ ...availability, occupancySurcharge: surchargeFor(availability, lead) })}
+      </Typography>
       {groupLabel && (
         <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupLabel}</Typography>
+      )}
+      {other && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", color: sp.muted }}>
+          or ₹{formatINR(other.total)} for {alternativeLabel(other)}
+        </Typography>
       )}
       {availability.approvedRate && (
         <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
@@ -117,7 +129,7 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
           price={price}
           action={
             <Button variant="contained" disableElevation disabled={!available} onClick={onBook} sx={bookButtonSx}>
-              {available ? (rooms > 1 ? `Book ${rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : "Sold out"}
+              {available ? (lead && lead.extraBeds === 0 && lead.rooms > 1 ? `Book ${lead.rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : "Sold out"}
             </Button>
           }
         />

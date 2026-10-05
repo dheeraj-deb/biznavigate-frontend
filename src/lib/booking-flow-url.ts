@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { parseRooms } from "./party-rooms";
+import { parseBeds, parseRooms } from "./party-rooms";
 
 /**
  * The URL is the source of truth across /resorts/[slug], /book, and
@@ -27,6 +27,11 @@ export type BookingFlowParams = {
    * cleared whenever the party changes, since it was sized for the old one.
    */
   rooms: number | null;
+  /**
+   * Extra beds across those rooms — the agent's "1 room + 1 extra bed", or
+   * what the guest picked at checkout. 0 means separate rooms on purpose.
+   */
+  beds: number | null;
 };
 
 
@@ -49,6 +54,7 @@ export function readBookingFlowParams(searchParams: URLSearchParams): BookingFlo
     childAges: parseChildAges(searchParams.get("childAges")),
     room: searchParams.get("room"),
     rooms: parseRooms(searchParams.get("rooms")),
+    beds: parseBeds(searchParams.get("beds")),
   };
 }
 
@@ -156,6 +162,7 @@ export function useBookingFlowHref() {
       }
       if (merged.room) qs.set("room", merged.room);
       if (merged.room && merged.rooms != null && merged.rooms > 1) qs.set("rooms", String(merged.rooms));
+      if (merged.room && merged.beds != null) qs.set("beds", String(merged.beds));
       const query = qs.toString();
       return query ? `${path}?${query}` : path;
     },

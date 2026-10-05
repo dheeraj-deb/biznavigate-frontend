@@ -37,6 +37,8 @@ export type CreatePublicBookingInput = {
   /** One per child — only sent once every child has an age. */
   childAges?: number[];
   roomCount?: number;
+  /** Extra beds across the rooms. Limited and priced server-side. */
+  extraBeds?: number;
   name: string;
   phone: string;
   email?: string;
@@ -111,6 +113,8 @@ export type BookingQuote = {
       standardSubtotal: number | null;
     };
     occupancySurcharge: number;
+    /** Absent from an API that predates extra beds. */
+    extraBeds?: { count: number; perNight: number; subtotal: number };
     extras: Array<{
       id: string;
       name: string;
@@ -144,6 +148,7 @@ export type QuoteInput = Pick<
   | "children"
   | "childAges"
   | "roomCount"
+  | "extraBeds"
   | "sessionToken"
   | "addonIds"
 >;

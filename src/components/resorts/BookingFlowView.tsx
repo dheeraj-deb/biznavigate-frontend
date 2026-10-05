@@ -24,7 +24,7 @@ import { canGoBackInApp } from "./shell/mobile";
 import { sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { isBookable, partyLabel, type AvailabilityResult, type ResortDetail } from "@/lib/publicApi";
-import { checkoutRoomCount } from "@/lib/party-rooms";
+import { arrangementsFor, checkoutArrangement, type Arrangement } from "@/lib/party-rooms";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -158,9 +158,18 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     [availability, params.room],
   );
 
-  // How many rooms of the chosen type checkout opens at: the party's need, or
-  // the count the WhatsApp link carried when the party can book it.
-  const roomCount = selectedAvailability ? checkoutRoomCount(selectedAvailability, params.rooms) : 1;
+  // How the group stays in the chosen room type: separate rooms, or fewer
+  // rooms with extra beds. Opens on what the WhatsApp link carried (rooms,
+  // beds) when the party can book it, else the cheaper way; the guest can
+  // switch at checkout.
+  const arrangementOptions = selectedAvailability ? arrangementsFor(selectedAvailability) : [];
+  const arrangement = selectedAvailability
+    ? checkoutArrangement(selectedAvailability, { rooms: params.rooms, beds: params.beds })
+    : null;
+
+  function chooseArrangement(next: Arrangement) {
+    updateParams({ rooms: next.rooms > 1 ? next.rooms : null, beds: next.extraBeds });
+  }
 
   const anyAvailable = availability?.some((a) => a.available) ?? true;
   const anyBookable = availability?.some(isBookable) ?? true;
@@ -185,7 +194,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       children: nextChildren,
       // The chat's room count was for the old party; the new one is sized
       // afresh by the availability call.
-      ...(partyChanged ? { rooms: null } : {}),
+      ...(partyChanged ? { rooms: null, beds: null } : {}),
     });
   }
 
@@ -196,9 +205,9 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     if (canGoBackInApp()) {
       router.back();
     } else if (selectedAvailability) {
-      updateParams({ room: null, rooms: null });
+      updateParams({ room: null, rooms: null, beds: null });
     } else {
-      router.push(buildHref(`/resorts/${property.slug}`, { room: null, rooms: null }));
+      router.push(buildHref(`/resorts/${property.slug}`, { room: null, rooms: null, beds: null }));
     }
   }
 
@@ -206,7 +215,8 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     bookingLinkEvents.track("room_selected", { roomTypeId });
     bookingLinkEvents.track("checkout_opened", { roomTypeId });
     // A count carried for one room type says nothing about another.
-    updateParams({ room: roomTypeId, rooms: roomTypeId === params.room ? params.rooms : null }, { push: true });
+    const same = roomTypeId === params.room;
+    updateParams({ room: roomTypeId, rooms: same ? params.rooms : null, beds: same ? params.beds : null }, { push: true });
   }
 
   const inCheckout = Boolean(selectedAvailability);
@@ -266,7 +276,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             propertyName={property.name}
             roomName={selectedAvailability.name}
             phone={property.tenant?.gupshupSourceNumber ?? null}
-            onClose={() => updateParams({ room: null, rooms: null }, { push: true })}
+            onClose={() => updateParams({ room: null, rooms: null, beds: null }, { push: true })}
           />
         ) : selectedAvailability ? (
           <CheckoutForm
@@ -277,12 +287,15 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             checkOut={checkOut}
             adults={adults}
             children={childrenCount}
-            roomCount={roomCount}
+            roomCount={arrangement?.rooms ?? 1}
+            extraBeds={arrangement?.extraBeds ?? 0}
+            arrangementOptions={arrangementOptions}
+            onArrangementChange={chooseArrangement}
             initialChildAges={params.childAges}
             onChildAgesChange={(ages) => updateParams({ childAges: ages ? ages.join(",") : null })}
             sessionToken={params.s}
             initialGuest={session?.guest ?? null}
-            onClose={() => updateParams({ room: null, rooms: null }, { push: true })}
+            onClose={() => updateParams({ room: null, rooms: null, beds: null }, { push: true })}
             room={roomTypeById.get(selectedAvailability.roomTypeId)}
             cancellationPolicy={property.cancellationPolicy}
             checkInTime={property.checkInTime}

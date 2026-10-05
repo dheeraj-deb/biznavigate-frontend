@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { stayTotal, type PublicRoomType } from "../../lib/publicApi";
-import { groupRoomsLabel, roomsForParty } from "../../lib/party-rooms";
+import { alternativeLabel, arrangementLabel, arrangementsFor, surchargeFor, type PartyRoomsRow } from "../../lib/party-rooms";
 import { WhatsAppCTA } from "./WhatsAppCTA";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
@@ -51,6 +51,13 @@ type Props = {
     roomsNeeded?: number;
     /** Every room plus extra guests — the total shown when set. */
     totalPriceForParty?: number;
+    /** Free, how many, and whether the group fits — with the extra-bed way,
+     *  so the card can lead with the cheaper of the two. */
+    available?: boolean;
+    availableRooms?: number;
+    fitsParty?: boolean;
+    enoughRoomsAvailable?: boolean;
+    extraBedOption?: PartyRoomsRow["extraBedOption"];
     /** Set when the owner approved a rate for this guest in WhatsApp — the
      *  standard total, struck through beside what they were actually
      *  promised. Without it the page quotes rack rate for a guest who
@@ -108,6 +115,14 @@ export function RoomCard({
     video.play().catch(() => {});
   }
 
+  // With the full availability row, the card leads with the cheaper way the
+  // group can stay (separate rooms, or fewer rooms with extra beds).
+  const row: PartyRoomsRow | null =
+    availability && typeof availability.available === "boolean"
+      ? { ...availability, available: availability.available, availableRooms: availability.availableRooms ?? 0 }
+      : null;
+  const [lead, other] = row ? arrangementsFor(row) : [];
+
   const price = availability ? (
     <>
       <Box>
@@ -120,10 +135,15 @@ export function RoomCard({
           ₹{formatINR(stayTotal(availability))}
         </Typography>
       </Box>
-      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
-      {groupRoomsLabel(roomsForParty(availability)) && (
-        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>
-          {groupRoomsLabel(roomsForParty(availability))}
+      <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>
+        {stayPriceNote({ ...availability, occupancySurcharge: row ? surchargeFor(row, lead) : availability.occupancySurcharge })}
+      </Typography>
+      {lead && arrangementLabel(lead) && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{arrangementLabel(lead)}</Typography>
+      )}
+      {other && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", color: sp.muted }}>
+          or ₹{formatINR(other.total)} for {alternativeLabel(other)}
         </Typography>
       )}
       {availability.approvedRate && (

@@ -7,6 +7,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  alternativeLabel,
+  arrangementLabel,
+  arrangementsFor,
+  checkoutArrangement,
+  parseBeds,
+  surchargeFor,
   checkoutRoomCount,
   groupRoomsLabel,
   isBookable,
@@ -85,4 +91,63 @@ test("the rooms URL param takes only a sane count", () => {
   assert.equal(parseRooms("2.5"), null);
   assert.equal(parseRooms("abc"), null);
   assert.equal(parseRooms("999"), null);
+});
+
+// Extra beds: three adults in a room for two, or four friends sharing one.
+// What the API returns for three adults and a room that takes extra beds.
+const bedded = {
+  available: true,
+  availableRooms: 4,
+  totalPrice: 6200,
+  occupancySurcharge: 0,
+  fitsParty: false,
+  roomsNeeded: 2,
+  enoughRoomsAvailable: true,
+  totalPriceForParty: 12400,
+  extraBedOption: { rooms: 1, extraBeds: 1, occupancySurcharge: 0, extraBedCharge: 1000, totalPriceForParty: 7200 },
+};
+
+test("both ways to stay are offered, the cheaper first", () => {
+  assert.deepEqual(arrangementsFor(bedded), [
+    { rooms: 1, extraBeds: 1, total: 7200 },
+    { rooms: 2, extraBeds: 0, total: 12400 },
+  ]);
+  assert.equal(stayTotal(bedded), 7200);
+  assert.equal(arrangementLabel({ rooms: 1, extraBeds: 1 }), "1 room + 1 extra bed");
+  assert.equal(arrangementLabel({ rooms: 1, extraBeds: 2 }), "1 room + 2 extra beds");
+  assert.equal(alternativeLabel({ rooms: 2, extraBeds: 0 }), "2 separate rooms");
+});
+
+test("one room with a bed is still bookable when two rooms are not free", () => {
+  const lastRoom = { ...bedded, availableRooms: 1, enoughRoomsAvailable: false };
+  assert.equal(isBookable(lastRoom), true);
+  assert.equal(tooFewRoomsLeft(lastRoom), false);
+  assert.deepEqual(arrangementsFor(lastRoom), [{ rooms: 1, extraBeds: 1, total: 7200 }]);
+});
+
+test("checkout opens on what the link carried, else the cheaper way", () => {
+  assert.deepEqual(checkoutArrangement(bedded, { beds: 1 }), { rooms: 1, extraBeds: 1, total: 7200 });
+  // A room count alone means separate rooms.
+  assert.deepEqual(checkoutArrangement(bedded, { rooms: 2 }), { rooms: 2, extraBeds: 0, total: 12400 });
+  // beds=0 is the guest choosing separate rooms on purpose.
+  assert.deepEqual(checkoutArrangement(bedded, { beds: 0 }), { rooms: 2, extraBeds: 0, total: 12400 });
+  assert.deepEqual(checkoutArrangement(bedded, {}), { rooms: 1, extraBeds: 1, total: 7200 });
+  // Beds asked for on a room that offers none: the rooms it does offer.
+  assert.deepEqual(checkoutArrangement(garden, { beds: 1 }), { rooms: 3, extraBeds: 0, total: 18600 });
+  assert.equal(checkoutArrangement({ ...garden, available: false }, {}), null);
+});
+
+test("the extra-guest note follows the arrangement shown", () => {
+  const withSurcharge = { ...bedded, occupancySurcharge: 900, extraBedOption: { ...bedded.extraBedOption, occupancySurcharge: 0 } };
+  assert.equal(surchargeFor(withSurcharge, { rooms: 1, extraBeds: 1, total: 7200 }), 0);
+  assert.equal(surchargeFor(withSurcharge, { rooms: 2, extraBeds: 0, total: 12400 }), 900);
+});
+
+test("the beds URL param takes only a sane count, and 0 means separate rooms", () => {
+  assert.equal(parseBeds("2"), 2);
+  assert.equal(parseBeds("0"), 0);
+  assert.equal(parseBeds(null), null);
+  assert.equal(parseBeds(""), null);
+  assert.equal(parseBeds("-1"), null);
+  assert.equal(parseBeds("1.5"), null);
 });

@@ -33,7 +33,7 @@ import { useBookingFlowHref, useBookingFlowParams, readCurrentBookingFlowParams 
 import { consumeArrival, isMobileViewport } from "@/components/resorts/shell/mobile";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { getAvailability, isBookable, partyLabel } from "@/lib/publicApi";
-import { checkoutRoomCount } from "@/lib/party-rooms";
+import { arrangementsFor, checkoutArrangement } from "@/lib/party-rooms";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
@@ -78,6 +78,24 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const selectedAvailability =
     availability?.find((a) => a.roomTypeId === selectedRoomId && isBookable(a)) ?? null;
   const checkoutRef = useRef<HTMLDivElement>(null);
+
+  // How the group stays in the selected room type: the guest's pick here, or
+  // what the chat's link carried (only for that room and party), or the
+  // cheaper way. A pick for one room type says nothing about another.
+  const [arrangementPick, setArrangementPick] = useState<{ roomTypeId: string; rooms: number; beds: number } | null>(null);
+  const fromLink =
+    selectedAvailability &&
+    selectedAvailability.roomTypeId === params.room &&
+    pickAdults === params.adults &&
+    pickChildren === (params.children ?? 0)
+      ? { rooms: params.rooms, beds: params.beds }
+      : undefined;
+  const inlineArrangement = selectedAvailability
+    ? checkoutArrangement(
+        selectedAvailability,
+        arrangementPick?.roomTypeId === selectedAvailability.roomTypeId ? arrangementPick : fromLink,
+      )
+    : null;
 
   // Page-view event so the funnel (view → moment → book) starts at the top.
   useEffect(() => {
@@ -495,6 +513,11 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                                   occupancySurcharge: thisAvailability.occupancySurcharge,
                                   roomsNeeded: thisAvailability.roomsNeeded,
                                   totalPriceForParty: thisAvailability.totalPriceForParty,
+                                  available: thisAvailability.available,
+                                  availableRooms: thisAvailability.availableRooms,
+                                  fitsParty: thisAvailability.fitsParty,
+                                  enoughRoomsAvailable: thisAvailability.enoughRoomsAvailable,
+                                  extraBedOption: thisAvailability.extraBedOption,
                                   nights: thisAvailability.nights,
                                   standardTotalPrice: thisAvailability.standardTotalPrice,
                                   approvedRate: thisAvailability.approvedRate,
@@ -533,15 +556,12 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     checkOut={pickCheckOut}
                     adults={pickAdults}
                     children={pickChildren}
-                    roomCount={checkoutRoomCount(
-                      selectedAvailability,
-                      // The chat's count only for the room and party it was quoted for.
-                      selectedAvailability.roomTypeId === params.room &&
-                        pickAdults === params.adults &&
-                        pickChildren === (params.children ?? 0)
-                        ? params.rooms
-                        : null,
-                    )}
+                    roomCount={inlineArrangement?.rooms ?? 1}
+                    extraBeds={inlineArrangement?.extraBeds ?? 0}
+                    arrangementOptions={arrangementsFor(selectedAvailability)}
+                    onArrangementChange={(next) =>
+                      setArrangementPick({ roomTypeId: selectedAvailability.roomTypeId, rooms: next.rooms, beds: next.extraBeds })
+                    }
                     initialChildAges={params.childAges ?? session?.prefill.childAges ?? null}
                     sessionToken={params.s}
                     initialGuest={session?.guest ?? null}

@@ -32,6 +32,7 @@ import {
   type BookingQuote,
 } from "@/lib/public-booking-api";
 import { getStoredRef } from "@/lib/attribution";
+import { alternativeLabel, arrangementLabel, type Arrangement } from "@/lib/party-rooms";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { getLiveAddons, partyLabel, type AvailabilityResult, type PropertyAddon, type PublicRoomType } from "@/lib/publicApi";
 
@@ -49,6 +50,14 @@ type Props = {
    * (roomCount on the quote and the booking); the form only shows it.
    */
   roomCount?: number;
+  /** Extra beds across those rooms — a third adult in a room for two. */
+  extraBeds?: number;
+  /**
+   * Every way the group can stay in this room type, cheapest first (separate
+   * rooms, or fewer rooms with extra beds). With two or more, the guest picks.
+   */
+  arrangementOptions?: Arrangement[];
+  onArrangementChange?: (next: Arrangement) => void;
   /** Ages already known (the URL, or given in WhatsApp) — one per child. */
   initialChildAges?: number[] | null;
   /** Told whenever every child has an age (or not), so the page can keep it. */
@@ -137,6 +146,9 @@ export function CheckoutForm({
   adults,
   children,
   roomCount = 1,
+  extraBeds = 0,
+  arrangementOptions = [],
+  onArrangementChange,
   initialChildAges,
   onChildAgesChange,
   sessionToken,
@@ -243,6 +255,7 @@ export function CheckoutForm({
           children,
           childAges: childAgesKey ? childAgesKey.split(",").map(Number) : undefined,
           roomCount,
+          extraBeds,
           sessionToken: sessionToken ?? undefined,
           addonIds: addonKey ? addonKey.split(",") : undefined,
         },
@@ -266,7 +279,7 @@ export function CheckoutForm({
       clearTimeout(timer);
       ac.abort();
     };
-  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, roomCount, sessionToken, addonKey]);
+  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, roomCount, extraBeds, sessionToken, addonKey]);
 
   const selectedOption =
     quote?.paymentOptions.find((o) => o.kind === payChoice) ?? quote?.paymentOptions[0] ?? null;
@@ -318,6 +331,7 @@ export function CheckoutForm({
         // The count the quote above was priced at — never fewer rooms than
         // the group needs, or the booking is refused for capacity.
         roomCount,
+        extraBeds,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -367,17 +381,24 @@ export function CheckoutForm({
       label: "Stay",
       icon: <NightsStayOutlinedIcon />,
       value: `${availability.nights} night${availability.nights !== 1 ? "s" : ""}`,
-      sub: roomCount > 1 ? `${roomCount} rooms for your group` : "1 room",
+      sub: arrangementLabel({ rooms: roomCount, extraBeds }) ?? "1 room",
     },
     ...(beds || size
       ? [{ label: "Room", icon: <BedOutlinedIcon />, value: [beds, size].filter(Boolean).join(" · "), wide: true }]
       : []),
   ];
   const photo = room?.photos?.[0];
-  // Every room booked already covers its base occupancy.
-  const extraAdults = room?.baseOccupancy != null ? Math.max(0, adults - room.baseOccupancy * roomCount) : 0;
+  // Every room booked already covers its base occupancy, and a guest on an
+  // extra bed pays for the bed instead (adults first, then children — the
+  // same order the server prices in).
+  const overBase = room?.baseOccupancy != null ? Math.max(0, adults - room.baseOccupancy * roomCount) : 0;
+  const bedAdults = Math.min(extraBeds, overBase);
+  const extraAdults = overBase - bedAdults;
   // With ages in hand, only the children who pay are named.
-  const payingChildren = childAges && freeAge != null ? childAges.filter((a) => a > freeAge).length : children;
+  const payingChildren = Math.max(
+    0,
+    (childAges && freeAge != null ? childAges.filter((a) => a > freeAge).length : children) - (extraBeds - bedAdults),
+  );
   const extraGuestsLabel = [
     extraAdults > 0 ? `${extraAdults} adult${extraAdults !== 1 ? "s" : ""}` : null,
     payingChildren > 0 ? `${payingChildren} ${payingChildren === 1 ? "child" : "children"}` : null,
@@ -456,6 +477,58 @@ export function CheckoutForm({
 
       {availability.approvedRate && (
         <Typography sx={{ mt: 1.5, fontSize: "0.8125rem", fontWeight: 600, color: sp.blue }}>Special rate approved by the property</Typography>
+      )}
+
+      {/* A group that fits either way chooses: fewer rooms with extra beds
+          (cheaper), or separate rooms (more space). Cheapest first. */}
+      {arrangementOptions.length > 1 && onArrangementChange && (
+        <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${sp.divider}` }}>
+          <SectionLabel>How would you like to stay?</SectionLabel>
+          <Box role="radiogroup" aria-label="How would you like to stay?" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {arrangementOptions.map((opt) => {
+              const selected = opt.rooms === roomCount && opt.extraBeds === extraBeds;
+              return (
+                <Box
+                  key={`${opt.rooms}-${opt.extraBeds}`}
+                  component="button"
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onArrangementChange(opt)}
+                  sx={{
+                    textAlign: "left",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    borderRadius: "14px",
+                    border: `1px solid ${selected ? sp.ink : sp.border}`,
+                    boxShadow: selected ? `inset 0 0 0 1px ${sp.ink}` : "none",
+                    bgcolor: "#fff",
+                    p: 1.75,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.25,
+                  }}
+                >
+                  {selected ? (
+                    <RadioButtonCheckedRoundedIcon sx={{ fontSize: 22, color: sp.ink, flexShrink: 0 }} />
+                  ) : (
+                    <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 22, color: sp.borderSoft, flexShrink: 0 }} />
+                  )}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontSize: "0.9375rem", fontWeight: 600, color: sp.ink }}>
+                      {opt.extraBeds > 0 ? arrangementLabel(opt) : alternativeLabel(opt)}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.45, color: sp.muted }}>
+                      {opt.extraBeds > 0 ? "Share a room, save on the stay" : "More space for everyone"}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ flexShrink: 0, fontSize: "1rem", fontWeight: 700, color: sp.ink }}>₹{formatINR(opt.total)}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+          <Typography sx={{ mt: 1, fontSize: "0.8125rem", color: sp.muted }}>Before taxes. The total below follows your choice.</Typography>
+        </Box>
       )}
 
       {asksAges && (
@@ -637,6 +710,12 @@ export function CheckoutForm({
             )}
             {quote.lines.occupancySurcharge < 0 && (
               <PriceRow label="1 guest price" value={quote.lines.occupancySurcharge} />
+            )}
+            {quote.lines.extraBeds && quote.lines.extraBeds.count > 0 && (
+              <PriceRow
+                label={`Extra bed${quote.lines.extraBeds.count !== 1 ? "s" : ""} (${quote.lines.extraBeds.count} × ₹${formatINR(quote.lines.extraBeds.perNight)} × ${quote.nights} night${quote.nights !== 1 ? "s" : ""})`}
+                value={quote.lines.extraBeds.subtotal}
+              />
             )}
             {quote.lines.extras.map((x) => (
               <PriceRow key={x.id} label={x.quantity > 1 ? `${x.name} × ${x.quantity}` : x.name} value={x.subtotal} />

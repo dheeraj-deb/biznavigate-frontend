@@ -82,6 +82,8 @@ export type PublicRoomType = {
   occupancyInfants?: number;
   extraBedAvailable?: boolean;
   extraBedPrice?: number;
+  /** Extra beds one room takes; absent from an API that predates it. */
+  maxExtraBeds?: number;
   virtualTourUrl?: string | null;
 };
 
@@ -217,6 +219,15 @@ export type AvailabilityResult = {
   /** roomsNeeded rooms plus extra guests, before tax. Set only when bookable.
    *  With occupancySurcharge, taken across all roomsNeeded rooms. */
   totalPriceForParty?: number;
+  /** The cheaper way, when the room takes extra beds: fewer rooms with beds
+   *  in them. Only sent when enough rooms are free for it. */
+  extraBedOption?: {
+    rooms: number;
+    extraBeds: number;
+    occupancySurcharge: number;
+    extraBedCharge: number;
+    totalPriceForParty: number;
+  };
 };
 
 // Group sizing lives in party-rooms.ts (plain arithmetic, tested on its own).

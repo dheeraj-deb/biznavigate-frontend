@@ -33,7 +33,7 @@ import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability, isBookable, partyLabel, stayTotal } from "@/lib/publicApi";
-import { groupRoomsLabel, roomsForParty, tooFewRoomsLeft } from "@/lib/party-rooms";
+import { alternativeLabel, arrangementLabel, arrangementsFor, roomsForParty, surchargeFor, tooFewRoomsLeft } from "@/lib/party-rooms";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PublicRoomType, ResortDetail } from "@/lib/publicApi";
 
@@ -201,6 +201,8 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   // Free but not bookable is either too few of them left, or a type the
   // group can't take at all.
   const groupRooms = thisRoom ? roomsForParty(thisRoom) : 1;
+  // Cheaper way first: separate rooms, or fewer rooms with extra beds.
+  const [lead, other] = thisRoom ? arrangementsFor(thisRoom) : [];
   const shortOfRooms = !!thisRoom && tooFewRoomsLeft(thisRoom);
   const tooSmall = !!thisRoom?.available && !isBookable(thisRoom) && !shortOfRooms;
 
@@ -410,9 +412,14 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
                   ₹{formatINR(stayTotal(thisRoom))}
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.4, color: sp.muted }}>{stayPriceNote(thisRoom)}</Typography>
-              {groupRoomsLabel(groupRooms) && (
-                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupRoomsLabel(groupRooms)}</Typography>
+              <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.4, color: sp.muted }}>{stayPriceNote({ ...thisRoom, occupancySurcharge: surchargeFor(thisRoom, lead) })}</Typography>
+              {lead && arrangementLabel(lead) && (
+                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{arrangementLabel(lead)}</Typography>
+              )}
+              {other && (
+                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", color: sp.muted }}>
+                  or ₹{formatINR(other.total)} for {alternativeLabel(other)}
+                </Typography>
               )}
               {thisRoom.approvedRate ? (
                 <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>Special rate approved for you</Typography>
@@ -463,7 +470,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
               disabled={loading}
               sx={bookButtonSx}
             >
-              {groupRooms > 1 ? `Book ${groupRooms} rooms` : "Book"}
+              {lead && lead.extraBeds === 0 && lead.rooms > 1 ? `Book ${lead.rooms} rooms` : "Book"}
             </Button>
           )}
         </Box>
