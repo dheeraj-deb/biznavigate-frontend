@@ -7,6 +7,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  compareForList,
+  wholePlaceLabel,
   alternativeLabel,
   arrangementLabel,
   arrangementsFor,
@@ -150,4 +152,25 @@ test("the beds URL param takes only a sane count, and 0 means separate rooms", (
   assert.equal(parseBeds(""), null);
   assert.equal(parseBeds("-1"), null);
   assert.equal(parseBeds("1.5"), null);
+});
+
+// A resort sold both room by room and as the whole place.
+test("the whole place is listed after the rooms, and bookable rows before the rest", () => {
+  const room = (id, extra = {}) => ({ id, available: true, availableRooms: 2, totalPrice: 6200, ...extra });
+  const rows = [
+    room("whole", { wholePlace: true, roomsInside: 7, availableRooms: 1 }),
+    room("garden"),
+    room("soldout", { available: false, availableRooms: 0 }),
+    room("suite"),
+  ];
+  assert.deepEqual(
+    [...rows].sort(compareForList).map((r) => r.id),
+    ["garden", "suite", "whole", "soldout"],
+  );
+});
+
+test("the whole place says it is all the rooms", () => {
+  assert.equal(wholePlaceLabel({ wholePlace: true, roomsInside: 7 }), "The whole place · all 7 rooms");
+  assert.equal(wholePlaceLabel({ wholePlace: true }), "The whole place");
+  assert.equal(wholePlaceLabel({}), null);
 });

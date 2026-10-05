@@ -219,6 +219,10 @@ export type AvailabilityResult = {
   /** roomsNeeded rooms plus extra guests, before tax. Set only when bookable.
    *  With occupancySurcharge, taken across all roomsNeeded rooms. */
   totalPriceForParty?: number;
+  /** The whole place sold with its rooms: one booking takes all
+   *  `roomsInside` rooms. Listed after the rooms. */
+  wholePlace?: boolean;
+  roomsInside?: number;
   /** The cheaper way, when the room takes extra beds: fewer rooms with beds
    *  in them. Only sent when enough rooms are free for it. */
   extraBedOption?: {

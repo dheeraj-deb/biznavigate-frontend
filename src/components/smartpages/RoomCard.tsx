@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { stayTotal, type PublicRoomType } from "../../lib/publicApi";
-import { alternativeLabel, arrangementLabel, arrangementsFor, surchargeFor, type PartyRoomsRow } from "../../lib/party-rooms";
+import { alternativeLabel, arrangementLabel, arrangementsFor, surchargeFor, wholePlaceLabel, type PartyRoomsRow } from "../../lib/party-rooms";
 import { WhatsAppCTA } from "./WhatsAppCTA";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
@@ -58,6 +58,9 @@ type Props = {
     fitsParty?: boolean;
     enoughRoomsAvailable?: boolean;
     extraBedOption?: PartyRoomsRow["extraBedOption"];
+    /** The whole place sold with its rooms: all `roomsInside` in one booking. */
+    wholePlace?: boolean;
+    roomsInside?: number;
     /** Set when the owner approved a rate for this guest in WhatsApp — the
      *  standard total, struck through beside what they were actually
      *  promised. Without it the page quotes rack rate for a guest who
@@ -138,6 +141,9 @@ export function RoomCard({
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>
         {stayPriceNote({ ...availability, occupancySurcharge: row ? surchargeFor(row, lead) : availability.occupancySurcharge })}
       </Typography>
+      {wholePlaceLabel(availability) && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{wholePlaceLabel(availability)}</Typography>
+      )}
       {lead && arrangementLabel(lead) && (
         <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{arrangementLabel(lead)}</Typography>
       )}

@@ -19,7 +19,7 @@ import {
   roomCardShellSx,
 } from "@/components/smartpages/roomCardParts";
 import { type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
-import { alternativeLabel, arrangementLabel, arrangementsFor, isBookable, roomsForParty, surchargeFor, tooFewRoomsLeft } from "@/lib/party-rooms";
+import { alternativeLabel, arrangementLabel, arrangementsFor, isBookable, roomsForParty, surchargeFor, tooFewRoomsLeft, wholePlaceLabel } from "@/lib/party-rooms";
 
 type Props = {
   availability: AvailabilityResult;
@@ -52,7 +52,10 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
   const rooms = roomsForParty(availability);
   const shortOfRooms = tooFewRoomsLeft(availability);
   const tooSmall = availability.available && !available && !shortOfRooms;
-  const scarce = available && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
+  // The whole place is one booking: "only 1 left" would be noise, and when a
+  // room inside it is already booked it isn't sold out — it's partly taken.
+  const scarce = available && !availability.wholePlace && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
+  const partlyBooked = !!availability.wholePlace && !availability.available;
   const [lead, other] = arrangementsFor(availability);
   const groupLabel = lead ? arrangementLabel(lead) : null;
 
@@ -71,6 +74,9 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>
         {stayPriceNote({ ...availability, occupancySurcharge: surchargeFor(availability, lead) })}
       </Typography>
+      {wholePlaceLabel(availability) && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{wholePlaceLabel(availability)}</Typography>
+      )}
       {groupLabel && (
         <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupLabel}</Typography>
       )}
@@ -93,6 +99,10 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
     <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.5, color: sp.muted }}>
       Too small for {party ?? "your group"}
     </Typography>
+  ) : partlyBooked ? (
+    <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.5, color: sp.muted }}>
+      Some rooms are already booked for these dates — book a room instead
+    </Typography>
   ) : (
     <Typography sx={{ fontSize: "0.875rem", color: sp.muted }}>Not available for these dates</Typography>
   );
@@ -114,7 +124,9 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
                 ? "Not enough rooms left"
                 : tooSmall
                   ? "Doesn't fit your group"
-                  : "Sold out"}
+                  : partlyBooked
+                    ? "Rooms already booked"
+                    : "Sold out"}
           </Box>
         )}
       </RoomPhotoCarousel>
@@ -129,7 +141,7 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
           price={price}
           action={
             <Button variant="contained" disableElevation disabled={!available} onClick={onBook} sx={bookButtonSx}>
-              {available ? (lead && lead.extraBeds === 0 && lead.rooms > 1 ? `Book ${lead.rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : "Sold out"}
+              {available ? (lead && lead.extraBeds === 0 && lead.rooms > 1 ? `Book ${lead.rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : partlyBooked ? "Not free" : "Sold out"}
             </Button>
           }
         />

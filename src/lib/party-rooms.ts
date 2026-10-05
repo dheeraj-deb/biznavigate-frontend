@@ -173,3 +173,21 @@ export function parseBeds(raw: string | null): number | null {
 export function surchargeFor(a: PartyRoomsRow, arr: Arrangement | undefined): number | undefined {
   return arr && arr.extraBeds > 0 ? (a.extraBedOption?.occupancySurcharge ?? 0) : a.occupancySurcharge;
 }
+
+/**
+ * Room list order: what the guest can book first, rooms before the whole
+ * place, otherwise as the property listed them. The whole place is every room
+ * above it as one booking — a summary, not the first thing to read.
+ */
+export function compareForList(
+  a: PartyRoomsRow & { wholePlace?: boolean },
+  b: PartyRoomsRow & { wholePlace?: boolean },
+): number {
+  return Number(isBookable(b)) - Number(isBookable(a)) || Number(!!a.wholePlace) - Number(!!b.wholePlace);
+}
+
+/** "The whole place · all 7 rooms" — null for a room. */
+export function wholePlaceLabel(a: { wholePlace?: boolean; roomsInside?: number }): string | null {
+  if (!a.wholePlace) return null;
+  return a.roomsInside ? `The whole place · all ${a.roomsInside} rooms` : "The whole place";
+}

@@ -24,7 +24,7 @@ import { canGoBackInApp } from "./shell/mobile";
 import { sp } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { isBookable, partyLabel, type AvailabilityResult, type ResortDetail } from "@/lib/publicApi";
-import { arrangementsFor, checkoutArrangement, type Arrangement } from "@/lib/party-rooms";
+import { arrangementsFor, checkoutArrangement, compareForList, type Arrangement } from "@/lib/party-rooms";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -175,7 +175,8 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   const anyBookable = availability?.some(isBookable) ?? true;
   // Rooms the group can book first; too-small and sold-out ones after, so the
   // first card is always one the guest can actually take.
-  const orderedAvailability = [...(availability ?? [])].sort((x, y) => Number(isBookable(y)) - Number(isBookable(x)));
+  // The whole place, sold with the rooms, comes after them (compareForList).
+  const orderedAvailability = [...(availability ?? [])].sort(compareForList);
 
   function handleDateGuestChange(next: {
     checkIn?: string;

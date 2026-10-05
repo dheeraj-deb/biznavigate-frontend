@@ -467,14 +467,19 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
               </Box>
             ) : (
               (() => {
-                const visibleRooms = availability
-                  ? property.roomTypes.filter(
-                      (room) => {
-                        const a = availability.find((row) => row.roomTypeId === room.id);
-                        return a ? isBookable(a) : false;
-                      },
-                    )
-                  : property.roomTypes;
+                // The whole place, sold with the rooms, is listed after them.
+                const wholeLast = (id: string) =>
+                  Number(!!availability?.find((row) => row.roomTypeId === id)?.wholePlace);
+                const visibleRooms = (
+                  availability
+                    ? property.roomTypes.filter(
+                        (room) => {
+                          const a = availability.find((row) => row.roomTypeId === room.id);
+                          return a ? isBookable(a) : false;
+                        },
+                      )
+                    : property.roomTypes
+                ).sort((x, y) => wholeLast(x.id) - wholeLast(y.id));
 
                 if (availability && visibleRooms.length === 0) {
                   // Rooms are free but none holds this group: say that, not "sold out".
@@ -518,6 +523,8 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                                   fitsParty: thisAvailability.fitsParty,
                                   enoughRoomsAvailable: thisAvailability.enoughRoomsAvailable,
                                   extraBedOption: thisAvailability.extraBedOption,
+                                  wholePlace: thisAvailability.wholePlace,
+                                  roomsInside: thisAvailability.roomsInside,
                                   nights: thisAvailability.nights,
                                   standardTotalPrice: thisAvailability.standardTotalPrice,
                                   approvedRate: thisAvailability.approvedRate,
