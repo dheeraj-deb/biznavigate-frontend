@@ -92,10 +92,9 @@ const Home: React.FC = () => {
               </a>
             </div>
             <div className="hero-trust">
-              <div>
-                <div className="stars">★★★★★</div>
-                <span>Loved by independent resort owners</span>
-              </div>
+              {/* No star rating until real owners have rated it — an unbacked
+                  rating is a misleading claim (ASCI / Consumer Protection Act). */}
+              <span>Built for independent resorts &amp; homestays</span>
               <div className="sep" />
               <span><b style={{ color: 'var(--ink)', fontWeight: 600 }}>0%</b> OTA commission on direct bookings</span>
             </div>
