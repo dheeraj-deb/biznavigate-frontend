@@ -80,7 +80,8 @@ export type PublicRoomType = {
   maxOccupancy?: number | null;
   /** Infants in a cot, on top of the bed capacity. */
   occupancyInfants?: number;
-  extraBedAvailable?: boolean;
+  /** Extra beds the owner allows in one room (0 = none). */
+  extraBedsMax?: number;
   extraBedPrice?: number;
   virtualTourUrl?: string | null;
 };
@@ -217,6 +218,9 @@ export type AvailabilityResult = {
   /** roomsNeeded rooms plus extra guests, before tax. Set only when bookable.
    *  With occupancySurcharge, taken across all roomsNeeded rooms. */
   totalPriceForParty?: number;
+  /** One room with extra beds holds the party that needs roomsNeeded rooms:
+   *  the beds, and that stay before tax (party-rooms.ts#extraBedsFor). */
+  oneRoomWithExtraBeds?: { extraBeds: number; totalPriceForParty: number };
 };
 
 // Group sizing lives in party-rooms.ts (plain arithmetic, tested on its own).

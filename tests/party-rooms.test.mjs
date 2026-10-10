@@ -7,7 +7,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  bookableInRooms,
   checkoutRoomCount,
+  extraBedsFor,
+  extraBedsLabel,
+  parseBeds,
   groupRoomsLabel,
   isBookable,
   parseRooms,
@@ -85,4 +89,53 @@ test("the rooms URL param takes only a sane count", () => {
   assert.equal(parseRooms("2.5"), null);
   assert.equal(parseRooms("abc"), null);
   assert.equal(parseRooms("999"), null);
+});
+
+// Audit F11 (2026-10-09): a family of four was quoted two Garden Deluxe rooms
+// at ₹29,820; one room with an extra bed was never offered. What the API now
+// returns for that party.
+const gardenFamily = {
+  available: true,
+  availableRooms: 4,
+  totalPrice: 12400,
+  occupancySurcharge: 0,
+  fitsParty: false,
+  roomsNeeded: 2,
+  enoughRoomsAvailable: true,
+  totalPriceForParty: 25270,
+  oneRoomWithExtraBeds: { extraBeds: 1, totalPriceForParty: 18400 },
+};
+
+test("keeps the several-room stay unless the link asked for the bed", () => {
+  assert.equal(extraBedsFor(gardenFamily), 0);
+  assert.equal(stayTotal(gardenFamily, 0), 25270);
+  assert.equal(roomsForParty(gardenFamily, 0), 2);
+});
+
+test("books one room with the bed the WhatsApp card offered", () => {
+  const beds = extraBedsFor(gardenFamily, { beds: 1 });
+  assert.equal(beds, 1);
+  assert.equal(stayTotal(gardenFamily, beds), 18400);
+  assert.equal(roomsForParty(gardenFamily, beds), 1);
+  assert.equal(checkoutRoomCount(gardenFamily, null, beds), 1);
+  assert.equal(extraBedsLabel(beds), "1 room + 1 extra bed");
+});
+
+test("several rooms asked for win over the bed", () => {
+  assert.equal(extraBedsFor(gardenFamily, { beds: 1, rooms: 2 }), 0);
+});
+
+test("one room with beds is the stay when too few rooms are left for several", () => {
+  const lastRoom = { ...gardenFamily, availableRooms: 1, enoughRoomsAvailable: false };
+  assert.equal(bookableInRooms(lastRoom), false);
+  assert.equal(isBookable(lastRoom), true);
+  assert.equal(extraBedsFor(lastRoom), 1);
+  assert.equal(tooFewRoomsLeft(lastRoom), false);
+});
+
+test("reads the beds param only as a sane count", () => {
+  assert.equal(parseBeds("1"), 1);
+  assert.equal(parseBeds("0"), null);
+  assert.equal(parseBeds("x"), null);
+  assert.equal(parseBeds(null), null);
 });
