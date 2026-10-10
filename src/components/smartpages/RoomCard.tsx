@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import { stayTotal, type PublicRoomType } from "../../lib/publicApi";
-import { groupRoomsLabel, roomsForParty } from "../../lib/party-rooms";
+import { extraBedsLabel, groupRoomsLabel, roomsForParty } from "../../lib/party-rooms";
 import { WhatsAppCTA } from "./WhatsAppCTA";
 import { VideoEmbed, isDirectVideo } from "./VideoEmbed";
 import { trackListingClick } from "../../lib/attribution";
@@ -51,6 +51,10 @@ type Props = {
     roomsNeeded?: number;
     /** Every room plus extra guests — the total shown when set. */
     totalPriceForParty?: number;
+    /** One room with extra beds instead of several (party-rooms.ts). */
+    oneRoomWithExtraBeds?: { extraBeds: number; totalPriceForParty: number };
+    /** The beds this card is priced with — 0 for the several-room stay. */
+    extraBeds?: number;
     /** Set when the owner approved a rate for this guest in WhatsApp — the
      *  standard total, struck through beside what they were actually
      *  promised. Without it the page quotes rack rate for a guest who
@@ -108,6 +112,11 @@ export function RoomCard({
     video.play().catch(() => {});
   }
 
+  const stayLabel = availability
+    ? availability.extraBeds
+      ? extraBedsLabel(availability.extraBeds)
+      : groupRoomsLabel(roomsForParty(availability))
+    : null;
   const price = availability ? (
     <>
       <Box>
@@ -117,14 +126,12 @@ export function RoomCard({
           </Typography>
         )}
         <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em" }}>
-          ₹{formatINR(stayTotal(availability))}
+          ₹{formatINR(stayTotal(availability, availability.extraBeds))}
         </Typography>
       </Box>
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
-      {groupRoomsLabel(roomsForParty(availability)) && (
-        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>
-          {groupRoomsLabel(roomsForParty(availability))}
-        </Typography>
+      {stayLabel && (
+        <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{stayLabel}</Typography>
       )}
       {availability.approvedRate && (
         <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
@@ -157,7 +164,7 @@ export function RoomCard({
         checkin={checkIn}
         checkout={checkOut}
         adults={adults}
-        totalPrice={stayTotal(availability)}
+        totalPrice={stayTotal(availability, availability.extraBeds)}
         label="Book now"
       />
     )

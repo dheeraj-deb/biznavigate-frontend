@@ -26,10 +26,19 @@ export type PartyRoomsRow = {
   enoughRoomsAvailable?: boolean;
   /** roomsNeeded rooms plus the extra heads they don't cover, before tax. */
   totalPriceForParty?: number;
+  /**
+   * When the party needs several rooms of this type but ONE room with extra
+   * beds holds it: how many beds, and that stay before tax. The WhatsApp
+   * agent offers the same option (audit F11: a family of four was only ever
+   * quoted two rooms).
+   */
+  oneRoomWithExtraBeds?: { extraBeds: number; totalPriceForParty: number };
 };
 
-/** Free on these dates AND bookable by the party — in one room or several. */
-export function isBookable(a: Pick<PartyRoomsRow, "available" | "fitsParty" | "enoughRoomsAvailable">): boolean {
+type BookableFields = Pick<PartyRoomsRow, "available" | "fitsParty" | "enoughRoomsAvailable">;
+
+/** Bookable in roomsNeeded rooms of this type, without extra beds. */
+export function bookableInRooms(a: BookableFields): boolean {
   if (!a.available) return false;
   // An API that predates group sizing sends no enoughRoomsAvailable; one room
   // holding the party is then the only way to book.
@@ -37,14 +46,46 @@ export function isBookable(a: Pick<PartyRoomsRow, "available" | "fitsParty" | "e
   return a.fitsParty !== false;
 }
 
-/** Rooms the party books of this type: 1 unless the server sized it into more. */
-export function roomsForParty(a: Pick<PartyRoomsRow, "roomsNeeded">): number {
+/** Free on these dates AND bookable by the party — in one room, several, or
+ *  one with extra beds. */
+export function isBookable(a: BookableFields & Pick<PartyRoomsRow, "oneRoomWithExtraBeds">): boolean {
+  return bookableInRooms(a) || (a.available && a.oneRoomWithExtraBeds != null);
+}
+
+/**
+ * The extra beds this stay is booked with: 0 for the several-room stay.
+ *
+ * One room with beds when that is the only way the party fits, or when the
+ * link asked for it (`beds`, from the WhatsApp card that offered it) and not
+ * for several rooms. Otherwise the several-room stay, as before beds existed —
+ * with the bed option offered beside it.
+ */
+export function extraBedsFor(
+  a: Pick<PartyRoomsRow, "available" | "fitsParty" | "enoughRoomsAvailable" | "oneRoomWithExtraBeds">,
+  requested: { beds?: number | null; rooms?: number | null } = {},
+): number {
+  const alt = a.oneRoomWithExtraBeds;
+  if (!alt) return 0;
+  if (!bookableInRooms(a)) return alt.extraBeds;
+  if (requested.rooms != null && requested.rooms > 1) return 0;
+  return requested.beds != null && requested.beds > 0 ? alt.extraBeds : 0;
+}
+
+/** Rooms the party books of this type: 1 with extra beds, else 1 unless the
+ *  server sized it into more. */
+export function roomsForParty(a: Pick<PartyRoomsRow, "roomsNeeded">, extraBeds = 0): number {
+  if (extraBeds > 0) return 1;
   const n = Math.floor(Number(a.roomsNeeded));
   return Number.isFinite(n) && n > 1 ? n : 1;
 }
 
-/** The stay as the guest will pay it before tax: every room, plus extra guests. */
-export function stayTotal(a: Pick<PartyRoomsRow, "totalPrice" | "occupancySurcharge" | "totalPriceForParty">): number {
+/** The stay as the guest will pay it before tax: every room, plus extra guests
+ *  — or the one room with its extra beds. */
+export function stayTotal(
+  a: Pick<PartyRoomsRow, "totalPrice" | "occupancySurcharge" | "totalPriceForParty" | "oneRoomWithExtraBeds">,
+  extraBeds = 0,
+): number {
+  if (extraBeds > 0 && a.oneRoomWithExtraBeds) return a.oneRoomWithExtraBeds.totalPriceForParty;
   if (typeof a.totalPriceForParty === "number") return a.totalPriceForParty;
   return a.totalPrice + (a.occupancySurcharge ?? 0);
 }
@@ -55,12 +96,30 @@ export function stayTotal(a: Pick<PartyRoomsRow, "totalPrice" | "occupancySurcha
  * `requested` is the `rooms` the WhatsApp link carried. It wins when it is a
  * count the party can actually book — never fewer rooms than the group needs
  * (the booking would be refused for capacity) and never more than are free.
+ * One room with extra beds is one room.
  */
-export function checkoutRoomCount(a: Pick<PartyRoomsRow, "roomsNeeded" | "availableRooms">, requested?: number | null): number {
+export function checkoutRoomCount(
+  a: Pick<PartyRoomsRow, "roomsNeeded" | "availableRooms">,
+  requested?: number | null,
+  extraBeds = 0,
+): number {
+  if (extraBeds > 0) return 1;
   const needed = roomsForParty(a);
   const want = Math.floor(Number(requested));
   if (!Number.isFinite(want) || want <= needed) return needed;
   return Math.min(want, Math.max(needed, Math.floor(a.availableRooms) || 0));
+}
+
+/** "1 room + 1 extra bed". */
+export function extraBedsLabel(extraBeds: number): string {
+  return `1 room + ${extraBeds} extra bed${extraBeds === 1 ? "" : "s"}`;
+}
+
+/** The `beds` URL param: "1" → 1; null for anything that is not a sane count. */
+export function parseBeds(raw: string | null): number | null {
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 1 && n <= 10 ? n : null;
 }
 
 /** "3 rooms for your group" — null for one room, where saying so is noise. */

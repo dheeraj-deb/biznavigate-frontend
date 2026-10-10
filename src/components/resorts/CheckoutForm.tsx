@@ -49,6 +49,8 @@ type Props = {
    * (roomCount on the quote and the booking); the form only shows it.
    */
   roomCount?: number;
+  /** Extra beds in the one room being booked (0: none) — priced by the server. */
+  extraBeds?: number;
   /** Ages already known (the URL, or given in WhatsApp) — one per child. */
   initialChildAges?: number[] | null;
   /** Told whenever every child has an age (or not), so the page can keep it. */
@@ -145,6 +147,7 @@ export function CheckoutForm({
   adults,
   children,
   roomCount = 1,
+  extraBeds = 0,
   initialChildAges,
   onChildAgesChange,
   sessionToken,
@@ -252,6 +255,7 @@ export function CheckoutForm({
           children,
           childAges: childAgesKey ? childAgesKey.split(",").map(Number) : undefined,
           roomCount,
+          extraBeds: extraBeds > 0 ? extraBeds : undefined,
           sessionToken: sessionToken ?? undefined,
           addonIds: addonKey ? addonKey.split(",") : undefined,
         },
@@ -275,7 +279,7 @@ export function CheckoutForm({
       clearTimeout(timer);
       ac.abort();
     };
-  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, roomCount, sessionToken, addonKey]);
+  }, [slug, availability.roomTypeId, checkIn, checkOut, adults, children, childAgesKey, roomCount, extraBeds, sessionToken, addonKey]);
 
   const selectedOption =
     quote?.paymentOptions.find((o) => o.kind === payChoice) ?? quote?.paymentOptions[0] ?? null;
@@ -327,6 +331,7 @@ export function CheckoutForm({
         // The count the quote above was priced at — never fewer rooms than
         // the group needs, or the booking is refused for capacity.
         roomCount,
+        extraBeds: extraBeds > 0 ? extraBeds : undefined,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -379,7 +384,12 @@ export function CheckoutForm({
       label: "Stay",
       icon: <NightsStayOutlinedIcon />,
       value: `${availability.nights} night${availability.nights !== 1 ? "s" : ""}`,
-      sub: roomCount > 1 ? `${roomCount} rooms for your group` : "1 room",
+      sub:
+        extraBeds > 0
+          ? `1 room + ${extraBeds} extra bed${extraBeds !== 1 ? "s" : ""}`
+          : roomCount > 1
+            ? `${roomCount} rooms for your group`
+            : "1 room",
     },
     ...(beds || size
       ? [{ label: "Room", icon: <BedOutlinedIcon />, value: [beds, size].filter(Boolean).join(" · "), wide: true }]
@@ -649,6 +659,12 @@ export function CheckoutForm({
             )}
             {quote.lines.occupancySurcharge < 0 && (
               <PriceRow label="1 guest price" value={quote.lines.occupancySurcharge} />
+            )}
+            {quote.lines.extraBeds && quote.lines.extraBeds.subtotal > 0 && (
+              <PriceRow
+                label={`Extra bed${quote.lines.extraBeds.count !== 1 ? `s × ${quote.lines.extraBeds.count}` : ""} · ₹${formatINR(quote.lines.extraBeds.pricePerNight)} a night`}
+                value={quote.lines.extraBeds.subtotal}
+              />
             )}
             {quote.lines.extras.map((x) => (
               <PriceRow key={x.id} label={x.quantity > 1 ? `${x.name} × ${x.quantity}` : x.name} value={x.subtotal} />
