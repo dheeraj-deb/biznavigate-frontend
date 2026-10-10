@@ -63,6 +63,14 @@ type Props = {
   /** The resort's times ("14:00"), shown beside the check-in / check-out days. */
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  /**
+   * The resort approves each booking before it is firm. Nothing is paid here:
+   * the guest sends a request, and the payment link follows on WhatsApp once
+   * the resort says yes. The button and the screen after it have to say so —
+   * a button reading "Pay ₹11,210" that then lands on the resort's home page
+   * looks like a payment that failed.
+   */
+  needsApproval?: boolean;
 };
 
 /** "2026-09-29" → "Tue, 29 Sept", read as the calendar day it names (no timezone shift). */
@@ -146,6 +154,7 @@ export function CheckoutForm({
   cancellationPolicy,
   checkInTime,
   checkOutTime,
+  needsApproval = false,
 }: Props) {
   // Field errors show only after the guest tries to pay — not while typing.
   const [attempted, setAttempted] = useState(false);
@@ -340,8 +349,11 @@ export function CheckoutForm({
         window.location.href = result.checkout.shortUrl;
         return;
       }
-      // No payment required — booking is confirmed outright.
-      window.location.href = `/resorts/${slug}?booked=1`;
+      // No checkout means the resort approves bookings itself: the room is
+      // held and the request is with them. Say that, on its own screen.
+      const sent = new URLSearchParams({ requested: result.code });
+      if (sessionToken) sent.set("s", sessionToken);
+      window.location.href = `/resorts/${slug}/booked?${sent.toString()}`;
     } catch (e) {
       bookingLinkEvents.track("checkout_failed");
       setError(e instanceof Error ? e.message : "Could not complete booking — please try again.");
@@ -778,6 +790,8 @@ export function CheckoutForm({
         >
           {submitting || quoting ? (
             <CircularProgress size={22} sx={{ color: "#fff" }} />
+          ) : needsApproval ? (
+            "Send booking request"
           ) : dueNow != null ? (
             `Pay ₹${formatINR(dueNow)}`
           ) : (
@@ -787,8 +801,14 @@ export function CheckoutForm({
         <Typography
           sx={{ mt: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, fontSize: "0.75rem", color: sp.muted, textAlign: "center" }}
         >
-          <LockOutlinedIcon sx={{ fontSize: 13 }} />
-          Secure payment · Confirmation on WhatsApp
+          {needsApproval ? (
+            "No payment now · the resort confirms on WhatsApp, then you pay"
+          ) : (
+            <>
+              <LockOutlinedIcon sx={{ fontSize: 13 }} />
+              Secure payment · Confirmation on WhatsApp
+            </>
+          )}
         </Typography>
       </Box>
     </Box>

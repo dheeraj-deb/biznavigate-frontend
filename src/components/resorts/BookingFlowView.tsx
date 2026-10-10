@@ -214,7 +214,13 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
   return (
     <Box>
       <MobileTopBar
-        title={inCheckout ? "Confirm and pay" : "Choose your room"}
+        title={
+          !inCheckout
+            ? "Choose your room"
+            : property.instantBooking === false
+              ? "Request to book"
+              : "Confirm and pay"
+        }
         subtitle={`Step ${inCheckout ? 2 : 1} of 2 · ${property.name}`}
         onBack={back}
         actions={
@@ -287,6 +293,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
             cancellationPolicy={property.cancellationPolicy}
             checkInTime={property.checkInTime}
             checkOutTime={property.checkOutTime}
+            needsApproval={property.instantBooking === false}
           />
         ) : (
           <>

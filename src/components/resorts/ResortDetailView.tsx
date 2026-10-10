@@ -550,6 +550,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     cancellationPolicy={property.cancellationPolicy}
                     checkInTime={property.checkInTime}
                     checkOutTime={property.checkOutTime}
+                    needsApproval={property.instantBooking === false}
                   />
                 )}
               </Box>
