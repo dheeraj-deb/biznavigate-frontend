@@ -19,13 +19,23 @@ import {
   roomCardShellSx,
 } from "@/components/smartpages/roomCardParts";
 import { type AvailabilityResult, type PublicRoomType } from "@/lib/publicApi";
-import { groupRoomsLabel, isBookable, roomsForParty, stayTotal, tooFewRoomsLeft } from "@/lib/party-rooms";
+import {
+  bookableInRooms,
+  extraBedsFor,
+  extraBedsLabel,
+  groupRoomsLabel,
+  isBookable,
+  roomsForParty,
+  stayTotal,
+  tooFewRoomsLeft,
+} from "@/lib/party-rooms";
 
 type Props = {
   availability: AvailabilityResult;
   roomType: PublicRoomType | undefined;
   viewHref: string;
-  onBook: () => void;
+  /** Books this room: `extraBeds` > 0 is one room with that many beds. */
+  onBook: (extraBeds: number) => void;
   /** "2 adults, 1 child" — named when the room is too small for it. */
   party?: string;
 };
@@ -45,11 +55,22 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
   // count the WhatsApp agent quoted. "Too small" is only for a type the group
   // can't book at all; too few rooms left is said as that.
   const available = isBookable(availability);
-  const rooms = roomsForParty(availability);
+  // The stay the main button books — several rooms, or one with extra beds
+  // when that is the only way the group fits — and the other one, when the
+  // group can book both (audit F11: say the choice out loud).
+  const extraBeds = extraBedsFor(availability);
+  const rooms = roomsForParty(availability, extraBeds);
+  const bedsOption = availability.oneRoomWithExtraBeds;
+  const alternative =
+    available && bedsOption && bookableInRooms(availability)
+      ? extraBeds > 0
+        ? { extraBeds: 0, label: `${roomsForParty(availability)} rooms`, total: stayTotal(availability) }
+        : { extraBeds: bedsOption.extraBeds, label: extraBedsLabel(bedsOption.extraBeds), total: bedsOption.totalPriceForParty }
+      : null;
   const shortOfRooms = tooFewRoomsLeft(availability);
   const tooSmall = availability.available && !available && !shortOfRooms;
   const scarce = available && availableRooms > 0 && availableRooms <= SCARCITY_THRESHOLD;
-  const groupLabel = available ? groupRoomsLabel(rooms) : null;
+  const groupLabel = available ? (extraBeds > 0 ? extraBedsLabel(extraBeds) : groupRoomsLabel(rooms)) : null;
 
   const price = available ? (
     <>
@@ -60,12 +81,22 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
           </Typography>
         )}
         <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, color: sp.ink, letterSpacing: "-0.01em" }}>
-          ₹{formatINR(stayTotal(availability))}
+          ₹{formatINR(stayTotal(availability, extraBeds))}
         </Typography>
       </Box>
       <Typography sx={{ fontSize: "0.8125rem", color: sp.muted }}>{stayPriceNote(availability)}</Typography>
       {groupLabel && (
         <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupLabel}</Typography>
+      )}
+      {alternative && (
+        <Button
+          variant="text"
+          size="small"
+          onClick={() => onBook(alternative.extraBeds)}
+          sx={{ mt: 0.25, ml: -1, px: 1, minHeight: 0, fontSize: "0.8125rem", fontWeight: 600, textTransform: "none", color: sp.blue }}
+        >
+          Or {alternative.label} · ₹{formatINR(alternative.total)}
+        </Button>
       )}
       {availability.approvedRate && (
         <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>
@@ -116,7 +147,7 @@ export function RoomAvailabilityCard({ availability, roomType, viewHref, onBook,
         <RoomCardFooter
           price={price}
           action={
-            <Button variant="contained" disableElevation disabled={!available} onClick={onBook} sx={bookButtonSx}>
+            <Button variant="contained" disableElevation disabled={!available} onClick={() => onBook(extraBeds)} sx={bookButtonSx}>
               {available ? (rooms > 1 ? `Book ${rooms} rooms` : "Book") : shortOfRooms ? "Not enough" : tooSmall ? "Too small" : "Sold out"}
             </Button>
           }

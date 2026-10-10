@@ -33,7 +33,7 @@ import { sp, formatINR } from "@/components/smartpages/tokens";
 import { guestDisplayFontFamily } from "@/lib/guestTheme";
 import { useBookingFlowParams, useBookingFlowHref, useUpdateBookingFlowParams, readCurrentBookingFlowParams } from "@/lib/booking-flow-url";
 import { getAvailability, isBookable, partyLabel, stayTotal } from "@/lib/publicApi";
-import { groupRoomsLabel, roomsForParty, tooFewRoomsLeft } from "@/lib/party-rooms";
+import { extraBedsFor, extraBedsLabel, groupRoomsLabel, roomsForParty, tooFewRoomsLeft } from "@/lib/party-rooms";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import type { AvailabilityResult, PublicRoomType, ResortDetail } from "@/lib/publicApi";
 
@@ -109,11 +109,11 @@ function roomExtras(room: PublicRoomType, property: ResortDetail): Extra[] {
       detail: infantMax != null ? `Under ${infantMax} years` : undefined,
     });
   }
-  if (room.extraBedAvailable) {
+  if (room.extraBedsMax && room.extraBedsMax > 0) {
     out.push({
       icon: <SingleBedOutlinedIcon />,
-      label: "Extra bed",
-      detail: "On request",
+      label: room.extraBedsMax === 1 ? "Extra bed" : `Up to ${room.extraBedsMax} extra beds`,
+      detail: "Book it with the room",
       price: room.extraBedPrice && room.extraBedPrice > 0 ? perNight(room.extraBedPrice) : undefined,
     });
   }
@@ -200,7 +200,13 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
   // A group one room can't hold books several — "3 rooms for your group".
   // Free but not bookable is either too few of them left, or a type the
   // group can't take at all.
-  const groupRooms = thisRoom ? roomsForParty(thisRoom) : 1;
+  // One room with extra beds when the chat chose it for this room, or when
+  // that is the only way the group fits.
+  const extraBeds = thisRoom
+    ? extraBedsFor(thisRoom, params.room === roomType.id ? params : {})
+    : 0;
+  const groupRooms = thisRoom ? roomsForParty(thisRoom, extraBeds) : 1;
+  const stayLabel = extraBeds > 0 ? extraBedsLabel(extraBeds) : groupRoomsLabel(groupRooms);
   const shortOfRooms = !!thisRoom && tooFewRoomsLeft(thisRoom);
   const tooSmall = !!thisRoom?.available && !isBookable(thisRoom) && !shortOfRooms;
 
@@ -224,7 +230,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
       adults: nextAdults,
       children: nextChildren,
       // A room count from the chat was sized for the old party.
-      ...(nextAdults !== adults || nextChildren !== childrenCount ? { rooms: null } : {}),
+      ...(nextAdults !== adults || nextChildren !== childrenCount ? { rooms: null, beds: null } : {}),
     });
   }
 
@@ -407,12 +413,12 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
                   </Typography>
                 )}
                 <Typography component="span" sx={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.01em", color: sp.ink }}>
-                  ₹{formatINR(stayTotal(thisRoom))}
+                  ₹{formatINR(stayTotal(thisRoom, extraBeds))}
                 </Typography>
               </Box>
               <Typography sx={{ fontSize: "0.8125rem", lineHeight: 1.4, color: sp.muted }}>{stayPriceNote(thisRoom)}</Typography>
-              {groupRoomsLabel(groupRooms) && (
-                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{groupRoomsLabel(groupRooms)}</Typography>
+              {stayLabel && (
+                <Typography sx={{ mt: 0.25, fontSize: "0.8125rem", fontWeight: 600, color: sp.ink }}>{stayLabel}</Typography>
               )}
               {thisRoom.approvedRate ? (
                 <Typography sx={{ mt: 0.25, fontSize: "0.75rem", fontWeight: 600, color: sp.blue }}>Special rate approved for you</Typography>
@@ -457,6 +463,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
                 adults,
                 children: childrenCount,
                 room: roomType.id,
+                beds: extraBeds > 0 ? extraBeds : null,
               })}
               variant="contained"
               disableElevation

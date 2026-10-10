@@ -33,7 +33,7 @@ import { useBookingFlowHref, useBookingFlowParams, readCurrentBookingFlowParams 
 import { consumeArrival, isMobileViewport } from "@/components/resorts/shell/mobile";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { getAvailability, isBookable, partyLabel } from "@/lib/publicApi";
-import { checkoutRoomCount } from "@/lib/party-rooms";
+import { checkoutRoomCount, extraBedsFor } from "@/lib/party-rooms";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
 
 function defaultDate(daysFromNow: number): string {
@@ -77,6 +77,16 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const selectedAvailability =
     availability?.find((a) => a.roomTypeId === selectedRoomId && isBookable(a)) ?? null;
+  // The chat's room count and beds only for the room and party they were
+  // quoted for.
+  const chatStay =
+    selectedAvailability != null &&
+    selectedAvailability.roomTypeId === params.room &&
+    pickAdults === params.adults &&
+    pickChildren === (params.children ?? 0);
+  const selectedExtraBeds = selectedAvailability
+    ? extraBedsFor(selectedAvailability, chatStay ? params : {})
+    : 0;
   const checkoutRef = useRef<HTMLDivElement>(null);
 
   // Page-view event so the funnel (view → moment → book) starts at the top.
@@ -495,6 +505,8 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                                   occupancySurcharge: thisAvailability.occupancySurcharge,
                                   roomsNeeded: thisAvailability.roomsNeeded,
                                   totalPriceForParty: thisAvailability.totalPriceForParty,
+                                  oneRoomWithExtraBeds: thisAvailability.oneRoomWithExtraBeds,
+                                  extraBeds: extraBedsFor(thisAvailability),
                                   nights: thisAvailability.nights,
                                   standardTotalPrice: thisAvailability.standardTotalPrice,
                                   approvedRate: thisAvailability.approvedRate,
@@ -535,13 +547,10 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
                     children={pickChildren}
                     roomCount={checkoutRoomCount(
                       selectedAvailability,
-                      // The chat's count only for the room and party it was quoted for.
-                      selectedAvailability.roomTypeId === params.room &&
-                        pickAdults === params.adults &&
-                        pickChildren === (params.children ?? 0)
-                        ? params.rooms
-                        : null,
+                      chatStay ? params.rooms : null,
+                      selectedExtraBeds,
                     )}
+                    extraBeds={selectedExtraBeds}
                     initialChildAges={params.childAges ?? session?.prefill.childAges ?? null}
                     sessionToken={params.s}
                     initialGuest={session?.guest ?? null}
