@@ -9,7 +9,7 @@ import { Inter, Sora } from "next/font/google";
  */
 export const marketingSans = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-marketing-sans",
   display: "swap",
 });
