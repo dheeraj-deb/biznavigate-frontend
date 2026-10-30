@@ -122,7 +122,11 @@
 /* ── hero ───────────────────────────────────────────────────────────────── */
 /* Light hero: soft cool-white with a faint grid, and a WhatsApp-green glow
    behind the phone. No blue panels — the blue lives in the type. */
-.home-root section.hero { position: relative; isolation: isolate; padding: 64px 0 24px; overflow: hidden; background: linear-gradient(180deg, #f6f8fc 0%, #fff 100%); }
+/* The hero fills exactly one screen below the nav (72px + 1px border); the phone scales
+   with the window height so it fits short laptop screens too. */
+.home-root section.hero {
+  position: relative; isolation: isolate; padding: 28px 0 12px; overflow: hidden;
+  min-height: calc(100svh - 73px); display: flex; flex-direction: column; justify-content: center; background: linear-gradient(180deg, #f6f8fc 0%, #fff 100%); }
 .hero::before {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background-image: linear-gradient(rgba(23,69,176,.05) 1px, transparent 1px),
@@ -151,14 +155,14 @@
   content: ""; position: absolute; left: 0; right: .35em; bottom: -.04em; height: .09em;
   border-radius: 99px; background: #25d366; opacity: .85; transform: rotate(-1deg);
 }
-.hero-sub { margin-top: 26px; max-width: 32em; font-size: 18px; line-height: 1.65; color: var(--ink-soft); }
-.hero-actions { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
-.hero-points { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px 26px; }
+.hero-sub { margin-top: 22px; max-width: 32em; font-size: 18px; line-height: 1.65; color: var(--ink-soft); }
+.hero-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
+.hero-points { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px 26px; }
 .hero-points li { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: var(--ink-2); }
 .hero-points svg { width: 16px; height: 16px; color: #1fa855; }
 
 /* ── phone + WhatsApp chat ──────────────────────────────────────────────── */
-.hero-visual { position: relative; display: grid; justify-items: center; padding: 48px 0 40px; }
+.hero-visual { position: relative; display: grid; justify-items: center; padding: 24px 0 20px; }
 .hero-visual::before {
   content: ""; position: absolute; z-index: -1; width: 520px; height: 520px; top: 50%; left: 50%; transform: translate(-50%, -50%);
   border-radius: 50%; background: radial-gradient(closest-side, rgba(37,211,102,.16), rgba(23,69,176,.06) 60%, transparent);
@@ -167,7 +171,7 @@
   width: 330px; padding: 10px; border-radius: 48px; background: #0d1117;
   box-shadow: 0 0 0 1px #2a2f38 inset, 0 50px 90px -30px rgba(10,15,28,.55), 0 20px 40px -20px rgba(10,15,28,.3);
 }
-.phone-screen { position: relative; display: flex; flex-direction: column; height: 640px; border-radius: 39px; overflow: hidden; background: #efeae2; }
+.phone-screen { position: relative; display: flex; flex-direction: column; height: clamp(440px, calc(100svh - 300px), 600px); border-radius: 39px; overflow: hidden; background: #efeae2; }
 
 .wa-status { display: flex; justify-content: space-between; align-items: center; padding: 10px 26px 4px; background: #fff; font-size: 13px; font-weight: 600; color: var(--ink); }
 .wa-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
@@ -239,8 +243,8 @@
 }
 .float b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
 .float span:not(.fl-ic) { font-size: 12.5px; color: var(--ink-mute); }
-.float-a { top: 26px; left: calc(50% - 165px - 118px); }
-.float-b { bottom: 22px; right: calc(50% - 165px - 128px); animation-delay: -3.5s; }
+.float-a { top: 0; left: calc(50% - 165px - 118px); }
+.float-b { bottom: 0; right: calc(50% - 165px - 128px); animation-delay: -3.5s; }
 .fl-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; flex: none; }
 .fl-ai { background: var(--brand-50); color: var(--brand); font-size: 13px; font-weight: 700; }
 .fl-ok { background: #e7f8ee; color: #1fa855; }
@@ -656,25 +660,31 @@
   .home-root :where(section) { padding: 72px 0; }
   .wrap { padding: 0 20px; }
   .nav.open .mobile-menu { padding: 4px 20px 20px; }
-  .home-root section.hero { padding: 40px 0 16px; }
-  .hero h1 { font-size: 36px; }
-  .hero h1 .hl { white-space: normal; }
-  .hero-badge { font-size: 12.5px; }
+  .home-root section.hero { min-height: 0; padding: 18px 0 8px; }
+  .hero-badge { margin-bottom: 14px; padding: 4px 12px 4px 4px; font-size: 12px; }
+  .hb-ic { width: 24px; height: 24px; }
+  .hb-ic svg { width: 14px; height: 14px; }
   .hero-badge b + span { display: none; }
-  .hero-visual { padding: 16px 0 8px; }
-  .phone { width: 300px; border-radius: 44px; }
-  .phone-screen { height: 580px; border-radius: 35px; }
+  .hero h1 { font-size: 31px; line-height: 1.1; }
+  .hero h1 .hl { white-space: normal; }
+  .hero-sub { margin-top: 12px; font-size: 15px; line-height: 1.55; }
+  .hero-actions { margin-top: 18px; flex-wrap: nowrap; gap: 8px; }
+  .hero-actions .btn { flex: 1 1 0; min-width: 0; height: 46px; padding: 0 12px; font-size: 14px; }
+  .hero-actions .btn-ic { display: none; }
+  .hero-points { margin-top: 14px; flex-wrap: nowrap; gap: 6px 14px; }
+  .hero-points li { gap: 5px; font-size: 13px; white-space: nowrap; }
+  .hero-points svg { width: 14px; height: 14px; }
+  /* A compact WhatsApp chat card replaces the full phone frame on phones. */
+  .hero-visual { padding: 16px 0 0; }
+  .hero-visual::before { width: 320px; height: 320px; }
+  .phone { width: 100%; padding: 0; border-radius: 20px; background: none; box-shadow: 0 20px 44px -24px rgba(10,15,28,.4); }
+  .phone-screen { height: 286px; border-radius: 20px; border: 1px solid var(--line); }
+  .wa-status, .wa-input { display: none; }
   .wa-card { flex-basis: 140px; }
   .wa-who b { font-size: 13.5px; }
   .wa-actions svg:first-child { display: none; }
   .float { display: none; }
   .control-plate { padding: 28px 14px; min-height: 0; border-radius: 22px; }
-  .hero-sub { font-size: 16.5px; }
-  .hero-actions .btn { flex: 1 1 auto; }
-  .console-body { height: 400px; padding: 12px; }
-  .rooms { width: 100%; gap: 6px; }
-  .room b { font-size: 11px; padding: 6px 7px 0; }
-  .room span { font-size: 10px; padding: 1px 7px 7px; }
   .trustline { justify-content: flex-start; padding: 18px 20px; gap: 8px 0; }
   .trustline li + li::before { margin: 0 12px; }
   .home-root section.statement { padding: 64px 0 72px; }
