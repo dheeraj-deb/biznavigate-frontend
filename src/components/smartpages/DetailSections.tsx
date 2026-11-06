@@ -123,7 +123,7 @@ export function LocationSection({
 }) {
   const [copied, setCopied] = useState(false);
   const hasCoords = property.latitude != null && property.longitude != null;
-  const address = [property.address, property.city, property.region, property.postalCode].filter(Boolean).join(", ");
+  const address = fullAddress(property.address, [property.city, property.region, property.postalCode]);
   const area = [property.city, property.region ?? property.country].filter(Boolean).join(", ");
   const gettingHere = (directions ?? property.directions)?.trim();
   const destination = hasCoords ? `${property.latitude},${property.longitude}` : address;
@@ -432,3 +432,26 @@ export function NotFoundState({ message }: { message: string }) {
     </Box>
   );
 }
+
+/**
+ * The address with city, region and postcode added only where it does not
+ * already name them — "…Kerala 673576, Wayanad, Wayanad" (live E2E
+ * 2026-11-06, Vythiri) came from adding a city the address already ended in.
+ */
+export function fullAddress(
+  address: string | null | undefined,
+  extras: Array<string | null | undefined>,
+): string {
+  const base = (address ?? "").trim();
+  const seen = base.toLowerCase();
+  const parts = base ? [base] : [];
+  for (const raw of extras) {
+    const part = (raw ?? "").trim();
+    if (!part) continue;
+    const lower = part.toLowerCase();
+    if (seen.includes(lower) || parts.some((p) => p.toLowerCase() === lower)) continue;
+    parts.push(part);
+  }
+  return parts.join(", ");
+}
+
