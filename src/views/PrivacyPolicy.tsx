@@ -61,7 +61,7 @@ const PrivacyPolicy = () => {
           </Typography>
           <Box component="ul" sx={{ color: '#666', pl: 0, mb: 2, listStyle: 'none' }}>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Company Name:</strong> BizNavigo TECHNOLOGIES PRIVATE LIMITED</Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Registered Address:</strong> C/O ERAMU P V, PALLIKKAL, VALIYAPUTHOOR HOUSE, TIRURANGADI, PUTHUR-PALLIKKAL, MALAPPURAM - 673636, KERALA, INDIA</Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Registered Address:</strong> 5TH FLOOR, C.M MATHEW BROTHERS ARCADE, KANNUR RD, KOZHIKODE, KERALA, INDIA</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:privacy@BizNavigo.in" color="primary">privacy@BizNavigo.in</Link></Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Support Email:</strong> <Link href="mailto:support@BizNavigo.in" color="primary">support@BizNavigo.in</Link></Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Phone:</strong> +91-8075624909</Typography></li>
@@ -542,10 +542,9 @@ const PrivacyPolicy = () => {
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>Registered Office:</Typography>
             <Typography variant="body1" sx={{ mb: 0, color: '#666' }}>
               BizNavigo TECHNOLOGIES PRIVATE LIMITED<br />
-              C/O ERAMU P V, PALLIKKAL<br />
-              VALIYAPUTHOOR HOUSE<br />
-              TIRURANGADI, PUTHUR-PALLIKKAL<br />
-              MALAPPURAM - 673636<br />
+              5TH FLOOR, C.M MATHEW BROTHERS ARCADE<br />
+              KANNUR RD<br />
+              KOZHIKODE<br />
               KERALA, INDIA
             </Typography>
             <Typography variant="body1" sx={{ mt: 2, color: '#666' }}>
@@ -624,7 +623,7 @@ const PrivacyPolicy = () => {
         {/* Footer */}
         <Box sx={{ borderTop: '1px solid #ddd', pt: 4, mt: 4 }}>
           <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
-            <strong>Governing Law:</strong> This Privacy Policy is governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Malappuram, Kerala, India.
+            <strong>Governing Law:</strong> This Privacy Policy is governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Kozhikode, Kerala, India.
           </Typography>
           <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
             <strong>Language:</strong> In case of any conflict between the English version and any translated version of this Privacy Policy, the English version shall prevail.

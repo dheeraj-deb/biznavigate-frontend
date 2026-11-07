@@ -28,7 +28,7 @@ const TermsOfService = () => {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: '#222' }}>Company Details:</Typography>
             <Box component="ul" sx={{ color: '#666', pl: 0, mb: 0, listStyle: 'none' }}>
               <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Name:</strong> BizNavigo TECHNOLOGIES PRIVATE LIMITED</Typography></li>
-              <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Registered Address:</strong> C/O ERAMU P V, PALLIKKAL, VALIYAPUTHOOR HOUSE, TIRURANGADI, PUTHUR-PALLIKKAL, MALAPPURAM - 673636, KERALA, INDIA</Typography></li>
+              <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Registered Address:</strong> 5TH FLOOR, C.M MATHEW BROTHERS ARCADE, KANNUR RD, KOZHIKODE, KERALA, INDIA</Typography></li>
               <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Email:</strong> <Link href="mailto:support@BizNavigo.in" color="primary">support@BizNavigo.in</Link></Typography></li>
               <li><Typography variant="body1" sx={{ mb: 1 }}><strong>Website:</strong> <Link href="https://www.BizNavigo.in" color="primary">www.BizNavigo.in</Link></Typography></li>
             </Box>
@@ -366,7 +366,7 @@ const TermsOfService = () => {
 
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>14.2 Jurisdiction</Typography>
           <Typography variant="body1" sx={{ mb: 3, color: '#666', lineHeight: 1.8 }}>
-            The courts of Malappuram, Kerala, India shall have exclusive jurisdiction over any disputes arising out of or related to this Agreement.
+            The courts of Kozhikode, Kerala, India shall have exclusive jurisdiction over any disputes arising out of or related to this Agreement.
           </Typography>
 
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: '#222' }}>14.3 Arbitration</Typography>
@@ -375,7 +375,7 @@ const TermsOfService = () => {
           </Typography>
           <Box component="ul" sx={{ color: '#666', pl: 4, mb: 3 }}>
             <li><Typography variant="body1" sx={{ mb: 1 }}>Single arbitrator mutually agreed upon by the parties</Typography></li>
-            <li><Typography variant="body1" sx={{ mb: 1 }}>Seat of arbitration: Malappuram, Kerala, India</Typography></li>
+            <li><Typography variant="body1" sx={{ mb: 1 }}>Seat of arbitration: Kozhikode, Kerala, India</Typography></li>
             <li><Typography variant="body1" sx={{ mb: 1 }}>Language: English</Typography></li>
           </Box>
 
@@ -467,10 +467,9 @@ const TermsOfService = () => {
 
             <Typography variant="body1" sx={{ mb: 1, color: '#666' }}><strong>Registered Office:</strong></Typography>
             <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>BizNavigo TECHNOLOGIES PRIVATE LIMITED</Typography>
-            <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>C/O ERAMU P V, PALLIKKAL</Typography>
-            <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>VALIYAPUTHOOR HOUSE</Typography>
-            <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>TIRURANGADI, PUTHUR-PALLIKKAL</Typography>
-            <Typography variant="body1" sx={{ mb: 2, color: '#666' }}>MALAPPURAM - 673636</Typography>
+            <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>5TH FLOOR, C.M MATHEW BROTHERS ARCADE</Typography>
+            <Typography variant="body1" sx={{ mb: 1, color: '#666' }}>KANNUR RD</Typography>
+            <Typography variant="body1" sx={{ mb: 2, color: '#666' }}>KOZHIKODE</Typography>
             <Typography variant="body1" sx={{ mb: 2, color: '#666' }}>KERALA, INDIA</Typography>
 
             <Typography variant="body1" sx={{ mb: 0, color: '#666' }}><strong>Business Hours:</strong> Monday to Saturday: 10:00 AM - 7:00 PM IST</Typography>
