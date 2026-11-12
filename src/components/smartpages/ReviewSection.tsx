@@ -278,7 +278,7 @@ export function ReviewSection({ slug, reviews: serverReviews, averageRating: ser
                   fontSize: "0.9375rem",
                   fontWeight: 600,
                   textTransform: "none",
-                  "&:hover": { bgcolor: "#1a4ab8" },
+                  "&:hover": { bgcolor: sp.blueHover },
                   "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.5 },
                 }}
               >

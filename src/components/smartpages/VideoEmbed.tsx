@@ -102,7 +102,7 @@ export function VideoEmbed({ url, poster, autoPlay, muted = true, loop, controls
               setLoadedEmbed(true);
               onPlay?.();
             }}
-            sx={{ bgcolor: sp.blue, color: "#fff", "&:hover": { bgcolor: "#1a4ab8" } }}
+            sx={{ bgcolor: sp.blue, color: "#fff", "&:hover": { bgcolor: sp.blueHover } }}
           >
             <PlayArrowIcon />
           </IconButton>

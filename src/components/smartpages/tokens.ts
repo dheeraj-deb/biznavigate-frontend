@@ -5,9 +5,13 @@ export const sp = {
   body: "#4a5568",
   muted: "#718096",
   faint: "#a0b4d0",
-  blue: "#1f57d6",
-  blueBgSoft: "#edf3ff",
-  blueBgTint: "#f0f5ff",
+  // The accent. CSS variables so a resort's brand colour (lib/brand.ts,
+  // set on :root by the [slug] layout) recolours every page; the fallbacks
+  // are BizNavigo's default blue.
+  blue: "var(--sp-accent, #1f57d6)",
+  blueHover: "var(--sp-accent-hover, #1a4ab8)",
+  blueBgSoft: "var(--sp-accent-soft, #edf3ff)",
+  blueBgTint: "var(--sp-accent-tint, #f0f5ff)",
   border: "#e8eef7",
   borderSoft: "#dfe7f3",
   divider: "#edf1f7",

@@ -138,7 +138,7 @@ export function LiveRateChecker({
             fontSize: "0.875rem",
             fontWeight: 600,
             alignSelf: { sm: "flex-end" },
-            "&:hover": { bgcolor: "#1a4ab8" },
+            "&:hover": { bgcolor: sp.blueHover },
             "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.5 },
           }}
           startIcon={pending ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}

@@ -16,8 +16,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   try {
     const property = await getResort(slug);
     const metaLocation = [property.city, property.region].filter(Boolean).join(', ');
-    const title = `${property.name} — Book Direct | ${metaLocation}`;
+    // The owner's own title and description (Brand screen) when set.
+    const title = property.brand?.seoTitle ?? `${property.name} — Book Direct | ${metaLocation}`;
     const description =
+      property.brand?.seoDescription ??
       property.description ??
       `Book ${property.propertyType ?? 'resort'} in ${metaLocation} directly via WhatsApp. Best price guaranteed.`;
     return {
