@@ -1,0 +1,68 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker name in the Cloudflare dashboard, or Workers Builds fails.
+  "name": "biznavigo-site",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // No "routes" here on purpose: the Worker serves whatever Host it is reached
+  // on (workers.dev now, www.biznavigo.com after cutover, resort custom domains
+  // later via Cloudflare for SaaS). Attach domains in the dashboard.
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "services": [
+    { "binding": "WORKER_SELF_REFERENCE", "service": "biznavigo-site" }
+  ],
+  // ISR page cache (open-next.config.ts → r2IncrementalCache). Private
+  // bucket, separate from the owner-photo bucket "biznavigate".
+  "r2_buckets": [
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "biznavigo-site-cache" }
+  ],
+  // Background regeneration of stale pages (doQueue). SQLite-backed, so it
+  // runs on the Workers Free plan.
+  "durable_objects": {
+    "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler"] }],
+  // On-demand revalidation store for revalidatePath (d1NextTagCache).
+  "d1_databases": [
+    {
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "biznavigo-site-tags",
+      "database_id": "82757294-a737-4809-9a7e-1f320504b67d"
+    }
+  ],
+  // next/image → Cloudflare Images binding. Keeps /_next/image URLs (including
+  // the hand-built ones in LivingPhotos.tsx), remotePatterns and AVIF/WebP.
+  "images": { "binding": "IMAGES" },
+  // `staging` branch → Worker "biznavigo-site-staging" (staging.biznavigo.com
+  // after cutover). Deploy with `--env staging`. Wrangler does not inherit
+  // bindings into an environment, so each one is repeated with its own
+  // staging resources.
+  "env": {
+    "staging": {
+      "services": [
+        { "binding": "WORKER_SELF_REFERENCE", "service": "biznavigo-site-staging" }
+      ],
+      "r2_buckets": [
+        { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "biznavigo-site-staging-cache" }
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }]
+      },
+      "d1_databases": [
+        {
+          "binding": "NEXT_TAG_CACHE_D1",
+          "database_name": "biznavigo-site-staging-tags",
+          "database_id": "6ead36d5-ab5a-4b0f-9369-a9ad54bc0b4c"
+        }
+      ],
+      "images": { "binding": "IMAGES" }
+    }
+  }
+}

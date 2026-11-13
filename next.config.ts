@@ -19,3 +19,12 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// Lets `next dev` reach the Cloudflare bindings in wrangler.jsonc (R2, D1,
+// Images) the same way the deployed Worker does.
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+// Dev only: during `next build` (here and on Vercel until cutover) it would
+// start a local workerd for nothing, since no build step reads a binding.
+if (process.env.NODE_ENV === "development") {
+  void initOpenNextCloudflareForDev();
+}

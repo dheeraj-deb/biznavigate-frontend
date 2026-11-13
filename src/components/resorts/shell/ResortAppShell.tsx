@@ -31,6 +31,8 @@ export type ShellProperty = {
   city: string | null;
   todayRate: number;
   rooms: { id: string; name: string }[];
+  /** The resort's own logo (brand), shown in place of BizNavigo's. */
+  logoUrl: string | null;
 };
 
 type Screen = "stay" | "photos" | "chat" | "book" | "booked" | "room" | "other";
@@ -104,6 +106,7 @@ export function ResortAppShell({ property, children }: { property: ShellProperty
       <MobileTopBar
         title={property.name}
         subtitle={property.city ?? undefined}
+        logoUrl={property.logoUrl ?? undefined}
         revealAfter={HERO_REVEAL_OFFSET}
         actions={
           <IconButton aria-label="Share" onClick={() => void shareResort(property.slug, property.name)} sx={{ width: 48, height: 48, color: sp.ink }}>
@@ -134,7 +137,10 @@ export function ResortAppShell({ property, children }: { property: ShellProperty
           pb: tab ? { xs: `calc(${TAB_BAR_HEIGHT}px + env(safe-area-inset-bottom))`, sm: 0 } : 0,
         }}
       >
-        <PublicHeader hideOnMobile />
+        <PublicHeader
+          hideOnMobile
+          resort={property.logoUrl ? { name: property.name, logoUrl: property.logoUrl, href: base } : undefined}
+        />
         {topBar}
         <Box component="main" sx={{ flex: 1 }}>
           {children}

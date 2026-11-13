@@ -112,21 +112,29 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       : property.photos;
 
   /**
-   * Runs availability for explicit dates rather than reading the pick state,
-   * so the seed below can call it with dates it has only just resolved —
-   * state set moments earlier would still read stale here.
+   * Runs availability for explicit dates (and, from the seed, an explicit
+   * party) rather than reading the pick state, so the seed below can call it
+   * with values it has only just resolved — state set moments earlier would
+   * still read stale here. The party matters as much as the dates: a stale
+   * default of 2 adults made a 1-adult room read as not bookable, so a link
+   * for it opened nothing on desktop.
    */
   async function runAvailability(
     checkIn: string,
     checkOut: string,
-    opts: { autoSelectRoomId?: string | null; scrollToRooms?: boolean } = {},
+    opts: {
+      autoSelectRoomId?: string | null;
+      scrollToRooms?: boolean;
+      party?: { adults: number; children: number };
+    } = {},
   ) {
     bookingLinkEvents.track("dates_selected", { checkIn, checkOut });
     setSelectedRoomId(null);
     setCheckingAvailability(true);
+    const party = opts.party ?? { adults: pickAdults, children: pickChildren };
     let rows: AvailabilityResult[] = [];
     try {
-      rows = await getAvailability(property.slug, checkIn, checkOut, params.s, { adults: pickAdults, children: pickChildren });
+      rows = await getAvailability(property.slug, checkIn, checkOut, params.s, party);
     } catch {
       rows = [];
     }
@@ -264,8 +272,15 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       // Dates arrived with the guest, so the thing they came to do is already
       // answerable — checking availability for dates they have just given the
       // agent is not a decision worth another tap.
+      // A room the link names that is no longer free lands on the room list
+      // (scrollToRooms) rather than leaving the guest at the top of the page
+      // wondering where the booking went.
       if (checkIn && checkOut) {
-        void runAvailability(checkIn, checkOut, { autoSelectRoomId: room });
+        void runAvailability(checkIn, checkOut, {
+          autoSelectRoomId: room,
+          scrollToRooms: room != null,
+          party: { adults: adults ?? pickAdults, children: children ?? pickChildren },
+        });
       }
     }
 
@@ -412,7 +427,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             sx={{
               borderRadius: 0,
               bgcolor: sp.blue,
-              "&:hover": { bgcolor: "#1a4ab8" },
+              "&:hover": { bgcolor: sp.blueHover },
               "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.7 },
               fontWeight: 600,
               height: "100%",

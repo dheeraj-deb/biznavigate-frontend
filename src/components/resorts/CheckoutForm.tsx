@@ -800,7 +800,7 @@ export function CheckoutForm({
             fontSize: "1rem",
             fontWeight: 600,
             textTransform: "none",
-            "&:hover": { bgcolor: "#1a4ab8" },
+            "&:hover": { bgcolor: sp.blueHover },
             "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.6 },
           }}
         >

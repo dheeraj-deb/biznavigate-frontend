@@ -37,7 +37,7 @@ export const bookButtonSx = {
   fontWeight: 600,
   textTransform: "none",
   bgcolor: sp.blue,
-  "&:hover": { bgcolor: "#1a4ab8" },
+  "&:hover": { bgcolor: sp.blueHover },
 } as const;
 
 const arrowSx = {

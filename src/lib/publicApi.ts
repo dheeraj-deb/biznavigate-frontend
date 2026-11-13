@@ -1,3 +1,5 @@
+import type { PublicBrand } from "./brand";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3006/api";
 
 export const API_BASE = BASE;
@@ -178,6 +180,8 @@ export type ResortDetail = PublicProperty & {
   /** Bookings confirm without the owner approving each one. */
   instantBooking?: boolean;
   // Detail-only fields — optional because older API builds don't send them.
+  /** The resort's colour, logos, favicon and page title (lib/brand.ts). */
+  brand?: PublicBrand;
   email?: string | null;
   directions?: string | null;
   childPolicy?: string | null;

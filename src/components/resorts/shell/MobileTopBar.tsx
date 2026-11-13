@@ -12,6 +12,8 @@ type Props = {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  /** The resort's logo, shown before the title. */
+  logoUrl?: string;
   /** Trailing icon buttons (share, chat…). */
   actions?: React.ReactNode;
   /** Keep the whole bar out of the way until the page has scrolled this far,
@@ -33,7 +35,7 @@ function useScrolledPast(offset: number | undefined): boolean {
 }
 
 /** Phone-only app bar: optional back arrow, a title, trailing actions. */
-export function MobileTopBar({ title, subtitle, onBack, actions, revealAfter }: Props) {
+export function MobileTopBar({ title, subtitle, onBack, logoUrl, actions, revealAfter }: Props) {
   const shown = useScrolledPast(revealAfter);
   // Revealed bars overlay the page (fixed, so they take no room while hidden);
   // the rest sit in the flow and stick.
@@ -69,6 +71,14 @@ export function MobileTopBar({ title, subtitle, onBack, actions, revealAfter }: 
         <IconButton onClick={onBack} aria-label="Back" sx={{ width: 48, height: 48, color: sp.ink }}>
           <ArrowBackIcon />
         </IconButton>
+      )}
+      {logoUrl && (
+        <Box
+          component="img"
+          src={logoUrl}
+          alt=""
+          sx={{ height: 32, width: "auto", maxWidth: 96, objectFit: "contain", mr: 1, flexShrink: 0 }}
+        />
       )}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography noWrap sx={{ fontSize: "1rem", fontWeight: 700, color: sp.ink, lineHeight: 1.25 }}>

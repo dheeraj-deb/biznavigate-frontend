@@ -24,3 +24,10 @@ yarn-debug.log*
 yarn-error.log*
 .vercel
 .env*
+
+# Cloudflare / OpenNext
+/.open-next
+/.wrangler
+.dev.vars*
+
+cloudflare-env.d.ts
