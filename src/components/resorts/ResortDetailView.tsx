@@ -427,7 +427,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
             sx={{
               borderRadius: 0,
               bgcolor: sp.blue,
-              "&:hover": { bgcolor: "#1a4ab8" },
+              "&:hover": { bgcolor: sp.blueHover },
               "&.Mui-disabled": { bgcolor: sp.blue, color: "#fff", opacity: 0.7 },
               fontWeight: 600,
               height: "100%",

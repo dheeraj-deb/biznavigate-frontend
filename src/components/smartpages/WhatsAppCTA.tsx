@@ -130,7 +130,7 @@ export function WhatsAppCTA(props: Props) {
             ? {
                 bgcolor: sp.blue,
                 color: "#fff",
-                "&:hover": { bgcolor: "#1a4ab8" },
+                "&:hover": { bgcolor: sp.blueHover },
               }
             : {
                 border: `1px solid ${sp.blue}`,

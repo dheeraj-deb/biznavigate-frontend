@@ -28,8 +28,13 @@ export function GuestThemeRoot({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** `hideOnMobile`: phones get ResortAppShell's own top bar instead. */
-export function PublicHeader({ hideOnMobile = false }: { hideOnMobile?: boolean }) {
+/** The resort whose page this is, when it has its own logo (brand). */
+export type HeaderResort = { name: string; logoUrl: string; href: string };
+
+/** `hideOnMobile`: phones get ResortAppShell's own top bar instead.
+ *  `resort`: a branded resort page leads with the resort's logo, linking to
+ *  its own page, instead of BizNavigo's. */
+export function PublicHeader({ hideOnMobile = false, resort }: { hideOnMobile?: boolean; resort?: HeaderResort }) {
   return (
     <Box
       component="header"
@@ -54,9 +59,20 @@ export function PublicHeader({ hideOnMobile = false }: { hideOnMobile?: boolean 
           justifyContent: "space-between",
         }}
       >
-        <Box component={NextLink} href="/" sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}>
-          <Box component="img" src="/logo.png" alt="BizNavigo" sx={{ height: 28, width: "auto" }} />
-        </Box>
+        {resort ? (
+          <Box component={NextLink} href={resort.href} sx={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+            <Box
+              component="img"
+              src={resort.logoUrl}
+              alt={resort.name}
+              sx={{ height: 40, width: "auto", maxWidth: 200, objectFit: "contain" }}
+            />
+          </Box>
+        ) : (
+          <Box component={NextLink} href="/" sx={{ display: "flex", alignItems: "center", gap: 1, textDecoration: "none" }}>
+            <Box component="img" src="/logo.png" alt="BizNavigo" sx={{ height: 28, width: "auto" }} />
+          </Box>
+        )}
         <Link
           component={NextLink}
           href="/"
