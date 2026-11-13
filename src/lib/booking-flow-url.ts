@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { parseBeds, parseRooms } from "./party-rooms";
+import { isPlatformHost, stripResortPrefix } from "./custom-host";
 
 /**
  * The URL is the source of truth across /resorts/[slug], /book, and
@@ -112,6 +113,19 @@ export function useHydrated(): boolean {
   );
 }
 
+/**
+ * True on an owner's own domain (lib/custom-host.ts), after hydration only:
+ * the server and the hydration render keep the /resorts/{slug} links the
+ * cached HTML has, then links drop that prefix.
+ */
+export function useCustomHost(): boolean {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => !isPlatformHost(window.location.host),
+    () => false,
+  );
+}
+
 /** Current query string as `URLSearchParams`. Empty during server render. */
 export function useSearchParamsSnapshot(): URLSearchParams {
   const search = useSyncExternalStore(
@@ -149,8 +163,12 @@ export function useBookingFlowParams(): BookingFlowParams {
  */
 export function useBookingFlowHref() {
   const params = useBookingFlowParams();
+  const customHost = useCustomHost();
   return useCallback(
-    (path: string, overrides: Partial<BookingFlowParams> = {}) => {
+    (resortPath: string, overrides: Partial<BookingFlowParams> = {}) => {
+      // On an owner's domain the resort is the whole site: /book, not
+      // /resorts/{slug}/book.
+      const path = customHost ? stripResortPrefix(resortPath) : resortPath;
       const merged = { ...params, ...overrides };
       const qs = new URLSearchParams();
       if (merged.s) qs.set("s", merged.s);
@@ -167,7 +185,7 @@ export function useBookingFlowHref() {
       const query = qs.toString();
       return query ? `${path}?${query}` : path;
     },
-    [params],
+    [params, customHost],
   );
 }
 
