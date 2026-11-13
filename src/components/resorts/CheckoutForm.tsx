@@ -34,6 +34,7 @@ import {
 import { getStoredRef } from "@/lib/attribution";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { getLiveAddons, partyLabel, type AvailabilityResult, type PropertyAddon, type PublicRoomType } from "@/lib/publicApi";
+import { resortPath } from "@/lib/custom-host";
 
 type Props = {
   slug: string;
@@ -358,7 +359,7 @@ export function CheckoutForm({
       // held and the request is with them. Say that, on its own screen.
       const sent = new URLSearchParams({ requested: result.code });
       if (sessionToken) sent.set("s", sessionToken);
-      window.location.href = `/resorts/${slug}/booked?${sent.toString()}`;
+      window.location.href = resortPath(`/resorts/${slug}/booked?${sent.toString()}`);
     } catch (e) {
       bookingLinkEvents.track("checkout_failed");
       setError(e instanceof Error ? e.message : "Could not complete booking — please try again.");

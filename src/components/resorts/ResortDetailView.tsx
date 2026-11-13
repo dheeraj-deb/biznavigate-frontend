@@ -35,6 +35,7 @@ import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/bookin
 import { getAvailability, isBookable, partyLabel } from "@/lib/publicApi";
 import { checkoutRoomCount, extraBedsFor } from "@/lib/party-rooms";
 import type { AvailabilityResult, ResortDetail } from "@/lib/publicApi";
+import { resortPath } from "@/lib/custom-host";
 
 function defaultDate(daysFromNow: number): string {
   const d = new Date();
@@ -230,7 +231,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       !browseLink &&
       (arrived.s || (arrived.checkin && arrived.checkout))
     ) {
-      router.replace(`/resorts/${property.slug}/book${window.location.search}`);
+      router.replace(resortPath(`/resorts/${property.slug}/book${window.location.search}`));
       return;
     }
 

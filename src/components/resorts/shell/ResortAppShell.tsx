@@ -22,6 +22,7 @@ import {
   notePopState,
   useKeyboardOpen,
 } from "./mobile";
+import { resortPath } from "@/lib/custom-host";
 
 /** What the chrome needs about the property — kept small, since the layout
  *  serialises it into every page of the visit. */
@@ -87,8 +88,8 @@ export function ResortAppShell({ property, children }: { property: ShellProperty
     // The live query string, not buildHref: this runs on mount, when the
     // hook's snapshot is still the server's empty one and would drop `s`.
     const { hash, search } = window.location;
-    if (hash === "#gallery") router.replace(`${base}/photos${search}`);
-    else if (hash === "#rooms") router.replace(`${base}/book${search}`);
+    if (hash === "#gallery") router.replace(resortPath(`${base}/photos${search}`));
+    else if (hash === "#rooms") router.replace(resortPath(`${base}/book${search}`));
     // Mount only: a hash the guest scrolls to later is not a redirect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

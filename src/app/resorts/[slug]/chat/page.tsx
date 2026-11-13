@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getResort, getResortSlugs } from '@/lib/publicApi';
 import { ChatScreen } from '@/components/resorts/ChatScreen';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
+import { canonicalResortUrl } from '@/lib/custom-host';
 
 export const revalidate = 300;
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       title: `Ask ${property.name}`,
       // A chat box has nothing for search to index; the property page does.
       robots: { index: false, follow: true },
-      alternates: { canonical: `/resorts/${property.slug}` },
+      alternates: { canonical: canonicalResortUrl(property) },
     };
   } catch {
     return { title: 'Resort not found' };
