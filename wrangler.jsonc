@@ -18,9 +18,10 @@
   "services": [
     { "binding": "WORKER_SELF_REFERENCE", "service": "biznavigo-site" }
   ],
-  // ISR page cache (open-next.config.ts → kvIncrementalCache).
-  "kv_namespaces": [
-    { "binding": "NEXT_INC_CACHE_KV", "id": "5c2b2a71688e45d5b5ca5bf4b92342da" }
+  // ISR page cache (open-next.config.ts → r2IncrementalCache). Private
+  // bucket, separate from the owner-photo bucket "biznavigate".
+  "r2_buckets": [
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "biznavigo-site-cache" }
   ],
   // Background regeneration of stale pages (doQueue). SQLite-backed, so it
   // runs on the Workers Free plan.
@@ -48,8 +49,8 @@
       "services": [
         { "binding": "WORKER_SELF_REFERENCE", "service": "biznavigo-site-staging" }
       ],
-      "kv_namespaces": [
-        { "binding": "NEXT_INC_CACHE_KV", "id": "740636abd7274367bc8f7129dd3d350d" }
+      "r2_buckets": [
+        { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "biznavigo-site-staging-cache" }
       ],
       "durable_objects": {
         "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }]
