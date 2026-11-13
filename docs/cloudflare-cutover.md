@@ -4,6 +4,15 @@ Status: **plan only, nothing done yet.** Every step that touches DNS, the
 nameservers, Vercel projects or a payment method needs the owner's go-ahead
 first. Written 2026-11-12.
 
+## Live previews (Workers Free, built against the staging API)
+
+- Booking site: https://biznavigo-site-staging.biznavigate.workers.dev
+  (for example `/resorts/pan-haven-vagamon`)
+- Dashboard: https://biznavigo-dashboard-staging.biznavigate.workers.dev
+
+Both were deployed from the CLI (`opennextjs-cloudflare deploy --env staging`).
+Workers Builds can be connected to these existing Workers.
+
 ## What moves and what stays
 
 | Address | Today (Vercel project) | After cutover |
