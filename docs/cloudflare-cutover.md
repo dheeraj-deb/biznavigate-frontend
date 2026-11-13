@@ -70,12 +70,16 @@ These Vercel defaults are **not** copied:
 
 ## Before cutover (no DNS change, safe any time)
 
-1. **Cloudflare account** on the Free plan. No card is needed for Workers, KV, D1,
-   Durable Objects (SQLite), Images (5,000 transforms a month) or Workers Builds.
-2. **Resources** (done 2026-11-12, account `cca1cc408684b5f3b6d2ffd662e86a5d`):
-   KV namespaces `biznavigo-site-cache` and `biznavigo-site-staging-cache`, and D1
-   databases `biznavigo-site-tags` and `biznavigo-site-staging-tags`. Their ids are in
-   the booking site's `wrangler.jsonc`. The D1 `revalidations` table is created by
+1. **Cloudflare account** on the Free plan: the same account that already holds the
+   owner-photo R2 bucket `biznavigate`, so R2 is already enabled. Workers, D1,
+   Durable Objects (SQLite), Images (5,000 transforms a month) and Workers Builds
+   need nothing more.
+2. **Resources** (done 2026-11-12/13, account `cca1cc408684b5f3b6d2ffd662e86a5d`):
+   - Private R2 buckets `biznavigo-site-cache` and `biznavigo-site-staging-cache`
+     (APAC location hint, Standard class) for the saved pages.
+   - D1 databases `biznavigo-site-tags` and `biznavigo-site-staging-tags`.
+
+   All are named in the booking site's `wrangler.jsonc`. The D1 `revalidations` table is created by
    `opennextjs-cloudflare deploy`, which runs the populate-cache step.
 3. **Connect Workers Builds** (Workers & Pages → Create → Import a repository). Use one
    Worker per row. The Worker name must equal the `name` in `wrangler.jsonc`, plus
@@ -219,9 +223,16 @@ step be undone on its own.
   ($5/month, 30 s CPU). The dashboard is the more likely of the two to need it first.
 - **Requests:** 100,000 a day across all Workers. After that, requests fail with
   error 1027 until the next UTC day.
-- **KV:** 1,000 writes a day. Each background refresh of a resort page writes one
-  entry, so busy pages refreshed every 5 minutes could use up the writes. If that
-  happens, move to R2 (needs a card) or Paid.
+- **R2 (saved pages):** the free tier is 1 million writes (Class A) and 10 million
+  reads (Class B) a month, plus 10 GB. Each background refresh of a page is one
+  write, so this has lots of room. Above the free tier, R2 bills the card already
+  on the account.
+- **Page speed:** reading a saved page from R2 took about 230–280 ms inside the
+  Worker, against about 70 ms with KV. Total time to first byte from India was about
+  0.30 s, against 0.38–0.45 s on Vercel today. After cutover, try OpenNext's
+  `withRegionalCache`, which keeps a copy in each data centre through Cloudflare's
+  Cache API. Measure it on the real domain rather than on `workers.dev`, and keep it
+  only if it clearly helps.
 - **Images:** 5,000 unique resizes a month. After that, new sizes fail with error
   9422, and sizes already made keep serving. The Free plan is never billed for this.
 - **Worker size:** the booking site is 6.3 MB (1.4 MB gzip) and the dashboard
