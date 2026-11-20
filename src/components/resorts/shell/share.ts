@@ -1,8 +1,10 @@
 "use client";
 
+import { resortPath } from "@/lib/custom-host";
+
 /** The system share sheet where there is one; the clipboard where not. */
 export async function shareResort(slug: string, name: string): Promise<void> {
-  const url = `${window.location.origin}/resorts/${slug}`;
+  const url = `${window.location.origin}${resortPath(`/resorts/${slug}`)}`;
   try {
     if (navigator.share) {
       await navigator.share({ title: name, url });

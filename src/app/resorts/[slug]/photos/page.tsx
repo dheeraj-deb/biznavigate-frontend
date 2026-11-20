@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getResort, getResortSlugs } from '@/lib/publicApi';
 import { PhotosView } from '@/components/resorts/PhotosView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
+import { canonicalResortUrl } from '@/lib/custom-host';
 
 export const revalidate = 300;
 
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     return {
       title: `Photos — ${property.name}`,
       // Same photos the property page carries; that page is the one to rank.
-      alternates: { canonical: `/resorts/${property.slug}` },
+      alternates: { canonical: canonicalResortUrl(property) },
       openGraph: { images: property.photos.slice(0, 3) },
     };
   } catch {

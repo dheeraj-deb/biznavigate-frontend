@@ -33,7 +33,9 @@ function baseUrl(): string {
 
 export function LodgingSchema({ property, todayRate }: { property: ResortDetail; todayRate: number }) {
   const type = SCHEMA_TYPE[(property.propertyType ?? "").toLowerCase()] ?? "LodgingBusiness";
-  const url = `${baseUrl()}/resorts/${property.slug}`;
+  const url = property.customDomain
+    ? `https://${property.customDomain}/`
+    : `${baseUrl()}/resorts/${property.slug}`;
 
   const lodging = {
     "@context": "https://schema.org",

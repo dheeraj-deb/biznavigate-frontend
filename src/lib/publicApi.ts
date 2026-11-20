@@ -182,6 +182,9 @@ export type ResortDetail = PublicProperty & {
   // Detail-only fields — optional because older API builds don't send them.
   /** The resort's colour, logos, favicon and page title (lib/brand.ts). */
   brand?: PublicBrand;
+  /** The owner's own address once it is live (www.myresort.com), else null.
+   *  Used as the canonical URL (lib/custom-host.ts). */
+  customDomain?: string | null;
   email?: string | null;
   directions?: string | null;
   childPolicy?: string | null;

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getResort, getResortSlugs } from '@/lib/publicApi';
 import { ResortDetailView } from '@/components/resorts/ResortDetailView';
 import { NotFoundState } from '@/components/smartpages/DetailSections';
+import { canonicalResortUrl } from '@/lib/custom-host';
 
 export const revalidate = 300;
 
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical: `/resorts/${property.slug}` },
+      alternates: { canonical: canonicalResortUrl(property) },
       openGraph: {
         title,
         description,
