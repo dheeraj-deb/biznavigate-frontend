@@ -27,6 +27,7 @@ import { AmenityLineIcon } from "@/components/smartpages/amenityLineIcons";
 import { formatTime } from "@/lib/formatTime";
 import { bathroomLabel, bedsLabel, mealPlanLabel, sizeLabel } from "@/lib/roomFacts";
 import { DateGuestCard } from "./DateGuestCard";
+import { PastWindowNotice, pastBookingWindow } from "./PastWindowNotice";
 import { StaySummary } from "./StaySummary";
 import { AskAssistantDrawer } from "./AskAssistantDrawer";
 import { sp, formatINR } from "@/components/smartpages/tokens";
@@ -257,6 +258,7 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
         <Box sx={{ display: { xs: "none", sm: "block" }, position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)" }}>
           <DateGuestCard
             mt={0}
+            bookableUntil={property.bookableUntil}
             checkIn={checkIn}
             checkOut={checkOut}
             adults={adults}
@@ -272,9 +274,21 @@ export function RoomDetailView({ property, roomType }: { property: ResortDetail;
         adults={adults}
         children={childrenCount}
         onChange={handleDateGuestChange}
+        bookableUntil={property.bookableUntil}
       />
 
       <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 } }}>
+        {pastBookingWindow(property.bookableUntil, checkIn) ? (
+          <Box sx={{ mb: 3 }}>
+            <PastWindowNotice
+              bookableUntil={property.bookableUntil!}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              whatsappNumber={property.tenant?.gupshupSourceNumber ?? null}
+              propertyName={property.name}
+            />
+          </Box>
+        ) : null}
         <Typography
           component="h1"
           sx={{ fontFamily: guestDisplayFontFamily, fontSize: { xs: "2.25rem", sm: "2.75rem" }, fontWeight: 400, lineHeight: 1.05, letterSpacing: "-0.01em", color: sp.ink }}

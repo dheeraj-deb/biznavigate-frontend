@@ -14,6 +14,7 @@ import { getAvailability } from "@/lib/publicApi";
 import { getBookingLinkSession, type BookingLinkSessionView } from "@/lib/booking-link-api";
 import { bookingLinkEvents } from "@/lib/booking-link-events";
 import { DateGuestCard } from "./DateGuestCard";
+import { PastWindowNotice, pastBookingWindow } from "./PastWindowNotice";
 import { StaySummary } from "./StaySummary";
 import { RoomAvailabilityCard } from "./RoomAvailabilityCard";
 import { CheckoutForm } from "./CheckoutForm";
@@ -116,6 +117,9 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
     // before their real dates land — and we burn an availability call on
     // dates nobody asked about.
     if (!seeded) return;
+    // Past the resort's booking window: nothing to look up — the notice
+    // below says how far ahead is open.
+    if (pastBookingWindow(property.bookableUntil, checkIn)) return;
     let alive = true;
     setLoading(true);
     getAvailability(property.slug, checkIn, checkOut, params.s, {
@@ -136,7 +140,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- childAgesKey stands in for the array
-  }, [property.slug, checkIn, checkOut, adults, childrenCount, childAgesKey, seeded]);
+  }, [property.slug, property.bookableUntil, checkIn, checkOut, adults, childrenCount, childAgesKey, seeded]);
 
   useEffect(() => {
     if (availability) {
@@ -264,6 +268,7 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
           adults={adults}
           children={childrenCount}
           onChange={handleDateGuestChange}
+          bookableUntil={property.bookableUntil}
         />
       </Box>
       <StaySummary
@@ -274,10 +279,19 @@ export function BookingFlowView({ property }: { property: ResortDetail }) {
         adults={adults}
         children={childrenCount}
         onChange={handleDateGuestChange}
+        bookableUntil={property.bookableUntil}
       />
 
       <Box sx={{ mx: "auto", maxWidth: 1024, px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 4 } }}>
-        {selectedAvailability && property.acceptsOnlinePayment === false ? (
+        {pastBookingWindow(property.bookableUntil, checkIn) ? (
+          <PastWindowNotice
+            bookableUntil={property.bookableUntil!}
+            checkIn={checkIn}
+            checkOut={checkOut}
+            whatsappNumber={property.tenant?.gupshupSourceNumber ?? null}
+            propertyName={property.name}
+          />
+        ) : selectedAvailability && property.acceptsOnlinePayment === false ? (
           <OnlineBookingUnavailable
             propertyName={property.name}
             roomName={selectedAvailability.name}
