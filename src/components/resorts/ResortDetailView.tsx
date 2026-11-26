@@ -408,6 +408,7 @@ export function ResortDetailView({ property }: { property: ResortDetail }) {
       <Box sx={{ display: { xs: "none", sm: "block" } }}>
       <DateGuestCard
         overlap={false}
+        bookableUntil={property.bookableUntil}
         checkIn={pickCheckIn}
         checkOut={pickCheckOut}
         adults={pickAdults}

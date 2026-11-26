@@ -30,6 +30,7 @@ export function StaySummary(props: {
   adults: number;
   children: number;
   onChange: React.ComponentProps<typeof DateGuestCard>["onChange"];
+  bookableUntil?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const nights = nightsBetween(props.checkIn, props.checkOut);
@@ -82,6 +83,7 @@ export function StaySummary(props: {
           adults={props.adults}
           children={props.children}
           onChange={props.onChange}
+          bookableUntil={props.bookableUntil}
         />
       )}
     </Box>

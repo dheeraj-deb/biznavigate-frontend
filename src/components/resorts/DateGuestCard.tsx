@@ -14,6 +14,8 @@ type Props = {
   adults: number;
   children: number;
   onChange: (next: { checkIn?: string; checkOut?: string; adults?: number; children?: number }) => void;
+  /** The last check-in the resort takes bookings for; the picker stops there. */
+  bookableUntil?: string | null;
   /** Optional trailing action rendered below the grid, inside the same card
    *  — e.g. the experience page's "Check availability" button that hands
    *  the selection off to /book, where this same card reappears live. */
@@ -91,7 +93,7 @@ function Stepper({
  * button into the card's own corner radius, so the button doesn't need to
  * know its own radius.
  */
-export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, footer, overlap = true, mt }: Props) {
+export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, footer, overlap = true, mt, bookableUntil }: Props) {
   return (
     <Box
       sx={{
@@ -123,7 +125,7 @@ export function DateGuestCard({ checkIn, checkOut, adults, children, onChange, f
             fullWidth
             value={checkIn}
             onChange={(e) => onChange({ checkIn: e.target.value })}
-            slotProps={{ input: { disableUnderline: true } }}
+            slotProps={{ input: { disableUnderline: true }, htmlInput: bookableUntil ? { max: bookableUntil } : undefined }}
             sx={dateFieldSx}
           />
         </Box>
